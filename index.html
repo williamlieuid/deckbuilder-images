@@ -89,11 +89,11 @@
   .card .check { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 2; }
   .imgwrap { position: relative; aspect-ratio: 1; background: var(--backdrop); border-radius: 8px; overflow: hidden; }
   .imgwrap img.base { width: 100%; height: 100%; object-fit: contain; }
-  p.sku { font-size: 12px; font-weight: 400; color: #C7C5BB; text-align: left; margin: 10px 0 6px; }
-  p.name { font-size: 13px; font-weight: 700; text-align: left; line-height: 1.35; height: 58px; overflow: hidden; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  span.sku { font-size: 12px; font-weight: 400; color: #C7C5BB; }
+  p.name { font-size: 13px; font-weight: 700; text-align: left; line-height: 1.35; overflow: hidden; margin: 10px 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
   p.name .name-eyebrow { color: var(--text-muted); }
   p.name .name-main { font-size: 15px; }
-  p.desc { font-size: 9px; color: var(--text-secondary); line-height: 1.4; margin: 0 0 8px; height: 84px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; }
+  p.desc { font-size: 9px; color: var(--text-secondary); line-height: 1.4; margin: 0 0 8px; height: 52px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
   .price-table { width: 100%; border-collapse: collapse; table-layout: fixed; border-top: 0.5px solid var(--border); padding-top: 8px; }
   .price-table td { padding-top: 8px; }
   .price-table p.qty { font-size: 9px; color: var(--text-muted); margin: 0; }
@@ -122,8 +122,11 @@
   @page { size: legal landscape; margin: 0; }
   @media print {
     .no-print { display: none !important; }
-    .deck-page { border: none; margin: 0; width: 14in; min-height: 8.5in; page-break-after: always; }
-    body { padding: 0; }
+    .wrap { padding: 0; }
+    .deck-page { border: none; margin: 0; width: 14in; min-height: 8.5in; }
+    .deck-page:not(:last-child) { page-break-after: always; break-after: always; }
+    body { margin: 0; padding: 0; }
+    .imgwrap { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   .note { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
@@ -209,14 +212,6 @@
             <label style="font-size:11px; color:var(--text-secondary);">Pattern scale: <span id="patternScaleLabel">100%</span></label>
             <input type="range" id="patternScale" min="20" max="200" value="100" step="5" style="width:100%; margin-top:2px;" />
           </div>
-          <div style="margin-top:8px;">
-            <label style="font-size:11px; color:var(--text-secondary);">Pattern horizontal position: <span id="patternOffsetXLabel">50%</span></label>
-            <input type="range" id="patternOffsetX" min="0" max="100" value="50" step="1" style="width:100%; margin-top:2px;" />
-          </div>
-          <div style="margin-top:8px;">
-            <label style="font-size:11px; color:var(--text-secondary);">Pattern vertical position: <span id="patternOffsetYLabel">50%</span></label>
-            <input type="range" id="patternOffsetY" min="0" max="100" value="50" step="1" style="width:100%; margin-top:2px;" />
-          </div>
           <label class="chk" style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); margin-top:8px; font-weight:400;">
             <input type="checkbox" id="patternKnockoutChk" checked /> Knockout Logo
           </label>
@@ -225,7 +220,7 @@
           <label>Background color</label>
           <div style="display:flex; gap:8px; align-items:center;">
             <button type="button" class="bg-swatch" data-color="#000000" style="width:26px;height:26px;border-radius:6px;background:#000000;border:2px solid transparent;cursor:pointer;padding:0;"></button>
-            <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#1A1A1A;border:2px solid transparent;cursor:pointer;padding:0;"></button>
+            <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#333232;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#E8E6DE" style="width:26px;height:26px;border-radius:6px;background:#E8E6DE;border:2px solid var(--accent);cursor:pointer;padding:0;"></button>
             <input type="color" id="customBgColor" value="#E8E6DE" style="width:26px;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Custom color" />
@@ -4133,8 +4128,12 @@ let deckName = ''; // optional, shown on the deck/print header instead of "Produ
 let selectedPattern = null; // URL of the chosen pattern (library or custom-uploaded)
 let patternScale = 100; // percentage; 100 = fills the product silhouette, lower = smaller/tiled, higher = zoomed in
 let patternKnockout = true; // when true, the logo over a pattern renders as a white silhouette; when false, it shows in its real colors
-let patternOffsetX = 50; // percentage of one tile width — pans the tile grid horizontally, wraps every 100%. Default 50 (not 0) puts a tile's own CENTER at the region's center, instead of a tile BOUNDARY there — hides a pattern's baked-in edge margin at the region's own edges instead of showing it as a seam through the middle.
-let patternOffsetY = 50; // percentage of one tile height — pans the tile grid vertically, wraps every 100%. Same reasoning as patternOffsetX above.
+// Fixed, no UI control (removed -- adjusting these live wasn't worth a full-grid repaint every
+// drag tick). 50 (not 0) puts a tile's own CENTER at the region's center, instead of a tile
+// BOUNDARY there -- hides a pattern's baked-in edge margin at the region's own edges instead of
+// showing it as a seam through the middle.
+const patternOffsetX = 50;
+const patternOffsetY = 50;
 // Always on, no UI toggle -- the product's own photo is multiplied over the warped logo (same
 // idea as pattern shading) so it picks up real folds/shadows instead of sitting as a flat decal.
 const logoMultiply = true;
@@ -4157,18 +4156,6 @@ const debouncedRenderGrid = debounce(() => renderGrid(applySort(currentResults))
 document.getElementById('patternScale').addEventListener('input', (e) => {
   patternScale = parseInt(e.target.value, 10);
   document.getElementById('patternScaleLabel').textContent = patternScale + '%';
-  debouncedRenderGrid();
-});
-
-document.getElementById('patternOffsetX').addEventListener('input', (e) => {
-  patternOffsetX = parseInt(e.target.value, 10);
-  document.getElementById('patternOffsetXLabel').textContent = patternOffsetX + '%';
-  debouncedRenderGrid();
-});
-
-document.getElementById('patternOffsetY').addEventListener('input', (e) => {
-  patternOffsetY = parseInt(e.target.value, 10);
-  document.getElementById('patternOffsetYLabel').textContent = patternOffsetY + '%';
   debouncedRenderGrid();
 });
 
@@ -4604,6 +4591,12 @@ function truncateText(text, max) {
   const lastSpace = cut.lastIndexOf(' ');
   return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';
 }
+function truncateWords(text, maxWords) {
+  if (!text) return '';
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(' ') + '…';
+}
 
 function formatName(name) {
   const idx = name.indexOf(':');
@@ -4906,13 +4899,52 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
       const quadPct = maskBoundingQuadPct(region);
       const quad = quadPct.map(pctToCanvas);
       const maskCanvas = buildMaskClipCanvas(region, size, pctToCanvas, maskImageCache);
-      const scratch = document.createElement('canvas');
-      scratch.width = size; scratch.height = size;
-      const sctx = scratch.getContext('2d');
-      paintRegionContent(sctx, quad, quadPct, region, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading);
-      sctx.globalCompositeOperation = 'destination-in';
-      sctx.drawImage(maskCanvas, 0, 0);
-      ctx.drawImage(scratch, 0, 0);
+      const allAxes = [region.logoAxis].concat(region.extraLogoAxes || []).filter(Boolean);
+      const axesForRender = allAxes.length > 0 ? allAxes : [null];
+      // Canvas-space centers for Voronoi partitioning: paintRegionContent fills the full
+      // mask bounding quad (all islands), so without partitioning each iteration's fill
+      // overwrites all previous islands and only the last axis survives.
+      const canvasCenters = allAxes.map(a => pctToCanvas(a.center));
+      // Build all per-island clip masks up front (one getImageData pass per island) rather than
+      // inside the render loop — avoids allocating N extra canvases concurrently mid-loop which
+      // compounds the memory pressure that crashes Chrome on mobile.
+      let islandClips = null;
+      if (canvasCenters.length > 1) {
+        const baseData = maskCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+        islandClips = canvasCenters.map((cc, axisIdx) => {
+          const im = document.createElement('canvas');
+          im.width = size; im.height = size;
+          const imc = im.getContext('2d');
+          const imgData = imc.createImageData(size, size);
+          const d = imgData.data;
+          for (let py = 0; py < size; py++) {
+            for (let px = 0; px < size; px++) {
+              const idx = (py * size + px) * 4;
+              if (baseData[idx + 3] === 0) continue;
+              const di = (px - cc.x) * (px - cc.x) + (py - cc.y) * (py - cc.y);
+              let nearest = true;
+              for (let j = 0; j < canvasCenters.length; j++) {
+                if (j === axisIdx) continue;
+                const dj = (px - canvasCenters[j].x) * (px - canvasCenters[j].x) + (py - canvasCenters[j].y) * (py - canvasCenters[j].y);
+                if (dj < di) { nearest = false; break; }
+              }
+              if (nearest) { d[idx] = baseData[idx]; d[idx+1] = baseData[idx+1]; d[idx+2] = baseData[idx+2]; d[idx+3] = baseData[idx+3]; }
+            }
+          }
+          imc.putImageData(imgData, 0, 0);
+          return im;
+        });
+      }
+      axesForRender.forEach((axis, axisIdx) => {
+        const scratch = document.createElement('canvas');
+        scratch.width = size; scratch.height = size;
+        const sctx = scratch.getContext('2d');
+        const regionForAxis = axis !== null ? Object.assign({}, region, { logoAxis: axis }) : region;
+        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading);
+        sctx.globalCompositeOperation = 'destination-in';
+        sctx.drawImage(islandClips ? islandClips[axisIdx] : maskCanvas, 0, 0);
+        ctx.drawImage(scratch, 0, 0);
+      });
       return;
     }
 
@@ -5103,7 +5135,7 @@ function computeTileSizePx(region, quad, scalePct, size, perspectiveTile, forceW
     return (scalePct / 100) * pxPerInch * PATTERN_BASE_SCALE;
   }
   const PERSPECTIVE_SCALE_CORRECTION = 1.065;
-  return size * (scalePct / 100) * (perspectiveTile ? PERSPECTIVE_SCALE_CORRECTION : 1) * PATTERN_BASE_SCALE;
+  return size * (scalePct / 100) * (perspectiveTile ? PERSPECTIVE_SCALE_CORRECTION : 1) * PATTERN_BASE_SCALE * (region.patternScaleMult || 1);
 }
 
 // True per-pixel projective texture mapping for the pattern tile — the earlier approach
@@ -5334,9 +5366,24 @@ function brandingRecipeKey(backdrop) {
   return [logoDataUrl || '', selectedPattern || '', patternScale, patternOffsetX, patternOffsetY, patternKnockout, logoMultiply, backdrop].join('');
 }
 
-async function paintOneBrandedCanvas(canvas, logoImg, backdrop) {
+// Bumped by every paintBrandedCanvases call and threaded through as `generation` down to the
+// actual per-canvas paint -- renderGrid()/the various field handlers (pattern pick, logo upload,
+// knockout toggle, backdrop change...) each independently kick off their own paintBrandedCanvases
+// without waiting for a prior one to finish, so it's routine for two renders to be in flight at
+// once (e.g. picking a pattern, then immediately choosing a logo before the first finished). Both
+// would otherwise fight over the SAME shared progress bar DOM (a stale one's hideRenderProgress()
+// firing after a newer one's showRenderProgress() hides a bar that should still be counting), and
+// a stale one's still-in-flight paint could pick up newly-changed globals (pattern/knockout/etc,
+// read live rather than snapshotted) partway through, drawing a mismatched mix of old and new
+// settings onto a canvas element that's likely already been torn out by the newer renderGrid()
+// anyway. Only the most-recently-started render is ever allowed to touch the progress bar or
+// actually draw -- an outdated one detects it's been superseded and quietly bails out instead.
+let renderGeneration = 0;
+
+async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   const p = PRODUCTS.find(x => x.sku === canvas.dataset.sku);
   if (!p || !p.regions) return;
+  if (generation !== renderGeneration) return; // a newer render already started before this one got going
 
   const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop);
   const cached = brandedRenderCache.get(p.sku);
@@ -5358,12 +5405,27 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop) {
     (wantsPattern && p.overlayImage) ? withTimeout(loadImageCached(p.overlayImage), IMAGE_LOAD_TIMEOUT_MS) : Promise.resolve(null),
     Promise.all(maskUrls.map(url => withTimeout(loadImageCached(url), IMAGE_LOAD_TIMEOUT_MS).catch(() => null))),
   ]);
+  if (generation !== renderGeneration) return; // superseded while those loads were in flight -- don't draw a stale mix of settings
+
+  // Yield to the browser's own paint/layout pass before this canvas's synchronous draw work.
+  // When every image involved is already cached (e.g. toggling knockout, which doesn't need any
+  // NEW network fetch at all), the Promise.all above resolves immediately -- a microtask, not a
+  // real async gap -- so without this, every product's drawBrandedCard call runs back-to-back in
+  // one unbroken synchronous burst. The progress bar's DOM updates still happen at the JS level
+  // during that burst, but the browser never gets a spare moment to actually flush a repaint to
+  // the screen until the whole burst finishes -- it looks frozen, then the finished result just
+  // pops in all at once. setTimeout (a macrotask), not just another microtask, is what actually
+  // lets the browser interleave a paint in between.
+  await new Promise(resolve => setTimeout(resolve, 0));
+  if (generation !== renderGeneration) return; // re-check -- another render may have started during that yield
+
   const pattern = wantsPattern
     ? { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY }
     : null;
   const maskImageCache = {};
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
-  drawBrandedCard(canvas, baseImg, logoImg, p.regions, backdrop, 700, pattern, maskImageCache, logoMultiply);
+  const previewSize = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 350 : 700;
+  drawBrandedCard(canvas, baseImg, logoImg, p.regions, backdrop, previewSize, pattern, maskImageCache, logoMultiply);
 
   const snapshot = document.createElement('canvas');
   snapshot.width = canvas.width; snapshot.height = canvas.height;
@@ -5375,18 +5437,19 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop) {
 // before ever bothering the user -- only a genuinely persistent failure gets a visible retry icon.
 const AUTO_RETRY_COUNT = 2;
 const AUTO_RETRY_DELAY_MS = 3000;
-async function paintOneBrandedCanvasWithRetry(canvas, logoImg, backdrop) {
+async function paintOneBrandedCanvasWithRetry(canvas, logoImg, backdrop, generation) {
   hideRetryBadge(canvas);
   for (let attempt = 0; attempt <= AUTO_RETRY_COUNT; attempt++) {
+    if (generation !== renderGeneration) return; // superseded -- no point retrying work nobody will see
     try {
-      await paintOneBrandedCanvas(canvas, logoImg, backdrop);
+      await paintOneBrandedCanvas(canvas, logoImg, backdrop, generation);
       return;
     } catch (err) {
       console.warn('Could not paint branded canvas for', canvas.dataset.sku, '(attempt', attempt + 1, 'of', AUTO_RETRY_COUNT + 1, ')', err);
       if (attempt < AUTO_RETRY_COUNT) await new Promise(r => setTimeout(r, AUTO_RETRY_DELAY_MS));
     }
   }
-  showRetryBadge(canvas, logoImg, backdrop);
+  if (generation === renderGeneration) showRetryBadge(canvas, logoImg, backdrop);
 }
 
 function hideRetryBadge(canvas) {
@@ -5431,18 +5494,31 @@ function hideRenderProgress() {
 async function paintBrandedCanvases(container) {
   const canvases = [...container.querySelectorAll('canvas.branded-canvas')];
   if (!canvases.length) return;
+  // Claimed synchronously, before any await, so a second paintBrandedCanvases call started while
+  // this one is still in flight always correctly supersedes it (see renderGeneration's own comment
+  // above paintOneBrandedCanvas for why this matters -- overlapping renders are routine, not rare).
+  const myGeneration = ++renderGeneration;
   let logoImg = null;
   try { if (logoDataUrl) logoImg = await withTimeout(loadImageCached(logoDataUrl), IMAGE_LOAD_TIMEOUT_MS); } catch (err) { return; }
+  if (myGeneration !== renderGeneration) return; // superseded while the logo was loading
   const backdrop = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim() || '#E8E6DE';
   let done = 0;
   showRenderProgress(canvases.length);
-  // Parallel, not sequential -- previously a single hung image blocked every product listed after
-  // it from ever painting. Promise.allSettled so one product's persistent failure (after its own
-  // retries) still lets every other product finish independently.
-  await Promise.allSettled(canvases.map(canvas =>
-    paintOneBrandedCanvasWithRetry(canvas, logoImg, backdrop).finally(() => updateRenderProgress(++done, canvases.length))
-  ));
-  hideRenderProgress();
+  // Mobile gets a tight concurrency cap — each 700px canvas takes ~2MB of pixel RAM and the
+  // Voronoi masking path creates several more per card. Blasting all cards in parallel on a phone
+  // exhausts Chrome's memory budget and crashes the tab. Desktop keeps higher parallelism so
+  // rendering still feels fast there.
+  const CONCURRENCY = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 2 : 6;
+  for (let i = 0; i < canvases.length; i += CONCURRENCY) {
+    if (myGeneration !== renderGeneration) break;
+    await Promise.allSettled(canvases.slice(i, i + CONCURRENCY).map(canvas =>
+      paintOneBrandedCanvasWithRetry(canvas, logoImg, backdrop, myGeneration).finally(() => {
+        done++;
+        if (myGeneration === renderGeneration) updateRenderProgress(done, canvases.length);
+      })
+    ));
+  }
+  if (myGeneration === renderGeneration) hideRenderProgress();
 }
 
 // ============ card rendering ============
@@ -5586,8 +5662,8 @@ function renderGrid(list) {
     <div class="card ${selected.has(p.sku) ? 'selected' : ''}" data-sku="${p.sku}">
       <input type="checkbox" class="check" data-sku="${p.sku}" ${selected.has(p.sku) ? 'checked' : ''} />
       ${imageBlock(p)}
-      <p class="sku">#${p.sku}</p><p class="name">${formatName(p.name)}</p>
-      <p class="desc">${truncateText(p.description, 480)}</p>
+      <p class="name"><span class="sku">#${p.sku}</span> ${formatName(p.name)}</p>
+      <p class="desc">${truncateWords(p.description, 50)}</p>
       ${priceBox(p)}
     </div>
   `).join('');
@@ -5640,8 +5716,8 @@ document.getElementById('buildDeckBtn').addEventListener('click', () => {
         ${chunk.map(p => `
           <div>
             ${imageBlock(p)}
-            <p class="sku">#${p.sku}</p><p class="name">${formatName(p.name)}</p>
-            <p class="desc">${truncateText(p.description, 480)}</p>
+            <p class="name"><span class="sku">#${p.sku}</span> ${formatName(p.name)}</p>
+            <p class="desc">${truncateWords(p.description, 50)}</p>
             ${priceBox(p)}
           </div>
         `).join('')}
@@ -5872,7 +5948,7 @@ function exportCustomerFile() {
     dateStr: new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'})
   };
 
-  var css = "\n:root{--border:#E0DED5;--text-primary:#1a1a1a;--text-secondary:#5F5E5A;--text-muted:#918F86;--backdrop:BACKDROP_PLACEHOLDER;--accent:#D85A30;--radius:8px;}\n*{box-sizing:border-box;}\nbody{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Arial,sans-serif;margin:0;padding:24px;color:var(--text-primary);background:#fff;}\n.topbar{display:flex;justify-content:flex-end;margin-bottom:16px;}\nbutton.primary{height:40px;padding:0 20px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:14px;font-weight:500;cursor:pointer;}\nbutton.secondary{height:26px;padding:0;border:0.5px solid #B4B2A9;border-radius:var(--radius);background:#fff;color:var(--text-primary);font-size:11px;cursor:pointer;width:100%;margin-top:6px;}\n.deck-page{width:14in;min-height:8.5in;margin:0 auto 40px;padding:0.5in 0.6in;background:#fff;border:0.5px solid var(--border);}\n.deck-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--text-primary);padding-bottom:10px;margin-bottom:20px;}\n.deck-header h2{font-size:16px;margin:0;}\n.deck-header p{font-size:11px;color:var(--text-secondary);margin:0;}\n.deck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;}\n.deck-grid .imgwrap{max-width:3.75in;margin:0 auto;}\n.imgwrap{position:relative;aspect-ratio:1;background:var(--backdrop);border-radius:8px;overflow:hidden;}\n.imgwrap img.base{width:100%;height:100%;object-fit:contain;}\np.sku{font-size:12px;font-weight:400;color:#C7C5BB;text-align:left;margin:10px 0 6px;}\np.name{font-size:13px;font-weight:700;text-align:left;line-height:1.35;height:58px;overflow:hidden;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}\np.name .name-eyebrow{color:var(--text-muted);}\np.name .name-main{font-size:15px;}\np.desc{font-size:9px;color:var(--text-secondary);line-height:1.4;margin:0 0 8px;height:84px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;}\n.price-table{width:100%;border-collapse:collapse;table-layout:fixed;border-top:0.5px solid var(--border);padding-top:8px;}\n.price-table td{padding-top:8px;}\n.price-table p.qty{font-size:9px;color:var(--text-muted);margin:0;}\n.price-table p.pr{font-size:12px;font-weight:500;margin:0;}\n.fees{margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);}\n.fees p{font-size:10px;color:var(--text-secondary);margin:0 0 4px;line-height:1.4;}\n.addon-row{display:flex;flex-wrap:wrap;column-gap:32px;row-gap:4px;}\n.addon-row span{font-size:10px;color:var(--text-secondary);white-space:nowrap;}\n@page{size:legal landscape;margin:0;}\n@media print{.no-print{display:none !important;}.deck-page{border:none;margin:0;width:14in;min-height:8.5in;page-break-after:always;}body{padding:0;}}\n".replace('BACKDROP_PLACEHOLDER', backdrop);
+  var css = "\n:root{--border:#E0DED5;--text-primary:#1a1a1a;--text-secondary:#5F5E5A;--text-muted:#918F86;--backdrop:BACKDROP_PLACEHOLDER;--accent:#D85A30;--radius:8px;}\n*{box-sizing:border-box;}\nbody{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Arial,sans-serif;margin:0;padding:24px;color:var(--text-primary);background:#fff;}\n.topbar{display:flex;justify-content:flex-end;margin-bottom:16px;}\nbutton.primary{height:40px;padding:0 20px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:14px;font-weight:500;cursor:pointer;}\nbutton.secondary{height:26px;padding:0;border:0.5px solid #B4B2A9;border-radius:var(--radius);background:#fff;color:var(--text-primary);font-size:11px;cursor:pointer;width:100%;margin-top:6px;}\n.deck-page{width:14in;min-height:8.5in;margin:0 auto 40px;padding:0.5in 0.6in;background:#fff;border:0.5px solid var(--border);}\n.deck-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--text-primary);padding-bottom:10px;margin-bottom:20px;}\n.deck-header h2{font-size:16px;margin:0;}\n.deck-header p{font-size:11px;color:var(--text-secondary);margin:0;}\n.deck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;}\n.deck-grid .imgwrap{max-width:3.75in;margin:0 auto;}\n.imgwrap{position:relative;aspect-ratio:1;background:var(--backdrop);border-radius:8px;overflow:hidden;}\n.imgwrap img.base{width:100%;height:100%;object-fit:contain;}\nspan.sku{font-size:12px;font-weight:400;color:#C7C5BB;}\np.name{font-size:13px;font-weight:700;text-align:left;line-height:1.35;overflow:hidden;margin:10px 0 6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}\np.name .name-eyebrow{color:var(--text-muted);}\np.name .name-main{font-size:15px;}\np.desc{font-size:9px;color:var(--text-secondary);line-height:1.4;margin:0 0 8px;height:52px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;}\n.price-table{width:100%;border-collapse:collapse;table-layout:fixed;border-top:0.5px solid var(--border);padding-top:8px;}\n.price-table td{padding-top:8px;}\n.price-table p.qty{font-size:9px;color:var(--text-muted);margin:0;}\n.price-table p.pr{font-size:12px;font-weight:500;margin:0;}\n.fees{margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);}\n.fees p{font-size:10px;color:var(--text-secondary);margin:0 0 4px;line-height:1.4;}\n.addon-row{display:flex;flex-wrap:wrap;column-gap:32px;row-gap:4px;}\n.addon-row span{font-size:10px;color:var(--text-secondary);white-space:nowrap;}\n@page{size:legal landscape;margin:0;}\n@media print{.no-print{display:none !important;}.wrap{padding:0;}.deck-page{border:none;margin:0;width:14in;min-height:8.5in;}.deck-page:not(:last-child){page-break-after:always;break-after:always;}body{margin:0;padding:0;}.imgwrap{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}\n".replace('BACKDROP_PLACEHOLDER', backdrop);
   var js = [
     "function fmtPrice(cur, n) {",
     "  var sym = cur === 'CAD' ? 'CA$' : '$';",
@@ -5893,6 +5969,12 @@ function exportCustomerFile() {
     "  var cut = text.slice(0, max);",
     "  var lastSpace = cut.lastIndexOf(' ');",
     "  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';",
+    "}",
+    "function truncateWords(text, maxWords) {",
+    "  if (!text) return '';",
+    "  var words = text.trim().split(/\\s+/);",
+    "  if (words.length <= maxWords) return text;",
+    "  return words.slice(0, maxWords).join(' ') + '…';",
     "}",
     "function priceBoxHtml(p) {",
     "  if (!DECK.pricingOn) return '';",
@@ -6123,13 +6205,43 @@ function exportCustomerFile() {
     "      var mQuadPct = maskBoundingQuadPct(region);",
     "      var mQuad = mQuadPct.map(pctToCanvas);",
     "      var maskCanvas = buildMaskClipCanvas(region, size, pctToCanvas, maskImageCache);",
-    "      var scratch = document.createElement('canvas');",
-    "      scratch.width = size; scratch.height = size;",
-    "      var sctx = scratch.getContext('2d');",
-    "      paintRegionContent(sctx, mQuad, mQuadPct, region, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading);",
-    "      sctx.globalCompositeOperation = 'destination-in';",
-    "      sctx.drawImage(maskCanvas, 0, 0);",
-    "      ctx.drawImage(scratch, 0, 0);",
+    "      var allAxes = [region.logoAxis].concat(region.extraLogoAxes || []).filter(Boolean);",
+    "      var axesForRender = allAxes.length > 0 ? allAxes : [null];",
+    "      var canvasCenters = allAxes.map(function(a) { return pctToCanvas(a.center); });",
+    "      axesForRender.forEach(function(axis, axisIdx) {",
+    "        var scratch = document.createElement('canvas');",
+    "        scratch.width = size; scratch.height = size;",
+    "        var sctx = scratch.getContext('2d');",
+    "        var regionForAxis = axis !== null ? Object.assign({}, region, { logoAxis: axis }) : region;",
+    "        paintRegionContent(sctx, mQuad, mQuadPct, regionForAxis, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading);",
+    "        var clipMask = maskCanvas;",
+    "        if (canvasCenters.length > 1 && axis !== null) {",
+    "          var islandMask = document.createElement('canvas');",
+    "          islandMask.width = size; islandMask.height = size;",
+    "          var imc = islandMask.getContext('2d');",
+    "          imc.drawImage(maskCanvas, 0, 0);",
+    "          var imgData = imc.getImageData(0, 0, size, size);",
+    "          var d = imgData.data;",
+    "          var cx = canvasCenters[axisIdx].x, cy = canvasCenters[axisIdx].y;",
+    "          for (var py = 0; py < size; py++) {",
+    "            for (var px = 0; px < size; px++) {",
+    "              var idx = (py * size + px) * 4;",
+    "              if (d[idx + 3] === 0) continue;",
+    "              var di = (px-cx)*(px-cx) + (py-cy)*(py-cy);",
+    "              for (var j = 0; j < canvasCenters.length; j++) {",
+    "                if (j === axisIdx) continue;",
+    "                var dj = (px-canvasCenters[j].x)*(px-canvasCenters[j].x) + (py-canvasCenters[j].y)*(py-canvasCenters[j].y);",
+    "                if (dj < di) { d[idx + 3] = 0; break; }",
+    "              }",
+    "            }",
+    "          }",
+    "          imc.putImageData(imgData, 0, 0);",
+    "          clipMask = islandMask;",
+    "        }",
+    "        sctx.globalCompositeOperation = 'destination-in';",
+    "        sctx.drawImage(clipMask, 0, 0);",
+    "        ctx.drawImage(scratch, 0, 0);",
+    "      });",
     "      return;",
     "    }",
     "    var quadPct = kind === 'rect'",
@@ -6227,7 +6339,7 @@ function exportCustomerFile() {
     "    return (scalePct / 100) * pxPerInch * PATTERN_BASE_SCALE;",
     "  }",
     "  var PERSPECTIVE_SCALE_CORRECTION = 1.065;",
-    "  return size * (scalePct / 100) * (perspectiveTile ? PERSPECTIVE_SCALE_CORRECTION : 1) * PATTERN_BASE_SCALE;",
+    "  return size * (scalePct / 100) * (perspectiveTile ? PERSPECTIVE_SCALE_CORRECTION : 1) * PATTERN_BASE_SCALE * (region.patternScaleMult || 1);",
     "}",
     "function paintPerspectivePatternPixels(targetCtx, patImgSrc, quad, size, tileSize, offsetXpct, offsetYpct, heightIn, scalePct) {",
     "  var patW = patImgSrc.naturalWidth || patImgSrc.width, patH = patImgSrc.naturalHeight || patImgSrc.height;",
@@ -6530,7 +6642,7 @@ function exportCustomerFile() {
     "    out += '<div class=\"deck-page\"><div class=\"deck-header\"><h2>' + deckTitle + '</h2><p>' + DECK.dateStr + '</p></div><div class=\"deck-grid\">';",
     "    for (var j = 0; j < chunk.length; j++) {",
     "      var p = chunk[j];",
-    "      out += '<div>' + imageBlockHtml(p) + '<p class=\"sku\">#' + p.sku + '</p><p class=\"name\">' + formatName(p.name) + '</p><p class=\"desc\">' + truncateText(p.description, 480) + '</p>' + priceBoxHtml(p) + '</div>';",
+    "      out += '<div>' + imageBlockHtml(p) + '<p class=\"name\"><span class=\"sku\">#' + p.sku + '</span> ' + formatName(p.name) + '</p><p class=\"desc\">' + truncateWords(p.description, 50) + '</p>' + priceBoxHtml(p) + '</div>';",
     "    }",
     "    out += '</div></div>';",
     "  }",
@@ -6589,6 +6701,12 @@ async function loadProductsFromSheet() {
     maxPriceByCurrency = computeMaxPriceByCurrency();
     computeSearchNames();
     updateBudgetPlaceholders();
+    // currentResults holds references to old bundled product objects — remap to fresh ones
+    // so descriptions, pricing and any other fields reflect the newly loaded sheet data.
+    if (currentResults.length) {
+      const bySkU = new Map(PRODUCTS.map(p => [p.sku, p]));
+      currentResults = currentResults.map(p => bySkU.get(p.sku) || p).filter(p => bySkU.has(p.sku));
+    }
     refreshIfSearched();
     console.log('Loaded ' + PRODUCTS.length + ' products from Google Sheets.');
   } catch (err) {
