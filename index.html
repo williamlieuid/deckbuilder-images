@@ -4894,11 +4894,12 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
     .map(kind => ({ kind, region: regions[kind] }))
     .concat((regions.extra || []).map(region => ({ kind: region.kind, region })));
 
+  const canvasToPct = (px, py) => ({ x: (px - dx) / dw * 100, y: (py - dy) / dh * 100 });
   regionList.forEach(({ kind, region }) => {
     if (kind === 'mask') {
-      const quadPct = maskBoundingQuadPct(region);
-      const quad = quadPct.map(pctToCanvas);
       const maskCanvas = buildMaskClipCanvas(region, size, pctToCanvas, maskImageCache);
+      const quadPct = maskBoundingQuadPct(region, maskCanvas, canvasToPct);
+      const quad = quadPct.map(pctToCanvas);
       const allAxes = [region.logoAxis].concat(region.extraLogoAxes || []).filter(Boolean);
       const axesForRender = allAxes.length > 0 ? allAxes : [null];
       // Canvas-space centers for Voronoi partitioning: paintRegionContent fills the full
@@ -5132,7 +5133,14 @@ function computeTileSizePx(region, quad, scalePct, size, perspectiveTile, forceW
   if (longIn) {
     const { width: regionWidthPx } = quadWidthHeightPx(quad);
     const pxPerInch = regionWidthPx / longIn;
-    return (scalePct / 100) * pxPerInch * PATTERN_BASE_SCALE;
+    // patternScaleMult used to only apply in the no-widthIn fallback below -- but the real-width
+    // branch here isn't immune to needing a manual correction either. A mask photographed at an
+    // angle (the common case) measures its bounding box axis-aligned to the PHOTO, not to the
+    // mask's own rotated shape, so regionWidthPx overshoots the shape's true width by however much
+    // the rotation stretches an axis-aligned box -- no amount of entering a more "honest" Width
+    // (in) value fixes that, since the real bug is on the pixel side of the ratio, not the inches
+    // side. This is the one knob available to manually correct for it per-mask.
+    return (scalePct / 100) * pxPerInch * PATTERN_BASE_SCALE * (region.patternScaleMult || 1);
   }
   const PERSPECTIVE_SCALE_CORRECTION = 1.065;
   return size * (scalePct / 100) * (perspectiveTile ? PERSPECTIVE_SCALE_CORRECTION : 1) * PATTERN_BASE_SCALE * (region.patternScaleMult || 1);
@@ -5227,10 +5235,48 @@ function paintPerspectivePatternPixels(targetCtx, patImgSrc, quad, size, tileSiz
   targetCtx.drawImage(tmp, minX, minY);
 }
 
-// Bounding box (percent) of a mask's "add" layers only, used the same way a rect region's
-// own box is used: as the quad the logo contain-fits into (and centerOffset is relative to).
-// Subtract layers only carve holes within that box, they never extend it.
-function maskBoundingQuadPct(mask) {
+// Bounding box (percent) of a mask's ACTUAL opaque pixels, read off the already-rasterized
+// composite stencil (every add/subtract layer, at the same resolution the mask itself renders
+// at) rather than each layer's own raw placement rectangle. That distinction matters for an
+// 'image'-shape layer -- the common case, a PNG silhouette like ministand-mask.png -- whose
+// x/y/w/h is where the file gets PLACED (almost always the full photo, 0,0,100,100), not the
+// shape of its own opaque pixels. Using the placement rect there made regionWidthPx (and
+// everything derived from it: computeTileSizePx's real-world pattern scale, the logo's
+// contain-fit box, centerOffset's anchor) silently use the FULL PHOTO's width for roughly a
+// third of all products -- their patterns rendered far larger than hand-placed poly/rect
+// regions on other products at the same real widthIn. One pixel scan of the rasterized stencil
+// handles image/ellipse/poly/rect layers and multi-layer unions uniformly, no per-shape
+// special-casing needed. Cached per mask object (by reference, stable across a session's
+// repeated re-renders of the same product) since a size×size getImageData scan isn't free.
+const maskBoundsCache = new WeakMap();
+function maskBoundingQuadPct(mask, maskCanvas, canvasToPct) {
+  if (maskBoundsCache.has(mask)) return maskBoundsCache.get(mask);
+  const { width, height } = maskCanvas;
+  const data = maskCanvas.getContext('2d').getImageData(0, 0, width, height).data;
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  const ALPHA_THRESHOLD = 10; // ignores near-fully-transparent antialiasing fringe at the silhouette's edge
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > ALPHA_THRESHOLD) {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
+    }
+  }
+  // A mask that rasterized to fully transparent (misconfigured layer, failed image load, etc.)
+  // has no real opaque bounds to read -- fall back to the old placement-rect union instead of
+  // returning a degenerate/inverted quad, so a broken mask fails the same way it always did
+  // rather than in some new, harder-to-diagnose way.
+  const quadPct = (maxX < 0)
+    ? legacyMaskLayerPlacementQuadPct(mask)
+    : (() => {
+        const tl = canvasToPct(minX, minY), br = canvasToPct(maxX + 1, maxY + 1);
+        return [{ x: tl.x, y: tl.y }, { x: br.x, y: tl.y }, { x: br.x, y: br.y }, { x: tl.x, y: br.y }];
+      })();
+  maskBoundsCache.set(mask, quadPct);
+  return quadPct;
+}
+function legacyMaskLayerPlacementQuadPct(mask) {
   let minX = 100, minY = 100, maxX = 0, maxY = 0;
   mask.layers.forEach(layer => {
     if (layer.op !== 'add') return;
@@ -5385,7 +5431,12 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   if (!p || !p.regions) return;
   if (generation !== renderGeneration) return; // a newer render already started before this one got going
 
-  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop);
+  // Includes the product's own regions (not just the global logo/pattern/backdrop settings
+  // brandingRecipeKey covers) -- otherwise a render cached before loadProductsFromSheet()'s live
+  // fetch resolves (or before any other in-session PRODUCTS update) keeps getting reused forever
+  // afterward, since none of the global settings need to change for that stale hit to persist. A
+  // product's own region JSON is the one thing that can change data-side with zero UI interaction.
+  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions);
   const cached = brandedRenderCache.get(p.sku);
   if (cached && cached.recipeKey === recipeKey) {
     canvas.width = cached.canvas.width; canvas.height = cached.canvas.height;
@@ -6199,12 +6250,13 @@ function exportCustomerFile() {
     "  var hasRectAnchor = !!(regions.rect && regions.rect.widthIn);",
     "  var regionList = ['rect','poly','mask'].filter(function(k) { return !!regions[k]; }).map(function(k) { return {kind:k, region:regions[k]}; })",
     "    .concat((regions.extra || []).map(function(r) { return {kind:r.kind, region:r}; }));",
+    "  function canvasToPct(px, py) { return { x: (px-dx)/dw*100, y: (py-dy)/dh*100 }; }",
     "  regionList.forEach(function(entry) {",
     "    var kind = entry.kind, region = entry.region;",
     "    if (kind === 'mask') {",
-    "      var mQuadPct = maskBoundingQuadPct(region);",
-    "      var mQuad = mQuadPct.map(pctToCanvas);",
     "      var maskCanvas = buildMaskClipCanvas(region, size, pctToCanvas, maskImageCache);",
+    "      var mQuadPct = maskBoundingQuadPct(region, maskCanvas, canvasToPct);",
+    "      var mQuad = mQuadPct.map(pctToCanvas);",
     "      var allAxes = [region.logoAxis].concat(region.extraLogoAxes || []).filter(Boolean);",
     "      var axesForRender = allAxes.length > 0 ? allAxes : [null];",
     "      var canvasCenters = allAxes.map(function(a) { return pctToCanvas(a.center); });",
@@ -6336,7 +6388,7 @@ function exportCustomerFile() {
     "  if (longIn) {",
     "    var regionWidthPx = quadWidthHeightPx(quad).width;",
     "    var pxPerInch = regionWidthPx / longIn;",
-    "    return (scalePct / 100) * pxPerInch * PATTERN_BASE_SCALE;",
+    "    return (scalePct / 100) * pxPerInch * PATTERN_BASE_SCALE * (region.patternScaleMult || 1);",
     "  }",
     "  var PERSPECTIVE_SCALE_CORRECTION = 1.065;",
     "  return size * (scalePct / 100) * (perspectiveTile ? PERSPECTIVE_SCALE_CORRECTION : 1) * PATTERN_BASE_SCALE * (region.patternScaleMult || 1);",
@@ -6391,7 +6443,32 @@ function exportCustomerFile() {
     "  tmp.getContext('2d').putImageData(out, 0, 0);",
     "  targetCtx.drawImage(tmp, minX, minY);",
     "}",
-    "function maskBoundingQuadPct(mask) {",
+    "var maskBoundsCache = new WeakMap();",
+    "function maskBoundingQuadPct(mask, maskCanvas, canvasToPct) {",
+    "  if (maskBoundsCache.has(mask)) return maskBoundsCache.get(mask);",
+    "  var width = maskCanvas.width, height = maskCanvas.height;",
+    "  var data = maskCanvas.getContext('2d').getImageData(0, 0, width, height).data;",
+    "  var minX = width, minY = height, maxX = -1, maxY = -1;",
+    "  var ALPHA_THRESHOLD = 10;",
+    "  for (var y = 0; y < height; y++) {",
+    "    for (var x = 0; x < width; x++) {",
+    "      if (data[(y * width + x) * 4 + 3] > ALPHA_THRESHOLD) {",
+    "        if (x < minX) minX = x; if (x > maxX) maxX = x;",
+    "        if (y < minY) minY = y; if (y > maxY) maxY = y;",
+    "      }",
+    "    }",
+    "  }",
+    "  var quadPct;",
+    "  if (maxX < 0) {",
+    "    quadPct = legacyMaskLayerPlacementQuadPct(mask);",
+    "  } else {",
+    "    var tl = canvasToPct(minX, minY), br = canvasToPct(maxX + 1, maxY + 1);",
+    "    quadPct = [{x:tl.x,y:tl.y},{x:br.x,y:tl.y},{x:br.x,y:br.y},{x:tl.x,y:br.y}];",
+    "  }",
+    "  maskBoundsCache.set(mask, quadPct);",
+    "  return quadPct;",
+    "}",
+    "function legacyMaskLayerPlacementQuadPct(mask) {",
     "  var minX = 100, minY = 100, maxX = 0, maxY = 0;",
     "  mask.layers.forEach(function(layer) {",
     "    if (layer.op !== 'add') return;",
@@ -6681,39 +6758,93 @@ function exportCustomerFile() {
 
 document.getElementById('exportCustomerBtn').addEventListener('click', exportCustomerFile);
 
-// --- Live product data from Google Sheets (optional) ---
-// Paste the Apps Script Web App URL here once deployed (see google-apps-script.gs).
-// Leave blank to keep using the bundled snapshot above.
+// --- Live product data (optional) ---
+// Two sources, tried in order, each falling further back if the one before it fails:
+//   1. PRODUCTS_SNAPSHOT_URL -- a static products.json, published via GitHub Pages off the same
+//      repo/branch that serves every product photo via jsDelivr (see pushProductsSnapshotToGitHub
+//      in google-apps-script.gs). Deliberately Pages, not jsDelivr, for this one file: jsDelivr's
+//      cache needs an explicit purge call after every write, and that purge API has its own rate
+//      limit -- fine for images (rarely overwritten) but this file gets pushed far more often, and
+//      a burst of edits can throttle the purge, leaving stale data with no error to signal it.
+//      Pages has no purge step at all; a push just republishes on its own, typically in well under
+//      a minute. Images stay on jsDelivr on purpose -- Pages' own propagation isn't meaningfully
+//      faster for content that rarely changes, and jsDelivr's purge-on-overwrite already works
+//      fine at that write frequency.
+//   2. SHEET_API_URL -- the Apps Script Web App reading the Sheet live. Kept only as a fallback
+//      for the gap before the snapshot's first push, or if GitHub/Pages itself is ever down.
+//   3. The bundled snapshot at the top of this file, if both of the above fail.
+const PRODUCTS_SNAPSHOT_URL = 'https://williamlieuid.github.io/deckbuilder-images/products.json';
 const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwf2KrICat9K75qgz5IqTHn0Cj66x1CeI4ooWgGCIOPyu21eK8G5pH56odxf0ctJek/exec';
 
-async function loadProductsFromSheet() {
-  if (!SHEET_API_URL) return;
+// Shared by both sources below so applying a fresh product list never drifts between them.
+function applyLoadedProducts(data, sourceLabel) {
+  PRODUCTS = data;
+  selected.clear();
+  populateCategoryDropdown();
+  maxPriceByCurrency = computeMaxPriceByCurrency();
+  computeSearchNames();
+  updateBudgetPlaceholders();
+  // currentResults holds references to old bundled product objects — remap to fresh ones
+  // so descriptions, pricing and any other fields reflect the newly loaded data.
+  if (currentResults.length) {
+    const bySkU = new Map(PRODUCTS.map(p => [p.sku, p]));
+    currentResults = currentResults.map(p => bySkU.get(p.sku) || p).filter(p => bySkU.has(p.sku));
+  }
+  refreshIfSearched();
+  console.log('Loaded ' + PRODUCTS.length + ' products from ' + sourceLabel + '.');
+}
+function isValidProductsPayload(data) {
+  return Array.isArray(data) && data.length && data[0].sku && data[0].tiers;
+}
+
+async function loadProductsFromSnapshot() {
+  if (!PRODUCTS_SNAPSHOT_URL) return false;
   try {
-    const res = await fetch(SHEET_API_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch(PRODUCTS_SNAPSHOT_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    if (!Array.isArray(data) || !data.length || !data[0].sku || !data[0].tiers) {
-      throw new Error('Unexpected response shape');
-    }
-    PRODUCTS = data;
-    selected.clear();
-    populateCategoryDropdown();
-    maxPriceByCurrency = computeMaxPriceByCurrency();
-    computeSearchNames();
-    updateBudgetPlaceholders();
-    // currentResults holds references to old bundled product objects — remap to fresh ones
-    // so descriptions, pricing and any other fields reflect the newly loaded sheet data.
-    if (currentResults.length) {
-      const bySkU = new Map(PRODUCTS.map(p => [p.sku, p]));
-      currentResults = currentResults.map(p => bySkU.get(p.sku) || p).filter(p => bySkU.has(p.sku));
-    }
-    refreshIfSearched();
-    console.log('Loaded ' + PRODUCTS.length + ' products from Google Sheets.');
+    if (!isValidProductsPayload(data)) throw new Error('Unexpected response shape');
+    applyLoadedProducts(data, 'the GitHub snapshot');
+    return true;
   } catch (err) {
-    console.warn('Could not load live product data from Google Sheets, using bundled snapshot instead.', err);
+    console.warn('Could not load the GitHub products snapshot, falling back to the live sheet.', err);
+    return false;
   }
 }
-loadProductsFromSheet();
+
+// Apps Script Web Apps bound to a Sheet occasionally throw a one-off "unable to open the file"
+// error under nothing more than a quick burst of requests (their concurrency/rate limits are
+// tight for a free-tier service, and get worse once more than one person has the Sheet open at
+// once) -- almost always gone on the very next call. One retry after a short pause absorbs that
+// class of blip so a single transient hiccup doesn't fall all the way back to the bundled
+// snapshot's null image URLs; a second real failure still falls back exactly as before. This is
+// now only reached at all when loadProductsFromSnapshot() above has already failed.
+async function loadProductsFromSheet() {
+  if (!SHEET_API_URL) return;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(SHEET_API_URL + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!isValidProductsPayload(data)) throw new Error('Unexpected response shape');
+      applyLoadedProducts(data, 'Google Sheets');
+      return;
+    } catch (err) {
+      if (attempt === 1) {
+        console.warn('Live product fetch failed, retrying once…', err);
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      console.warn('Could not load live product data from Google Sheets, using bundled snapshot instead.', err);
+    }
+  }
+}
+
+async function loadProducts() {
+  const gotSnapshot = await loadProductsFromSnapshot();
+  if (!gotSnapshot) await loadProductsFromSheet();
+}
+loadProducts();
 renderLogoHistory();
 
 
