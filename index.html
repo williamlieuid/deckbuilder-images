@@ -4851,6 +4851,82 @@ function getKnockoutLogoSource(logoImg) {
   return c;
 }
 
+const WOOD_ENGRAVE_COLOR = '#786957';
+// Simulates a ~1mm laser-cut recess, lit from directly above: fills the logo's own silhouette
+// with the wood-recess color, then adds a soft dark band hugging the TOP inside edge (the recess's
+// upper inner wall falls into its own shadow, since the light from above never reaches straight
+// down into a vertical wall facing up) and a soft light band hugging the BOTTOM inside edge (the
+// lower inner wall catches that same overhead light at a grazing angle). Built the same way as
+// getKnockoutLogoSource above -- returns a plain canvas consumed identically by the existing
+// contain-fit/warp pipeline, so no other rendering code needs to know this isn't a normal logo.
+function getWoodEngravedLogoSource(logoImg) {
+  const w = logoImg.naturalWidth || logoImg.width, h = logoImg.naturalHeight || logoImg.height;
+  // Padded so the blurred shadow/highlight bands have room to fall off before the canvas edge —
+  // a shape whose silhouette touches the source image's own edge would otherwise get its band cut
+  // off flat there instead of softly fading, one more reason a plain crop-to-content isn't enough.
+  const pad = Math.round(Math.max(w, h) * 0.03) + 4;
+  const cw = w + pad * 2, ch = h + pad * 2;
+
+  const silhouette = document.createElement('canvas');
+  silhouette.width = cw; silhouette.height = ch;
+  const sctx = silhouette.getContext('2d');
+  sctx.drawImage(logoImg, pad, pad, w, h);
+  sctx.globalCompositeOperation = 'source-in';
+  sctx.fillStyle = '#ffffff';
+  sctx.fillRect(0, 0, cw, ch);
+
+  // Recess depth is expressed relative to the logo's own size (not a fixed pixel count), so the
+  // effect scales sensibly whether this logo ends up tiny or huge on the final card.
+  const offsetPx = Math.max(1, Math.round(Math.min(w, h) * 0.015));
+  const blurPx = offsetPx * 2;
+
+  // The sliver of the silhouette that a copy of itself, translated by (0, dy), no longer covers —
+  // i.e. exactly the edge band on the side the translation moved AWAY from.
+  function edgeBand(dy) {
+    const c = document.createElement('canvas');
+    c.width = cw; c.height = ch;
+    const cx = c.getContext('2d');
+    cx.drawImage(silhouette, 0, 0);
+    cx.globalCompositeOperation = 'destination-out';
+    cx.drawImage(silhouette, 0, dy);
+    return c;
+  }
+  const topShadowBand = edgeBand(offsetPx);
+  const bottomHighlightBand = edgeBand(-offsetPx);
+
+  const out = document.createElement('canvas');
+  out.width = cw; out.height = ch;
+  const octx = out.getContext('2d');
+
+  octx.drawImage(silhouette, 0, 0);
+  octx.globalCompositeOperation = 'source-in';
+  octx.fillStyle = WOOD_ENGRAVE_COLOR;
+  octx.fillRect(0, 0, cw, ch);
+  octx.globalCompositeOperation = 'source-over';
+
+  octx.save();
+  octx.filter = `blur(${blurPx}px)`;
+  octx.globalAlpha = 0.55;
+  octx.globalCompositeOperation = 'multiply';
+  octx.drawImage(topShadowBand, 0, 0);
+  octx.restore();
+
+  octx.save();
+  octx.filter = `blur(${blurPx}px)`;
+  octx.globalAlpha = 0.45;
+  octx.globalCompositeOperation = 'screen';
+  octx.drawImage(bottomHighlightBand, 0, 0);
+  octx.restore();
+
+  // Blur inevitably pushes shadow/highlight color outside the true silhouette edge -- clip back to
+  // exactly the logo's own shape so nothing bleeds onto the surrounding wood surface.
+  octx.globalCompositeOperation = 'destination-in';
+  octx.drawImage(silhouette, 0, 0);
+  octx.globalCompositeOperation = 'source-over';
+
+  return out;
+}
+
 // Draws base image (contain-fit into a square canvas, backdrop-filled), the pattern fill
 // clipped to each defined region's own shape (rect/poly/mask — never the whole product), the
 // logo warped on top within that same region (knocked out to a white silhouette when
@@ -4858,7 +4934,7 @@ function getKnockoutLogoSource(logoImg) {
 // perspective-warped through the region's own homography instead of flat-tiled, so a diagonal
 // product shot doesn't look like a flat decal; rect/mask stay flat-tiled since they don't carry
 // perspective info the way a hand-placed 4-corner quad does.
-function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply) {
+function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply, woodProduct) {
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
@@ -4874,7 +4950,10 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
   // its own logo already baked in, so pattern-only branding (no separate logo warp) is valid too.
   if (!regions || (!logoImg && !(pattern && pattern.img))) return;
 
-  const baseLogoSrc = !logoImg ? null : (pattern && pattern.knockout) ? getKnockoutLogoSource(logoImg) : logoImg;
+  const baseLogoSrc = !logoImg ? null
+    : woodProduct ? getWoodEngravedLogoSource(logoImg)
+    : (pattern && pattern.knockout) ? getKnockoutLogoSource(logoImg)
+    : logoImg;
   const skipShading = isDarkBase(baseImg);
 
   // A sibling rect never gets its own heightIn (only poly does), so it can never disagree with
@@ -5444,7 +5523,10 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
     return;
   }
 
-  const wantsPattern = p.patternEligible && !!selectedPattern;
+  // Black/wood material overrides skip pattern branding entirely -- ink pattern texture doesn't
+  // apply to a flat black surface (the whole point of "black" here) or to a laser-engraved wood
+  // recess (which uses its own tinted/embossed look instead, see getWoodEngravedLogoSource).
+  const wantsPattern = p.patternEligible && !!selectedPattern && !p.blackProduct && !p.woodProduct;
   const maskUrls = collectMaskImageUrls(p.regions);
   // Fire every image request for this product at once instead of one-at-a-time -- previously each
   // await (base, then pattern, then overlay, then each mask image) delayed the NEXT request from
@@ -5476,7 +5558,8 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   const maskImageCache = {};
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
   const previewSize = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 350 : 700;
-  drawBrandedCard(canvas, baseImg, logoImg, p.regions, backdrop, previewSize, pattern, maskImageCache, logoMultiply);
+  const effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : logoMultiply;
+  drawBrandedCard(canvas, baseImg, logoImg, p.regions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
 
   const snapshot = document.createElement('canvas');
   snapshot.width = canvas.width; snapshot.height = canvas.height;
@@ -5663,7 +5746,7 @@ async function exportProductImage(sku) {
     const baseImg = await loadCrossOriginImage(baseUrl);
     const logoImg = logoDataUrl ? await loadCrossOriginImage(logoDataUrl) : null;
     let pattern = null;
-    if (p.patternEligible && selectedPattern) {
+    if (p.patternEligible && selectedPattern && !p.blackProduct && !p.woodProduct) {
       const patternImg = await loadCrossOriginImage(selectedPattern);
       const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
       pattern = { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
@@ -5671,7 +5754,8 @@ async function exportProductImage(sku) {
     const canvas = document.createElement('canvas');
     const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
     const maskImageCache = await loadMaskImageCache(p.regions, loadCrossOriginImage);
-    drawBrandedCard(canvas, baseImg, logoImg, p.regions, '#ffffff', size, pattern, maskImageCache, logoMultiply);
+    const effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : logoMultiply;
+    drawBrandedCard(canvas, baseImg, logoImg, p.regions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + '.jpg');
   } catch (err) {
@@ -5981,12 +6065,13 @@ function exportCustomerFile() {
   var productsData = lastBuiltDeck.map(function(p) {
     var hasPattern = p.patternEligible && !!selectedPattern;
     var hasRegionBranding = (!!logo || hasPattern) && !!(p.regions && (p.regions.rect || p.regions.poly || p.regions.mask));
-    var usePattern = hasRegionBranding && hasPattern;
+    var usePattern = hasRegionBranding && hasPattern && !p.blackProduct && !p.woodProduct;
     return {
       sku: p.sku, name: p.name, description: p.description,
       baseImg: hasRegionBranding ? p.blankImage : p.masterImage,
       hasRegionBranding: hasRegionBranding, regions: p.regions,
       usePattern: usePattern, overlayImage: p.overlayImage,
+      blackProduct: !!p.blackProduct, woodProduct: !!p.woodProduct,
       tiers: p.tiers,
       setupFee: p.setupFee, addons: p.addons
     };
@@ -6234,7 +6319,57 @@ function exportCustomerFile() {
     "  cx.fillRect(0, 0, w, h);",
     "  return c;",
     "}",
-    "function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply) {",
+    "var WOOD_ENGRAVE_COLOR = '#786957';",
+    "function getWoodEngravedLogoSource(logoImg) {",
+    "  var w = logoImg.naturalWidth || logoImg.width, h = logoImg.naturalHeight || logoImg.height;",
+    "  var pad = Math.round(Math.max(w, h) * 0.03) + 4;",
+    "  var cw = w + pad * 2, ch = h + pad * 2;",
+    "  var silhouette = document.createElement('canvas');",
+    "  silhouette.width = cw; silhouette.height = ch;",
+    "  var sctx = silhouette.getContext('2d');",
+    "  sctx.drawImage(logoImg, pad, pad, w, h);",
+    "  sctx.globalCompositeOperation = 'source-in';",
+    "  sctx.fillStyle = '#ffffff';",
+    "  sctx.fillRect(0, 0, cw, ch);",
+    "  var offsetPx = Math.max(1, Math.round(Math.min(w, h) * 0.015));",
+    "  var blurPx = offsetPx * 2;",
+    "  function edgeBand(dy) {",
+    "    var c = document.createElement('canvas');",
+    "    c.width = cw; c.height = ch;",
+    "    var cx = c.getContext('2d');",
+    "    cx.drawImage(silhouette, 0, 0);",
+    "    cx.globalCompositeOperation = 'destination-out';",
+    "    cx.drawImage(silhouette, 0, dy);",
+    "    return c;",
+    "  }",
+    "  var topShadowBand = edgeBand(offsetPx);",
+    "  var bottomHighlightBand = edgeBand(-offsetPx);",
+    "  var out = document.createElement('canvas');",
+    "  out.width = cw; out.height = ch;",
+    "  var octx = out.getContext('2d');",
+    "  octx.drawImage(silhouette, 0, 0);",
+    "  octx.globalCompositeOperation = 'source-in';",
+    "  octx.fillStyle = WOOD_ENGRAVE_COLOR;",
+    "  octx.fillRect(0, 0, cw, ch);",
+    "  octx.globalCompositeOperation = 'source-over';",
+    "  octx.save();",
+    "  octx.filter = 'blur(' + blurPx + 'px)';",
+    "  octx.globalAlpha = 0.55;",
+    "  octx.globalCompositeOperation = 'multiply';",
+    "  octx.drawImage(topShadowBand, 0, 0);",
+    "  octx.restore();",
+    "  octx.save();",
+    "  octx.filter = 'blur(' + blurPx + 'px)';",
+    "  octx.globalAlpha = 0.45;",
+    "  octx.globalCompositeOperation = 'screen';",
+    "  octx.drawImage(bottomHighlightBand, 0, 0);",
+    "  octx.restore();",
+    "  octx.globalCompositeOperation = 'destination-in';",
+    "  octx.drawImage(silhouette, 0, 0);",
+    "  octx.globalCompositeOperation = 'source-over';",
+    "  return out;",
+    "}",
+    "function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply, woodProduct) {",
     "  canvas.width = size; canvas.height = size;",
     "  var ctx = canvas.getContext('2d');",
     "  ctx.clearRect(0,0,size,size);",
@@ -6245,7 +6380,7 @@ function exportCustomerFile() {
     "  ctx.drawImage(baseImg, dx, dy, dw, dh);",
     "  function pctToCanvas(pt) { return { x: dx + (pt.x/100)*dw, y: dy + (pt.y/100)*dh }; }",
     "  if (!regions || (!logoImg && !(pattern && pattern.img))) { return; }",
-    "  var baseLogoSrc = !logoImg ? null : (pattern && pattern.knockout) ? getKnockoutLogoSource(logoImg) : logoImg;",
+    "  var baseLogoSrc = !logoImg ? null : woodProduct ? getWoodEngravedLogoSource(logoImg) : (pattern && pattern.knockout) ? getKnockoutLogoSource(logoImg) : logoImg;",
     "  var skipShading = isDarkBase(baseImg);",
     "  var hasRectAnchor = !!(regions.rect && regions.rect.widthIn);",
     "  var regionList = ['rect','poly','mask'].filter(function(k) { return !!regions[k]; }).map(function(k) { return {kind:k, region:regions[k]}; })",
@@ -6583,7 +6718,8 @@ function exportCustomerFile() {
     "    });",
     "  }",
     "  return Promise.all([withTimeout(loadImageCached(canvas.dataset.base), IMAGE_LOAD_TIMEOUT_MS), patternPromise, loadMaskImageCache(p.regions, function(url) { return withTimeout(loadImageCached(url), IMAGE_LOAD_TIMEOUT_MS); })]).then(function(results) {",
-    "    drawBrandedCard(canvas, results[0], logoImg, p.regions, DECK.backdrop || '#E8E6DE', 700, results[1], results[2], DECK.logoMultiply);",
+    "    var effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : DECK.logoMultiply;",
+    "    drawBrandedCard(canvas, results[0], logoImg, p.regions, DECK.backdrop || '#E8E6DE', 700, results[1], results[2], effectiveLogoMultiply, !!p.woodProduct);",
     "  });",
     "}",
     "var AUTO_RETRY_COUNT = 2;",
@@ -6696,7 +6832,8 @@ function exportCustomerFile() {
     "  Promise.all([loadCrossOriginImage(p.baseImg), logoPromise2, patternPromise, loadMaskImageCache(p.regions, loadCrossOriginImage)]).then(function(results) {",
     "    var canvas = document.createElement('canvas');",
     "    var size = Math.max(results[0].naturalWidth, results[0].naturalHeight, 1200);",
-    "    drawBrandedCard(canvas, results[0], results[1], p.regions, '#ffffff', size, results[2], results[3], DECK.logoMultiply);",
+    "    var effectiveLogoMultiply2 = (p.blackProduct || p.woodProduct) ? false : DECK.logoMultiply;",
+    "    drawBrandedCard(canvas, results[0], results[1], p.regions, '#ffffff', size, results[2], results[3], effectiveLogoMultiply2, !!p.woodProduct);",
     "    var dataUrl = canvas.toDataURL('image/jpeg', 0.92);",
     "    triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + '.jpg');",
     "  }).catch(function() {",
