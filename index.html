@@ -6911,7 +6911,7 @@ document.getElementById('exportCustomerBtn').addEventListener('click', exportCus
 //      for the gap before the snapshot's first push, or if GitHub/Pages itself is ever down.
 //   3. The bundled snapshot at the top of this file, if both of the above fail.
 const PRODUCTS_SNAPSHOT_URL = 'https://williamlieuid.github.io/deckbuilder-images/products.json';
-const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwf2KrICat9K75qgz5IqTHn0Cj66x1CeI4ooWgGCIOPyu21eK8G5pH56odxf0ctJek/exec';
+const SHEET_API_URL = 'https://deck-builder-api.deckbuilder.workers.dev';
 
 // Shared by both sources below so applying a fresh product list never drifts between them.
 function applyLoadedProducts(data, sourceLabel) {
