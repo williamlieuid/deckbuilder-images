@@ -225,6 +225,8 @@
           <label>Pattern</label>
           <div id="patternSwatches" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
             <button type="button" class="pattern-swatch" data-pattern="" style="width:36px;height:36px;border-radius:6px;background:#F1EFE8;border:2px solid var(--accent);cursor:pointer;padding:0;font-size:9px;color:var(--text-muted);">None</button>
+            <button type="button" class="pattern-swatch" id="patternSolidBtn" style="width:36px;height:36px;border-radius:6px;background:#D85A30;border:2px solid transparent;cursor:pointer;padding:0;font-size:7.5px;line-height:1.15;color:#fff;font-weight:600;">Solid<br>Fill</button>
+            <input type="color" id="patternSolidColorInput" value="#D85A30" style="width:36px;height:36px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Solid Fill Color" />
           </div>
           <input type="file" id="customPatternInput" accept="image/*" style="display:none;" />
           <button type="button" class="secondary" id="patternChooseBtn" style="width:100%; height:28px; font-size:11px; margin-top:6px;">Choose File</button>
@@ -243,7 +245,6 @@
         <div class="field" style="max-width:220px;">
           <label>Background Color</label>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="bg-swatch" data-color="#000000" style="width:26px;height:26px;border-radius:6px;background:#000000;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#333232;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#E8E6DE" style="width:26px;height:26px;border-radius:6px;background:#E8E6DE;border:2px solid var(--accent);cursor:pointer;padding:0;"></button>
@@ -4228,6 +4229,8 @@ let selected = new Set();
 let lastBuiltDeck = [];
 let deckName = ''; // optional, shown on the deck/print header instead of "Product Recommendations"
 let selectedPattern = null; // URL of the chosen pattern (library or custom-uploaded)
+let selectedPatternSolidColor = null; // hex color when "Solid Fill" is chosen instead of an image pattern -- mutually exclusive with selectedPattern
+function patternIsSelected() { return !!(selectedPattern || selectedPatternSolidColor); }
 let patternScale = 100; // percentage; 100 = fills the product silhouette, lower = smaller/tiled, higher = zoomed in
 let patternKnockout = true; // when true, the logo over a pattern renders as a white silhouette; when false, it shows in its real colors
 // Universal colorize (the "Colorize Logo" control under Upload Logo) -- a card-wide default that
@@ -4294,7 +4297,7 @@ const PATTERN_LIBRARY_EXCLUDE = ['9020902.jpg'];
 function renderPatternSwatches() {
   const wrap = document.getElementById('patternSwatches');
   const noneBtn = wrap.querySelector('[data-pattern=""]');
-  wrap.querySelectorAll('.pattern-swatch:not([data-pattern=""])').forEach(el => el.remove());
+  wrap.querySelectorAll('.pattern-swatch:not([data-pattern=""]):not(#patternSolidBtn)').forEach(el => el.remove());
   PATTERN_LIBRARY.forEach((url, i) => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -4336,14 +4339,30 @@ loadPatternLibraryFromGitHub();
 document.getElementById('patternSwatches').addEventListener('click', async (e) => {
   const btn = e.target.closest('.pattern-swatch');
   if (!btn) return;
+  if (btn.id === 'patternSolidBtn') {
+    selectedPattern = null;
+    selectedPatternSolidColor = document.getElementById('patternSolidColorInput').value;
+    document.querySelectorAll('.pattern-swatch').forEach(b => { b.style.borderColor = (b.id === 'patternSolidBtn') ? 'var(--accent)' : 'transparent'; });
+    renderGrid(applySort(currentResults));
+    return;
+  }
   const rawUrl = btn.dataset.pattern || null;
+  selectedPatternSolidColor = null;
   document.querySelectorAll('.pattern-swatch').forEach(b => {
-    b.style.borderColor = (b.dataset.pattern === (rawUrl || '')) ? 'var(--accent)' : 'transparent';
+    b.style.borderColor = (b.dataset.pattern === (rawUrl || '') && b.id !== 'patternSolidBtn') ? 'var(--accent)' : 'transparent';
   });
   // Library swatches can carry the same baked-in edge margin custom uploads do — trim it here too
   // (the CDN serving these sets Access-Control-Allow-Origin: *, so pixel-reading it for trim works).
   selectedPattern = rawUrl ? await trimImageWhitespace(rawUrl) : null;
   renderGrid(applySort(currentResults));
+});
+
+document.getElementById('patternSolidColorInput').addEventListener('input', (e) => {
+  document.getElementById('patternSolidBtn').style.background = e.target.value;
+  if (selectedPatternSolidColor) {
+    selectedPatternSolidColor = e.target.value;
+    debouncedRenderGrid();
+  }
 });
 
 document.getElementById('patternChooseBtn').addEventListener('click', () => document.getElementById('customPatternInput').click());
@@ -4359,6 +4378,7 @@ document.getElementById('customPatternInput').addEventListener('change', (e) => 
     // reads as a white cross/plus through the region (the margins of adjacent tiles meeting).
     // Trimming to the swatch's actual content lets tiles butt up seamlessly.
     selectedPattern = await trimImageWhitespace(ev.target.result);
+    selectedPatternSolidColor = null;
     document.querySelectorAll('.pattern-swatch').forEach(b => b.style.borderColor = 'transparent');
     renderGrid(applySort(currentResults));
   };
@@ -4593,16 +4613,17 @@ function trimImageWhitespace(dataUrl) {
 document.getElementById('removeLogoBtn').addEventListener('click', () => {
   logoDataUrl = null;
   document.getElementById('logoInput').value = '';
-  document.getElementById('logoFileName').textContent = 'No file chosen';
+  document.getElementById('logoFileName').textContent = 'No File Chosen';
   renderGrid(applySort(currentResults));
 });
 
 document.getElementById('removePatternBtn').addEventListener('click', () => {
   selectedPattern = null;
+  selectedPatternSolidColor = null;
   document.getElementById('customPatternInput').value = '';
-  document.getElementById('patternFileName').textContent = 'No file chosen';
+  document.getElementById('patternFileName').textContent = 'No File Chosen';
   document.querySelectorAll('.pattern-swatch').forEach(b => {
-    b.style.borderColor = b.dataset.pattern === '' ? 'var(--accent)' : 'transparent';
+    b.style.borderColor = (b.dataset.pattern === '' && b.id !== 'patternSolidBtn') ? 'var(--accent)' : 'transparent';
   });
   renderGrid(applySort(currentResults));
 });
@@ -4775,10 +4796,29 @@ function solveAffine(src, dst) {
   return [a, b, c, d, e, f];
 }
 
+// warpImageIntoQuad splits the destination quad into two triangles sharing one diagonal, each
+// warped by its OWN affine transform (a true perspective warp isn't affine, so one transform
+// can't represent the whole quad -- two triangles is the standard way around that). The two
+// transforms only agree exactly at the diagonal's two shared vertices; anywhere else along that
+// edge they can disagree by a sub-pixel amount, and each triangle's own clip path is separately
+// anti-aliased there too. On a normal photographic logo that shows up as an imperceptible sub-
+// pixel blend, but on a flat single-color fill (knockout or the "Colorize Logo" tint) there's no
+// color variation to hide it in, so it reads as a visible hairline seam along the diagonal.
+// Inflating the CLIP path outward from the triangle's own centroid (not the transform, which
+// still uses the true triangle correspondence) makes the two triangles overlap by a hair instead
+// of meeting edge-to-edge -- redundant opaque overdraw in that sliver is invisible, unlike a gap.
+function inflateTriangle(tri, eps) {
+  const cx = (tri[0].x + tri[1].x + tri[2].x) / 3, cy = (tri[0].y + tri[1].y + tri[2].y) / 3;
+  return tri.map(p => {
+    const dx = p.x - cx, dy = p.y - cy, len = Math.hypot(dx, dy) || 1;
+    return { x: p.x + (dx / len) * eps, y: p.y + (dy / len) * eps };
+  });
+}
 function warpTriangle(ctx, img, srcTri, dstTri) {
   ctx.save();
+  const clipTri = inflateTriangle(dstTri, 0.75);
   ctx.beginPath();
-  ctx.moveTo(dstTri[0].x, dstTri[0].y); ctx.lineTo(dstTri[1].x, dstTri[1].y); ctx.lineTo(dstTri[2].x, dstTri[2].y);
+  ctx.moveTo(clipTri[0].x, clipTri[0].y); ctx.lineTo(clipTri[1].x, clipTri[1].y); ctx.lineTo(clipTri[2].x, clipTri[2].y);
   ctx.closePath(); ctx.clip();
   const m = solveAffine(srcTri, dstTri);
   ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
@@ -5242,7 +5282,14 @@ function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoS
     }
   }
 
-  if (pattern && pattern.img && !region.__skipPattern) {
+  if (pattern && (pattern.img || pattern.solidColor) && !region.__skipPattern) {
+    if (pattern.solidColor) {
+      // "Solid Fill" -- a flat color instead of a tiled image. Filled across the whole working
+      // canvas, same as the tile loop below does; the caller's own clip (rect/poly) or destination-
+      // in mask composite (mask regions) is what actually constrains it to the region's shape.
+      targetCtx.fillStyle = pattern.solidColor;
+      targetCtx.fillRect(0, 0, size, size);
+    } else {
     // Same rotation the logo gets (region.rotateCCW) — otherwise a product with rect.rotateCCW
     // false and poly.rotateCCW true (Chisel: the flat and diagonal shots have different "up"
     // directions relative to the image) shows the pattern in two different orientations even
@@ -5294,6 +5341,7 @@ function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoS
           targetCtx.drawImage(patImgSrc, tx, ty, tileWi, tileHi);
         }
       }
+    }
     }
     if (pattern.overlayImg) {
       targetCtx.drawImage(pattern.overlayImg, 0, 0, size, size);
@@ -5644,7 +5692,7 @@ function withTimeout(promise, ms) {
 // identical work for products it had already painted seconds earlier.
 const brandedRenderCache = new Map(); // sku -> { recipeKey, canvas }
 function brandingRecipeKey(backdrop) {
-  return [logoDataUrl || '', selectedPattern || '', patternScale, patternOffsetX, patternOffsetY, patternKnockout, logoMultiply, backdrop, colorizeAll ? colorizeAllColor : ''].join('');
+  return [logoDataUrl || '', selectedPattern || '', selectedPatternSolidColor || '', patternScale, patternOffsetX, patternOffsetY, patternKnockout, logoMultiply, backdrop, colorizeAll ? colorizeAllColor : ''].join('');
 }
 
 // Bumped by every paintBrandedCanvases call and threaded through as `generation` down to the
@@ -5688,7 +5736,8 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   // Black/wood material overrides skip pattern branding entirely -- ink pattern texture doesn't
   // apply to a flat black surface (the whole point of "black" here) or to a laser-engraved wood
   // recess (which uses its own tinted/embossed look instead, see getWoodEngravedLogoSource).
-  const wantsPattern = p.patternEligible && !!selectedPattern && !p.blackProduct && !p.woodProduct;
+  const patternActive = p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct;
+  const wantsPattern = patternActive && !!selectedPattern; // image mode specifically -- Solid Fill needs no image fetch
   const maskUrls = collectMaskImageUrls(effectiveRegions);
   // Fire every image request for this product at once instead of one-at-a-time -- previously each
   // await (base, then pattern, then overlay, then each mask image) delayed the NEXT request from
@@ -5697,7 +5746,7 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   const [baseImg, patternImg, overlayImg, maskImgs] = await Promise.all([
     withTimeout(loadImageCached(canvas.dataset.base), IMAGE_LOAD_TIMEOUT_MS),
     wantsPattern ? withTimeout(loadImageCached(selectedPattern), IMAGE_LOAD_TIMEOUT_MS) : Promise.resolve(null),
-    (wantsPattern && p.overlayImage) ? withTimeout(loadImageCached(p.overlayImage), IMAGE_LOAD_TIMEOUT_MS) : Promise.resolve(null),
+    (patternActive && p.overlayImage) ? withTimeout(loadImageCached(p.overlayImage), IMAGE_LOAD_TIMEOUT_MS) : Promise.resolve(null),
     Promise.all(maskUrls.map(url => withTimeout(loadImageCached(url), IMAGE_LOAD_TIMEOUT_MS).catch(() => null))),
   ]);
   if (generation !== renderGeneration) return; // superseded while those loads were in flight -- don't draw a stale mix of settings
@@ -5714,9 +5763,10 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   await new Promise(resolve => setTimeout(resolve, 0));
   if (generation !== renderGeneration) return; // re-check -- another render may have started during that yield
 
-  const pattern = wantsPattern
+  const pattern = !patternActive ? null
+    : wantsPattern
     ? { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY }
-    : null;
+    : { solidColor: selectedPatternSolidColor, knockout: patternKnockout, overlayImg: overlayImg };
   const maskImageCache = {};
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
   const previewSize = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 350 : 700;
@@ -5824,7 +5874,7 @@ async function paintBrandedCanvases(container) {
 // controls that belong in the working results grid are omitted there.
 function imageBlock(p, includeControls = true) {
   const hasLogo = !!logoDataUrl;
-  const hasPattern = p.patternEligible && !!selectedPattern;
+  const hasPattern = p.patternEligible && patternIsSelected();
   const hasRegionBranding = (hasLogo || hasPattern) && !!(p.regions && (p.regions.rect || p.regions.poly || p.regions.mask));
 
   const baseImg = hasRegionBranding ? p.blankImage : p.masterImage;
@@ -5915,7 +5965,7 @@ async function exportProductImage(sku) {
   const p = PRODUCTS.find(x => x.sku === sku);
   if (!p) return;
   const hasLogo = !!logoDataUrl;
-  const hasPattern = p.patternEligible && !!selectedPattern;
+  const hasPattern = p.patternEligible && patternIsSelected();
   const hasRegionBranding = (hasLogo || hasPattern) && !!(p.regions && (p.regions.rect || p.regions.poly || p.regions.mask));
   const baseUrl = hasRegionBranding ? p.blankImage : p.masterImage;
 
@@ -5942,10 +5992,14 @@ async function exportProductImage(sku) {
     const baseImg = await loadCrossOriginImage(baseUrl);
     const logoImg = logoDataUrl ? await loadCrossOriginImage(logoDataUrl) : null;
     let pattern = null;
-    if (p.patternEligible && selectedPattern && !p.blackProduct && !p.woodProduct) {
-      const patternImg = await loadCrossOriginImage(selectedPattern);
+    if (p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct) {
       const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
-      pattern = { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
+      if (selectedPattern) {
+        const patternImg = await loadCrossOriginImage(selectedPattern);
+        pattern = { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
+      } else {
+        pattern = { solidColor: selectedPatternSolidColor, knockout: patternKnockout, overlayImg: overlayImg };
+      }
     }
     const effectiveRegions = applyRegionOverrides(p.regions, p.sku);
     const canvas = document.createElement('canvas');
