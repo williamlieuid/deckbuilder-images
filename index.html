@@ -130,27 +130,47 @@
   }
 
   .note { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .brandmark { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .brandmark .mark {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; position: relative;
+    background: linear-gradient(135deg, var(--accent), #F2A65A);
+    box-shadow: 0 2px 6px rgba(216, 90, 48, 0.35);
+  }
+  .brandmark .mark::before, .brandmark .mark::after { content: ''; position: absolute; left: 8px; border-radius: 3px; background: #fff; }
+  .brandmark .mark::before { width: 14px; height: 3px; top: 10px; opacity: 0.95; }
+  .brandmark .mark::after { width: 9px; height: 3px; top: 16px; opacity: 0.6; }
+  .brandmark .wordmark { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
+  .brandmark .wordmark span { font-weight: 800; color: var(--accent); }
+
+  .region-ctrl-btn { border: 1px solid var(--border); border-radius: 3px; }
+  .colorize-region-input { -webkit-appearance: none; appearance: none; }
+  .colorize-region-input::-webkit-color-swatch-wrapper { padding: 0; }
+  .colorize-region-input::-webkit-color-swatch { border: none; border-radius: 2px; }
+  .colorize-region-input::-moz-color-swatch { border: none; border-radius: 2px; }
 </style>
 </head>
 <body>
 <div class="wrap" id="wrap">
 
   <div class="no-print">
-    <h1>Deck builder</h1>
-    <p class="sub">Product data loads live from Google Sheets.</p>
+    <div class="brandmark">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="wordmark">Deck<span>Builder</span></span>
+    </div>
 
     <div class="panel">
       <div class="field-row">
-        <div class="field" style="position:relative;">
+        <div class="field" style="position:relative; flex:1.6; min-width:220px;">
           <label>Category</label>
           <button type="button" id="catDropdownBtn" class="secondary" style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-            <span id="catDropdownLabel">All categories</span>
+            <span id="catDropdownLabel">All Categories</span>
             <span aria-hidden="true">&#9662;</span>
           </button>
           <div id="fCategory" class="cat-dropdown-panel" style="display:none;"></div>
         </div>
         <div class="field">
-          <label>Price range per unit</label>
+          <label>Price Range Per Unit</label>
           <div style="display:flex; gap:8px; align-items:center;">
             <div class="price-field-wrap">
               <span class="dollar-prefix" id="minDollar">$</span>
@@ -163,18 +183,18 @@
             </div>
           </div>
         </div>
-        <div class="field" style="flex:2; position:relative;">
-          <label>Search (name, tags, keywords)</label>
+        <div class="field" style="flex:0.8; min-width:140px; position:relative;">
+          <label>Search (Name, Tags, Keywords)</label>
           <input type="text" id="fSearch" placeholder="e.g. eco-friendly, tech, onboarding" autocomplete="off" />
           <div id="searchSuggestions" class="suggestions-panel" style="display:none;"></div>
         </div>
       </div>
-      <details id="advancedOptions" open style="margin-bottom:14px; border:0.5px solid var(--border); border-radius:var(--radius); padding:0;">
-        <summary style="cursor:pointer; padding:10px 12px; font-size:13px; font-weight:500; color:var(--text-primary); list-style:none;">Pricing, currency & branding options</summary>
+      <div id="advancedOptions" style="margin-bottom:14px; border:0.5px solid var(--border); border-radius:var(--radius); padding:0;">
+        <div style="padding:10px 12px; font-size:13px; font-weight:500; color:var(--text-primary);">Pricing, Currency &amp; Branding Options</div>
         <div style="padding:0 12px 12px;">
       <div class="field-row">
         <div class="field" style="max-width:160px;">
-          <label>Add pricing</label>
+          <label>Add Pricing</label>
           <div class="radio-group">
             <label><input type="radio" name="pricing" value="yes" checked> Yes</label>
             <label><input type="radio" name="pricing" value="no"> No</label>
@@ -188,28 +208,32 @@
           </div>
         </div>
         <div class="field" id="logoField" style="max-width:220px;">
-          <label>Upload logo</label>
+          <label>Upload Logo</label>
           <input type="file" id="logoInput" accept="image/*" style="display:none;" />
-          <button type="button" class="secondary" id="logoChooseBtn" style="width:100%;">Choose file</button>
+          <button type="button" class="secondary" id="logoChooseBtn" style="width:100%;">Choose File</button>
           <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-            <span id="logoFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No file chosen</span>
-            <button type="button" class="tiny-remove" id="removeLogoBtn" title="Remove logo">✕</button>
+            <span id="logoFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No File Chosen</span>
+            <button type="button" class="tiny-remove" id="removeLogoBtn" title="Remove Logo">✕</button>
           </div>
           <div id="logoHistoryRow" style="display:none; gap:6px; margin-top:6px; flex-wrap:wrap;"></div>
+          <label class="chk" style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); margin-top:10px; font-weight:400;">
+            <input type="checkbox" id="colorizeAllChk" /> Colorize Logo
+          </label>
+          <input type="color" id="colorizeAllColor" value="#D85A30" disabled style="width:100%; height:26px; padding:0; border:0.5px solid var(--border); border-radius:var(--radius); cursor:pointer; margin-top:6px; opacity:0.4;" title="Colorize color" />
         </div>
         <div class="field" id="patternField" style="max-width:340px;">
-          <label>Pattern (for pattern-eligible products)</label>
+          <label>Pattern</label>
           <div id="patternSwatches" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
             <button type="button" class="pattern-swatch" data-pattern="" style="width:36px;height:36px;border-radius:6px;background:#F1EFE8;border:2px solid var(--accent);cursor:pointer;padding:0;font-size:9px;color:var(--text-muted);">None</button>
           </div>
           <input type="file" id="customPatternInput" accept="image/*" style="display:none;" />
-          <button type="button" class="secondary" id="patternChooseBtn" style="width:100%; height:28px; font-size:11px; margin-top:6px;">Choose file</button>
+          <button type="button" class="secondary" id="patternChooseBtn" style="width:100%; height:28px; font-size:11px; margin-top:6px;">Choose File</button>
           <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-            <span id="patternFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No file chosen</span>
-            <button type="button" class="tiny-remove" id="removePatternBtn" title="Remove pattern">✕</button>
+            <span id="patternFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No File Chosen</span>
+            <button type="button" class="tiny-remove" id="removePatternBtn" title="Remove Pattern">✕</button>
           </div>
           <div style="margin-top:8px;">
-            <label style="font-size:11px; color:var(--text-secondary);">Pattern scale: <span id="patternScaleLabel">100%</span></label>
+            <label style="font-size:11px; color:var(--text-secondary);">Pattern Scale: <span id="patternScaleLabel">100%</span></label>
             <input type="range" id="patternScale" min="20" max="200" value="100" step="5" style="width:100%; margin-top:2px;" />
           </div>
           <label class="chk" style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); margin-top:8px; font-weight:400;">
@@ -217,26 +241,34 @@
           </label>
         </div>
         <div class="field" style="max-width:220px;">
-          <label>Background color</label>
-          <div style="display:flex; gap:8px; align-items:center;">
+          <label>Background Color</label>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
             <button type="button" class="bg-swatch" data-color="#000000" style="width:26px;height:26px;border-radius:6px;background:#000000;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#333232;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;"></button>
             <button type="button" class="bg-swatch" data-color="#E8E6DE" style="width:26px;height:26px;border-radius:6px;background:#E8E6DE;border:2px solid var(--accent);cursor:pointer;padding:0;"></button>
-            <input type="color" id="customBgColor" value="#E8E6DE" style="width:26px;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Custom color" />
+            <button type="button" class="bg-swatch" data-color="#D85A30" style="width:26px;height:26px;border-radius:6px;background:#D85A30;border:2px solid transparent;cursor:pointer;padding:0;" title="Burnt Orange"></button>
+            <button type="button" class="bg-swatch" data-color="#E0B03C" style="width:26px;height:26px;border-radius:6px;background:#E0B03C;border:2px solid transparent;cursor:pointer;padding:0;" title="Golden Mustard"></button>
+            <button type="button" class="bg-swatch" data-color="#4C9A6B" style="width:26px;height:26px;border-radius:6px;background:#4C9A6B;border:2px solid transparent;cursor:pointer;padding:0;" title="Sage Green"></button>
+            <button type="button" class="bg-swatch" data-color="#2F6F6A" style="width:26px;height:26px;border-radius:6px;background:#2F6F6A;border:2px solid transparent;cursor:pointer;padding:0;" title="Deep Teal"></button>
+            <button type="button" class="bg-swatch" data-color="#3E5DC7" style="width:26px;height:26px;border-radius:6px;background:#3E5DC7;border:2px solid transparent;cursor:pointer;padding:0;" title="Cobalt Blue"></button>
+            <button type="button" class="bg-swatch" data-color="#6D4FC4" style="width:26px;height:26px;border-radius:6px;background:#6D4FC4;border:2px solid transparent;cursor:pointer;padding:0;" title="Ultraviolet"></button>
+            <button type="button" class="bg-swatch" data-color="#C15A9E" style="width:26px;height:26px;border-radius:6px;background:#C15A9E;border:2px solid transparent;cursor:pointer;padding:0;" title="Magenta Orchid"></button>
+            <button type="button" class="bg-swatch" data-color="#D9455F" style="width:26px;height:26px;border-radius:6px;background:#D9455F;border:2px solid transparent;cursor:pointer;padding:0;" title="Coral Red"></button>
+            <input type="color" id="customBgColor" value="#E8E6DE" style="width:26px;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Custom Color" />
           </div>
         </div>
       </div>
         </div>
-      </details>
+      </div>
       <div style="display:flex; gap:10px;">
-        <button class="primary" id="searchBtn">Search products</button>
+        <button class="primary" id="searchBtn">Search Products</button>
         <button class="secondary" id="resetBtn">Reset</button>
       </div>
     </div>
 
     <div id="renderProgress" class="no-print" style="display:none; align-items:center; gap:10px; position:sticky; top:0; z-index:20; background:#fff; border-bottom:0.5px solid var(--border); padding:8px 0; margin-bottom:10px;">
-      <span id="renderProgressLabel" style="font-size:12px; color:var(--text-secondary); white-space:nowrap;">Rendering images…</span>
+      <span id="renderProgressLabel" style="font-size:12px; color:var(--text-secondary); white-space:nowrap;">Rendering Images…</span>
       <div style="flex:1; height:4px; background:var(--surface-1); border-radius:2px; overflow:hidden;">
         <div id="renderProgressFill" style="height:100%; width:0%; background:var(--accent); transition:width 0.15s;"></div>
       </div>
@@ -246,11 +278,10 @@
       <p id="resultsCount"></p>
       <div style="display:flex; gap:10px; align-items:center;">
         <select id="sortSelect" style="height:36px; border:0.5px solid var(--border); border-radius:var(--radius); font-size:13px; padding:0 8px;">
-          <option value="default">Sort: default</option>
-          <option value="price-asc" selected>Price: low to high</option>
-          <option value="price-desc">Price: high to low</option>
+          <option value="price-asc" selected>Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
         </select>
-        <button class="secondary" id="selectAllBtn">Select all</button>
+        <button class="secondary" id="selectAllBtn" style="white-space:nowrap;">Select All</button>
       </div>
     </div>
 
@@ -261,18 +292,18 @@
   <div id="deckBar" class="no-print">
     <p id="deckCount">0 products selected</p>
     <div style="display:flex; gap:10px; align-items:center;">
-      <input type="text" id="deckNameInput" placeholder="Deck name (optional)" style="height:34px; padding:0 10px; border:0.5px solid var(--border); border-radius:var(--radius); font-size:13px; width:220px;" />
-      <button class="secondary" id="backBtn">Back to results</button>
-      <button class="primary" id="buildDeckBtn">Build deck</button>
+      <input type="text" id="deckNameInput" placeholder="Deck Name (Optional)" style="height:34px; padding:0 10px; border:0.5px solid var(--border); border-radius:var(--radius); font-size:13px; width:220px;" />
+      <button class="secondary" id="backBtn">Back to Results</button>
+      <button class="primary" id="buildDeckBtn">Build Deck</button>
     </div>
   </div>
 
   <div id="deckView">
     <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <button class="secondary" id="backToEditBtn">← Back to edit selection</button>
+      <button class="secondary" id="backToEditBtn">← Back to Edit Selection</button>
       <div style="display:flex; gap:10px;">
-        <button class="secondary" id="exportCustomerBtn">Save file for customer</button>
-        <button class="secondary" id="downloadJpgBtn">Download deck as JPG</button>
+        <button class="secondary" id="exportCustomerBtn">Save File for Customer</button>
+        <button class="secondary" id="downloadJpgBtn">Download Deck as JPG</button>
         <button class="primary" id="downloadBtn">Download / Print PDF</button>
       </div>
     </div>
@@ -4081,6 +4112,77 @@ let PRODUCTS = [
   }
 ];
 
+// Session-only per-region rotate/hide overrides (never written to the sheet) -- the per-card
+// rotate/hide buttons let a rep fix a badly-oriented or unwanted branding area for THIS session's
+// deck/exports without touching the underlying region data. Keyed by SKU, then by a stable region
+// key ('primary', or 'extra0'/'extra1'/... matching regions.extra's own array order).
+let regionOverrides = {};
+function getRegionOverride(sku, key) {
+  return (regionOverrides[sku] && regionOverrides[sku][key]) || { rotateSteps: 0, hidden: false, hidePattern: false, colorize: null };
+}
+function setRegionOverride(sku, key, patch) {
+  if (!regionOverrides[sku]) regionOverrides[sku] = {};
+  regionOverrides[sku][key] = Object.assign({}, getRegionOverride(sku, key), patch);
+}
+// Enumerates every controllable region on a product -- the one primary (whichever of
+// rect/poly/mask is actually set) plus each extra, in the same order the rotate/hide buttons are
+// drawn in, so the UI and the override-application logic below always agree on what "extra0"
+// etc. refers to.
+function regionOverrideKeyList(regions) {
+  if (!regions) return [];
+  const list = [];
+  const primaryKind = regions.rect ? 'rect' : (regions.poly ? 'poly' : (regions.mask ? 'mask' : null));
+  if (primaryKind) list.push({ key: 'primary', label: 'Main', kind: primaryKind });
+  (regions.extra || []).forEach((ex, i) => {
+    list.push({ key: 'extra' + i, label: ex.label || ('Area ' + (i + 2)), kind: ex.kind });
+  });
+  return list;
+}
+// Returns a NEW regions object with this session's overrides baked in -- never mutates the
+// original PRODUCTS data. A hidden region is simply omitted (drawBrandedCard already skips any
+// falsy rect/poly/mask and any extra not present in the array); a rotated region gets
+// __extraRotateSteps attached, read by paintRegionContent above to spin the logo the requested
+// number of additional 90° steps on top of whatever the region's own data already specifies; a
+// pattern-hidden region gets __skipPattern attached, read by paintRegionContent to skip just the
+// pattern-fill block for that one region while its logo still renders normally (and to fall back
+// off the card-wide knockout for that region too, since there's no pattern left to knock out
+// against); a colorized region gets __colorize attached with the chosen hex, read by
+// paintRegionContent to override the logo source with a solid-color knockout in that color.
+function applyRegionOverrides(regions, sku) {
+  if (!regions) return regions;
+  const skuOverrides = regionOverrides[sku];
+  if (!skuOverrides) return regions;
+  const out = { rect: regions.rect, poly: regions.poly, mask: regions.mask, extra: (regions.extra || []).slice() };
+  function applyOne(region, ov) {
+    if (!ov) return region;
+    if (ov.hidden) return null;
+    let next = region;
+    if (ov.rotateSteps) next = Object.assign({}, next, { __extraRotateSteps: ov.rotateSteps });
+    if (ov.hidePattern) next = Object.assign({}, next, { __skipPattern: true });
+    if (ov.colorize) next = Object.assign({}, next, { __colorize: ov.colorize });
+    return next;
+  }
+  const primaryKind = out.rect ? 'rect' : (out.poly ? 'poly' : (out.mask ? 'mask' : null));
+  if (primaryKind) out[primaryKind] = applyOne(out[primaryKind], skuOverrides['primary']);
+  out.extra = out.extra
+    .map((ex, i) => applyOne(ex, skuOverrides['extra' + i]))
+    .filter(Boolean);
+  return out;
+}
+// Forces every on-screen instance of one product's branded canvas (grid AND deck view both use
+// the same canvas.branded-canvas[data-sku] convention) to redraw with the current override state,
+// right after a rotate/hide button click -- bypasses the render cache directly rather than
+// threading override state through brandingRecipeKey, since it only ever needs to affect one SKU.
+function invalidateAndRepaintSku(sku) {
+  brandedRenderCache.delete(sku);
+  document.querySelectorAll(`canvas.branded-canvas[data-sku="${sku}"]`).forEach(async (canvas) => {
+    let logoImg = null;
+    try { if (logoDataUrl) logoImg = await loadImageCached(logoDataUrl); } catch (err) { return; }
+    const backdrop = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim() || '#E8E6DE';
+    paintOneBrandedCanvasWithRetry(canvas, logoImg, backdrop, renderGeneration);
+  });
+}
+
 let logoDataUrl = null;
 // Quick-reselect for recently used logos (rep switching between a handful of regular clients),
 // so re-branding a deck doesn't require re-finding + re-uploading the same file every time.
@@ -4128,6 +4230,12 @@ let deckName = ''; // optional, shown on the deck/print header instead of "Produ
 let selectedPattern = null; // URL of the chosen pattern (library or custom-uploaded)
 let patternScale = 100; // percentage; 100 = fills the product silhouette, lower = smaller/tiled, higher = zoomed in
 let patternKnockout = true; // when true, the logo over a pattern renders as a white silhouette; when false, it shows in its real colors
+// Universal colorize (the "Colorize Logo" control under Upload Logo) -- a card-wide default that
+// tints every region's logo to one chosen color, applied in paintRegionContent. A per-region
+// colorize override (the per-card color swatch) still wins over this for any one area a rep wants
+// to leave as an exception.
+let colorizeAll = false;
+let colorizeAllColor = '#D85A30';
 // Fixed, no UI control (removed -- adjusting these live wasn't worth a full-grid repaint every
 // drag tick). 50 (not 0) puts a tile's own CENTER at the region's center, instead of a tile
 // BOUNDARY there -- hides a pattern's baked-in edge margin at the region's own edges instead of
@@ -4141,6 +4249,18 @@ const logoMultiply = true;
 document.getElementById('patternKnockoutChk').addEventListener('change', (e) => {
   patternKnockout = e.target.checked;
   renderGrid(applySort(currentResults));
+});
+
+const colorizeAllColorInput = document.getElementById('colorizeAllColor');
+document.getElementById('colorizeAllChk').addEventListener('change', (e) => {
+  colorizeAll = e.target.checked;
+  colorizeAllColorInput.disabled = !colorizeAll;
+  colorizeAllColorInput.style.opacity = colorizeAll ? '' : '0.4';
+  renderGrid(applySort(currentResults));
+});
+colorizeAllColorInput.addEventListener('change', (e) => {
+  colorizeAllColor = e.target.value;
+  if (colorizeAll) renderGrid(applySort(currentResults));
 });
 
 // Dragging a range slider fires 'input' continuously (dozens of events across a couple seconds),
@@ -4161,11 +4281,15 @@ document.getElementById('patternScale').addEventListener('input', (e) => {
 
 // Bundled fallback snapshot — used until/unless loadPatternLibraryFromGitHub() below loads the
 // live GitHub folder listing successfully. Same hot-swap pattern as the PRODUCTS fallback array.
+// 9020902.jpg ("Pattern 1") is deliberately excluded -- its source image isn't actually seamless
+// (confirmed by measuring real edge-pixel mismatch), so it tiled visibly wrong and was removed.
 let PATTERN_LIBRARY = [
-  "https://cdn.jsdelivr.net/gh/williamlieuid/deckbuilder-images@main/patterns/9020902.jpg",
   "https://cdn.jsdelivr.net/gh/williamlieuid/deckbuilder-images@main/patterns/AdobeStock_538516421.jpeg",
   "https://cdn.jsdelivr.net/gh/williamlieuid/deckbuilder-images@main/patterns/AdobeStock_558246982.jpeg"
 ];
+// Filenames excluded from the live GitHub folder listing too (see note above) -- the file itself
+// is left in the repo, just never surfaced as a selectable swatch in the app.
+const PATTERN_LIBRARY_EXCLUDE = ['9020902.jpg'];
 
 function renderPatternSwatches() {
   const wrap = document.getElementById('patternSwatches');
@@ -4197,7 +4321,7 @@ async function loadPatternLibraryFromGitHub() {
     if (!Array.isArray(files)) throw new Error('Unexpected response shape');
     const imageExt = /\.(jpe?g|png|webp|gif)$/i;
     const urls = files
-      .filter(f => f.type === 'file' && imageExt.test(f.name))
+      .filter(f => f.type === 'file' && imageExt.test(f.name) && !PATTERN_LIBRARY_EXCLUDE.includes(f.name))
       .map(f => `https://cdn.jsdelivr.net/gh/${PATTERN_REPO}@${PATTERN_BRANCH}/patterns/${f.name}`);
     if (!urls.length) throw new Error('No pattern image files found in patterns/ folder');
     PATTERN_LIBRARY = urls;
@@ -4534,7 +4658,7 @@ document.getElementById('searchBtn').addEventListener('click', () => {
   });
 
   document.getElementById('resultsHeader').style.display = 'flex';
-  document.getElementById('resultsCount').textContent = currentResults.length + ' product' + (currentResults.length===1?'':'s') + ' matched';
+  document.getElementById('resultsCount').textContent = currentResults.length + ' Product' + (currentResults.length===1?'':'s') + ' Found';
   renderGrid(applySort(currentResults));
 });
 
@@ -4800,19 +4924,31 @@ function quadFromAxis(logoAxis, dx, dy, dw, dh) {
   ];
 }
 
-function getRotatedLogoSource(logoImg, rotateCCW, rotateCW) {
-  if (!rotateCCW && !rotateCW) return logoImg;
-  const w = logoImg.naturalWidth || logoImg.width, h = logoImg.naturalHeight || logoImg.height;
+// General-purpose 0/90/180/270 clockwise rotation (steps = how many 90° clockwise turns), used
+// directly by the region-rotate-override feature below. getRotatedLogoSource (single-step,
+// boolean-driven) stays the pattern-tiling entry point unchanged -- only the logo path needs
+// multi-step rotation, and reusing this as its implementation keeps both consistent.
+function rotateImageSteps(img, steps) {
+  steps = ((steps % 4) + 4) % 4;
+  if (steps === 0) return img;
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
   const off = document.createElement('canvas');
-  off.width = h; off.height = w;
   const octx = off.getContext('2d');
-  if (rotateCCW) {
-    octx.translate(0, w); octx.rotate(-Math.PI / 2);
-  } else {
+  if (steps === 2) {
+    off.width = w; off.height = h;
+    octx.translate(w, h); octx.rotate(Math.PI);
+  } else if (steps === 1) {
+    off.width = h; off.height = w;
     octx.translate(h, 0); octx.rotate(Math.PI / 2);
+  } else { // steps === 3
+    off.width = h; off.height = w;
+    octx.translate(0, w); octx.rotate(-Math.PI / 2);
   }
-  octx.drawImage(logoImg, 0, 0);
+  octx.drawImage(img, 0, 0);
   return off;
+}
+function getRotatedLogoSource(logoImg, rotateCCW, rotateCW) {
+  return rotateImageSteps(logoImg, rotateCW ? 1 : (rotateCCW ? 3 : 0));
 }
 
 // radiusPx may be a single number (uniform, all corners) or a 4-element array (per-corner,
@@ -4839,16 +4975,19 @@ function roundedRegionClipPath(ctx, points, radiusPx) {
 }
 function normVec(dx, dy) { const l = Math.hypot(dx, dy) || 1; return { x: dx / l, y: dy / l }; }
 
-function getKnockoutLogoSource(logoImg) {
+function getColorizedLogoSource(logoImg, hexColor) {
   const w = logoImg.naturalWidth || logoImg.width, h = logoImg.naturalHeight || logoImg.height;
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const cx = c.getContext('2d');
   cx.drawImage(logoImg, 0, 0);
   cx.globalCompositeOperation = 'source-in';
-  cx.fillStyle = '#ffffff';
+  cx.fillStyle = hexColor;
   cx.fillRect(0, 0, w, h);
   return c;
+}
+function getKnockoutLogoSource(logoImg) {
+  return getColorizedLogoSource(logoImg, '#ffffff');
 }
 
 const WOOD_ENGRAVE_COLOR = '#786957';
@@ -5020,7 +5159,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
         scratch.width = size; scratch.height = size;
         const sctx = scratch.getContext('2d');
         const regionForAxis = axis !== null ? Object.assign({}, region, { logoAxis: axis }) : region;
-        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading);
+        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading, woodProduct);
         sctx.globalCompositeOperation = 'destination-in';
         sctx.drawImage(islandClips ? islandClips[axisIdx] : maskCanvas, 0, 0);
         ctx.drawImage(scratch, 0, 0);
@@ -5053,7 +5192,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
     // pattern render correctly regardless of click order, without touching the clip/radii above.
     const warpQuadPct = normalizeQuadWinding(quadPct);
     const warpQuad = warpQuadPct.map(pctToCanvas);
-    paintRegionContent(ctx, warpQuad, warpQuadPct, region, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, kind === 'poly', hasRectAnchor, logoMultiply, skipShading);
+    paintRegionContent(ctx, warpQuad, warpQuadPct, region, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, kind === 'poly', hasRectAnchor, logoMultiply, skipShading, woodProduct);
     ctx.restore();
   });
 }
@@ -5061,12 +5200,29 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
 // Shared by all three region kinds: fills the pattern within whatever clip/target the caller
 // set up (flat-tiled, or perspective-warped through the region's own quad when perspectiveTile
 // is true), applies shading, then warps the logo on top.
-function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoSrc, baseImg, dx, dy, dw, dh, size, perspectiveTile, hasRectAnchor, logoMultiply, skipShading) {
+function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoSrc, rawLogoSrc, baseImg, dx, dy, dw, dh, size, perspectiveTile, hasRectAnchor, logoMultiply, skipShading, woodProduct) {
+  // Per-region override of the card-wide logo source: __colorize (the "Colorize Logo" control)
+  // always wins when set, regardless of pattern state -- it's a deliberate solid-color choice, not
+  // tied to knockout-vs-pattern logic. Otherwise, __skipPattern (the "hide pattern" control) means
+  // there's no pattern left under this one region to justify a plain white silhouette, so fall back
+  // to the logo's real colors instead of the card-wide knocked-out version. Wood-engraved logos
+  // aren't affected -- that treatment is a fixed physical simulation, not a knockout choice.
+  let effectiveLogoSrc = baseLogoSrc;
+  if (baseLogoSrc && !woodProduct) {
+    if (region.__colorize) effectiveLogoSrc = getColorizedLogoSource(rawLogoSrc, region.__colorize);
+    else if (colorizeAll) effectiveLogoSrc = getColorizedLogoSource(rawLogoSrc, colorizeAllColor);
+    else if (region.__skipPattern && pattern && pattern.knockout) effectiveLogoSrc = rawLogoSrc;
+  }
   // Compute the logo's own contain-fit placement quad FIRST (before touching the pattern) so it's
   // ready once we get to drawing the logo on top -- the pattern below always fills the WHOLE
   // region regardless of the logo, never clipped down to just the logo's own area.
   let logoDst = null, logoSrcForDraw = null;
-  if (baseLogoSrc) {
+  if (effectiveLogoSrc) {
+    // Session-only rotate override (the per-region rotate button on each product card) -- applied
+    // up front to the raw logo source, before either placement branch, so contain-fit naturally
+    // adapts to the rotated width/height in both cases with no other change needed.
+    const overrideSteps = region.__extraRotateSteps || 0;
+    const overriddenLogoSrc = overrideSteps ? rotateImageSteps(effectiveLogoSrc, overrideSteps) : effectiveLogoSrc;
     if (region.logoAxis) {
       // The axis handles already encode whatever rotation is wanted, continuously -- applying
       // rotateCCW's coarse 90° swap on top would double up, so skip it for this path only.
@@ -5075,18 +5231,18 @@ function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoS
       // padding-buffered contain-fit rect/poly already use) so its own real aspect ratio always
       // wins regardless of how the two handles happen to be dragged.
       const axisQuad = quadFromAxis(region.logoAxis, dx, dy, dw, dh);
-      const axisLogoW = baseLogoSrc.naturalWidth || baseLogoSrc.width, axisLogoH = baseLogoSrc.naturalHeight || baseLogoSrc.height;
+      const axisLogoW = overriddenLogoSrc.naturalWidth || overriddenLogoSrc.width, axisLogoH = overriddenLogoSrc.naturalHeight || overriddenLogoSrc.height;
       logoDst = containFitSubQuad(axisQuad, axisLogoW, axisLogoH, null);
-      logoSrcForDraw = baseLogoSrc;
+      logoSrcForDraw = overriddenLogoSrc;
     } else {
-      logoSrcForDraw = getRotatedLogoSource(baseLogoSrc, region.rotateCCW, region.rotateCW);
+      logoSrcForDraw = getRotatedLogoSource(overriddenLogoSrc, region.rotateCCW, region.rotateCW);
       const logoW = logoSrcForDraw.naturalWidth || logoSrcForDraw.width, logoH = logoSrcForDraw.naturalHeight || logoSrcForDraw.height;
       const centerUV = region.centerOffset ? computeCenterUV(quadPct, region.centerOffset) : null;
       logoDst = containFitSubQuad(quad, logoW, logoH, centerUV);
     }
   }
 
-  if (pattern && pattern.img) {
+  if (pattern && pattern.img && !region.__skipPattern) {
     // Same rotation the logo gets (region.rotateCCW) — otherwise a product with rect.rotateCCW
     // false and poly.rotateCCW true (Chisel: the flat and diagonal shots have different "up"
     // directions relative to the image) shows the pattern in two different orientations even
@@ -5148,7 +5304,7 @@ function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoS
     }
   }
 
-  if (baseLogoSrc) {
+  if (effectiveLogoSrc) {
     if (logoMultiply && !skipShading) warpImageIntoQuadShaded(targetCtx, logoSrcForDraw, logoDst, baseImg, dx, dy, dw, dh, size);
     else warpImageIntoQuad(targetCtx, logoSrcForDraw, logoDst);
   }
@@ -5488,7 +5644,7 @@ function withTimeout(promise, ms) {
 // identical work for products it had already painted seconds earlier.
 const brandedRenderCache = new Map(); // sku -> { recipeKey, canvas }
 function brandingRecipeKey(backdrop) {
-  return [logoDataUrl || '', selectedPattern || '', patternScale, patternOffsetX, patternOffsetY, patternKnockout, logoMultiply, backdrop].join('');
+  return [logoDataUrl || '', selectedPattern || '', patternScale, patternOffsetX, patternOffsetY, patternKnockout, logoMultiply, backdrop, colorizeAll ? colorizeAllColor : ''].join('');
 }
 
 // Bumped by every paintBrandedCanvases call and threaded through as `generation` down to the
@@ -5510,12 +5666,18 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   if (!p || !p.regions) return;
   if (generation !== renderGeneration) return; // a newer render already started before this one got going
 
-  // Includes the product's own regions (not just the global logo/pattern/backdrop settings
-  // brandingRecipeKey covers) -- otherwise a render cached before loadProductsFromSheet()'s live
-  // fetch resolves (or before any other in-session PRODUCTS update) keeps getting reused forever
-  // afterward, since none of the global settings need to change for that stale hit to persist. A
-  // product's own region JSON is the one thing that can change data-side with zero UI interaction.
-  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions);
+  // Session-only rotate/hide overrides (per-card region controls) baked into a fresh regions
+  // object here -- never mutates p.regions itself, so PRODUCTS stays the untouched source of
+  // truth and re-syncing/re-fetching data can't collide with it.
+  const effectiveRegions = applyRegionOverrides(p.regions, p.sku);
+
+  // Includes the product's own regions AND its current override state (not just the global
+  // logo/pattern/backdrop settings brandingRecipeKey covers) -- otherwise a render cached before
+  // loadProductsFromSheet()'s live fetch resolves (or before a rotate/hide click) keeps getting
+  // reused forever afterward, since none of the global settings need to change for that stale hit
+  // to persist. A product's own region JSON (and now its override state) is the one thing that
+  // can change data-side with zero global-setting interaction.
+  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions) + '' + JSON.stringify(regionOverrides[p.sku] || null);
   const cached = brandedRenderCache.get(p.sku);
   if (cached && cached.recipeKey === recipeKey) {
     canvas.width = cached.canvas.width; canvas.height = cached.canvas.height;
@@ -5527,7 +5689,7 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   // apply to a flat black surface (the whole point of "black" here) or to a laser-engraved wood
   // recess (which uses its own tinted/embossed look instead, see getWoodEngravedLogoSource).
   const wantsPattern = p.patternEligible && !!selectedPattern && !p.blackProduct && !p.woodProduct;
-  const maskUrls = collectMaskImageUrls(p.regions);
+  const maskUrls = collectMaskImageUrls(effectiveRegions);
   // Fire every image request for this product at once instead of one-at-a-time -- previously each
   // await (base, then pattern, then overlay, then each mask image) delayed the NEXT request from
   // even starting until the one before it resolved, serializing what are otherwise independent
@@ -5559,7 +5721,7 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
   const previewSize = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 350 : 700;
   const effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : logoMultiply;
-  drawBrandedCard(canvas, baseImg, logoImg, p.regions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
+  drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
 
   const snapshot = document.createElement('canvas');
   snapshot.width = canvas.width; snapshot.height = canvas.height;
@@ -5657,7 +5819,10 @@ async function paintBrandedCanvases(container) {
 
 // ============ card rendering ============
 
-function imageBlock(p) {
+// includeControls is false for the built-deck view (post "Build Deck") -- that view is the
+// polished, client-facing output, so the rep-only Download/rotate/colorize/hide-pattern/hide
+// controls that belong in the working results grid are omitted there.
+function imageBlock(p, includeControls = true) {
   const hasLogo = !!logoDataUrl;
   const hasPattern = p.patternEligible && !!selectedPattern;
   const hasRegionBranding = (hasLogo || hasPattern) && !!(p.regions && (p.regions.rect || p.regions.poly || p.regions.mask));
@@ -5673,13 +5838,44 @@ function imageBlock(p) {
     return `<div class="imgwrap">
       <canvas class="branded-canvas" data-sku="${p.sku}" data-base="${baseImg}" style="width:100%; height:100%; display:block;"></canvas>
     </div>
-    <button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:6px; font-size:11px; height:26px; padding:0;">Download image (JPEG)</button>`;
+    ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">Download Image</button>
+    ${regionControlsHtml(p)}` : ''}`;
   }
 
   return `<div class="imgwrap">
     <img class="base" src="${baseImg}" />
   </div>
-  <button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:6px; font-size:11px; height:26px; padding:0;">Download image (JPEG)</button>`;
+  ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">Download Image</button>` : ''}`;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// One compact row per controllable branding area (primary + each extra) -- a rotate button that
+// adds 90° clockwise per click (cycling 0/90/180/270, session-only, see applyRegionOverrides), a
+// color swatch that colorizes the logo to any chosen color (knockout + tint, overrides pattern
+// knockout), a checkerboard button (the standard "no fill" indicator) that hides just this area's
+// pattern while the logo stays, and a hide toggle that drops that one area's logo/pattern for this
+// session without touching the underlying region data. Only rendered for products with more than
+// a trivial one-region setup
+// worth being told apart, but shown even for a single region so the rotate button stays reachable
+// on every branded card.
+function regionControlsHtml(p) {
+  const list = regionOverrideKeyList(p.regions);
+  if (!list.length) return '';
+  return `<div class="region-controls no-print" style="display:flex; flex-direction:column; gap:2px; margin-top:4px;">
+    ${list.map(r => {
+      const ov = getRegionOverride(p.sku, r.key);
+      return `<div class="region-ctrl-row" style="display:flex; align-items:center; gap:4px; font-size:9.5px; color:var(--text-muted);">
+        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span>
+        <button type="button" class="tiny region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise" style="width:22px; height:18px; padding:0; font-size:11px; line-height:1; background:#fff;">↻</button>
+        <input type="color" class="tiny region-ctrl-btn colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#ff0000'}" title="${ov.colorize ? ('Colorized ' + ov.colorize + ' — click to clear') : 'Colorize logo (click to pick a color)'}" style="width:22px; height:18px; padding:0; cursor:pointer; ${ov.colorize ? '' : 'opacity:0.35;'}" />
+        <button type="button" class="tiny region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="width:22px; height:18px; padding:0; background-image:linear-gradient(to top right, transparent 44%, #e0332f 44%, #e0332f 56%, transparent 56%), repeating-conic-gradient(#999 0% 25%, #ddd 0% 50%); background-size:100% 100%, 6px 6px; ${ov.hidePattern ? 'opacity:0.4;' : ''}"></button>
+        <button type="button" class="tiny region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="width:22px; height:18px; padding:0; font-size:10px; line-height:1; background:#fff; ${ov.hidden ? 'opacity:0.5;' : ''}">${ov.hidden ? '\u{1F6AB}' : '\u{1F441}'}</button>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function slugify(name) {
@@ -5751,11 +5947,12 @@ async function exportProductImage(sku) {
       const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
       pattern = { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
     }
+    const effectiveRegions = applyRegionOverrides(p.regions, p.sku);
     const canvas = document.createElement('canvas');
     const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
-    const maskImageCache = await loadMaskImageCache(p.regions, loadCrossOriginImage);
+    const maskImageCache = await loadMaskImageCache(effectiveRegions, loadCrossOriginImage);
     const effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : logoMultiply;
-    drawBrandedCard(canvas, baseImg, logoImg, p.regions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
+    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + '.jpg');
   } catch (err) {
@@ -5767,7 +5964,52 @@ async function exportProductImage(sku) {
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('dl-btn')) {
     exportProductImage(e.target.dataset.sku);
+    return;
   }
+  const sku = e.target.dataset.sku, regionKey = e.target.dataset.region;
+  if (e.target.classList.contains('rotate-region-btn')) {
+    const cur = getRegionOverride(sku, regionKey);
+    setRegionOverride(sku, regionKey, { rotateSteps: (cur.rotateSteps + 1) % 4 });
+    invalidateAndRepaintSku(sku);
+  } else if (e.target.classList.contains('hide-region-btn')) {
+    const cur = getRegionOverride(sku, regionKey);
+    const nowHidden = !cur.hidden;
+    setRegionOverride(sku, regionKey, { hidden: nowHidden });
+    e.target.textContent = nowHidden ? '\u{1F6AB}' : '\u{1F441}';
+    e.target.title = nowHidden ? 'Show this area' : 'Hide this area entirely';
+    e.target.style.opacity = nowHidden ? '0.5' : '';
+    invalidateAndRepaintSku(sku);
+  } else if (e.target.classList.contains('hide-pattern-region-btn')) {
+    const cur = getRegionOverride(sku, regionKey);
+    const nowHidden = !cur.hidePattern;
+    setRegionOverride(sku, regionKey, { hidePattern: nowHidden });
+    e.target.title = nowHidden ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)';
+    e.target.style.opacity = nowHidden ? '0.4' : '';
+    invalidateAndRepaintSku(sku);
+  } else if (e.target.classList.contains('colorize-region-input')) {
+    // A native color <input> always opens its picker on click -- intercept only the "already
+    // colorized, click to clear" case here (before the picker opens) and let every other click
+    // through untouched so the picker still opens normally to PICK a color, captured below by the
+    // 'change' listener instead.
+    const cur = getRegionOverride(sku, regionKey);
+    if (cur.colorize) {
+      e.preventDefault();
+      setRegionOverride(sku, regionKey, { colorize: null });
+      e.target.title = 'Colorize logo (click to pick a color)';
+      e.target.style.opacity = '0.35';
+      invalidateAndRepaintSku(sku);
+    }
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if (!e.target.classList.contains('colorize-region-input')) return;
+  const sku = e.target.dataset.sku, regionKey = e.target.dataset.region;
+  const color = e.target.value;
+  setRegionOverride(sku, regionKey, { colorize: color });
+  e.target.title = 'Colorized ' + color + ' — click to clear';
+  e.target.style.opacity = '';
+  invalidateAndRepaintSku(sku);
 });
 
 function basePrice(p) {
@@ -5850,7 +6092,7 @@ document.getElementById('buildDeckBtn').addEventListener('click', () => {
       <div class="deck-grid">
         ${chunk.map(p => `
           <div>
-            ${imageBlock(p)}
+            ${imageBlock(p, false)}
             <p class="name"><span class="sku">#${p.sku}</span> ${formatName(p.name)}</p>
             <p class="desc">${truncateWords(p.description, 50)}</p>
             ${priceBox(p)}
