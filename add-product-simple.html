@@ -60,21 +60,16 @@
 <body>
 <div class="page">
 
-  <div class="tabs" style="justify-content:space-between; align-items:center;">
-    <div style="display:flex; gap:24px;">
-      <button type="button" class="tabBtn active" id="tabBtnProduct" data-tab="product">Add a Product</button>
-      <button type="button" class="tabBtn" id="tabBtnEdit" data-tab="edit">Edit a Product</button>
-      <button type="button" class="tabBtn" id="tabBtnPattern" data-tab="pattern">Add a Pattern</button>
-    </div>
-    <a href="https://github.com/williamlieuid/deckbuilder-images/blob/main/ADD-PRODUCT-GUIDE.md" target="_blank" rel="noopener" class="secondary" id="helpLink" style="height:28px; padding:0 12px; border-radius:var(--radius); border:0.5px solid #B4B2A9; font-size:12px; color:var(--text-primary); text-decoration:none; display:inline-flex; align-items:center; gap:5px; margin-bottom:8px;">
-        <span aria-hidden="true">?</span> Help
-    </a>
+  <div class="tabs">
+    <button type="button" class="tabBtn active" id="tabBtnProduct" data-tab="product">Add a Product</button>
+    <button type="button" class="tabBtn" id="tabBtnEdit" data-tab="edit">Edit a Product</button>
+    <button type="button" class="tabBtn" id="tabBtnPattern" data-tab="pattern">Add a Pattern</button>
   </div>
 
   <div class="tabPanel" id="tabPanelProduct">
 
-  <h1>Add a Product</h1>
-  <p class="hint">One product at a time, top to bottom. Nothing is saved until you click Add Product at the end.</p>
+  <h1 id="productFormHeading">Add a Product</h1>
+  <p class="hint">One product at a time, top to bottom. Nothing is saved until you click the button at the end.</p>
 
   <div class="fieldRow">
     <div class="field" style="max-width:140px;">
@@ -85,22 +80,28 @@
       <label>Product Name <span style="color:#D8433B;">*</span></label>
       <input type="text" id="productNameInput" placeholder="e.g. Chisel" />
     </div>
+    <div class="field" style="max-width:150px;">
+      <label>Color (optional)</label>
+      <input type="text" id="productColorInput" placeholder="e.g. Black" />
+    </div>
   </div>
 
   <div class="section-title">Product Photo &amp; Logo Placement</div>
-  <p class="empty-note" style="margin-bottom:8px;">Fill in the Product Number and Name above first — your uploaded files will be automatically renamed to match, so they're easy to find later.</p>
+  <p class="empty-note" style="margin-bottom:8px;">Fill in the Product Number, Name, and Color (if used) above first — your uploaded files below will be automatically renamed to match, so they're easy to find later.</p>
 
   <div class="uploadRow">
-    <button type="button" class="secondary" id="choosePhotoBtn">Upload Product Photo…</button>
+    <button type="button" class="secondary" id="choosePhotoBtn">Choose Blank Product Image</button>
     <input type="file" id="photoInput" accept="image/*" style="display:none;" />
     <span class="status" id="photoStatus">No file chosen</span>
   </div>
+  <p class="empty-note" style="margin:2px 0 10px;">Tip: a plain photo of the product with no logo or branding on it — just the item by itself.</p>
+
   <div class="uploadRow">
-    <button type="button" class="secondary" id="chooseMaskBtn">Upload Logo Area File…</button>
+    <button type="button" class="secondary" id="chooseMaskBtn">Choose Mask Image</button>
     <input type="file" id="maskInput" accept="image/*" style="display:none;" />
     <span class="status" id="maskStatus">No file chosen</span>
   </div>
-  <p class="empty-note">This second file tells us exactly where the logo goes — it should already have that area cut out (made transparent) in an image editor. It's placed over the whole photo automatically.</p>
+  <p class="empty-note">Tip: a file the same size as the photo above, with the logo area cut out (made see-through) in an image editor — everything else in the file can be left blank. It's placed over the whole photo automatically.</p>
 
   <div id="canvasWrap" style="display:none;">
     <canvas id="canvas"></canvas>
@@ -127,7 +128,7 @@
 
   <div class="fieldRow">
     <div class="field">
-      <label>Subtitle (optional)</label>
+      <label>Subtitle <span style="color:#D8433B;">*</span></label>
       <input type="text" id="productTaglineInput" placeholder="e.g. Carpenter Infinity Pencil (white)" />
     </div>
   </div>
@@ -556,26 +557,35 @@ function slugify(str) {
   return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
 }
 
+// Shared by the live filename preview and the real upload at submit time, so the two can never
+// drift apart. Color is optional -- only folded in when the rep actually used that field (e.g. a
+// product sold in multiple colors, where each photo needs its own distinct filename).
+function computeFileSlug() {
+  const sku = document.getElementById('skuInput').value.trim();
+  const name = document.getElementById('productNameInput').value.trim();
+  const color = document.getElementById('productColorInput').value.trim();
+  if (!sku || !name) return null;
+  return sku + '-' + slugify(name) + (color ? '-' + slugify(color) : '');
+}
+
 // Live preview of the actual filename an uploaded photo/logo-area file will be renamed to once
-// both Product Number and Product Name are filled in -- the real rename happens at submit time
-// (see submitProductBtn's handler), this just shows it ahead of time so it's obvious the naming
-// convention is being followed, not a mystery that happens invisibly on save.
+// Product Number and Product Name (and Color, if used) are filled in -- the real rename happens
+// at submit time (see submitProductBtn's handler), this just shows it ahead of time so it's
+// obvious the naming convention is being followed, not a mystery that happens invisibly on save.
 // Only applies to a file actually pending upload (a real data: URI from a freshly-chosen local
 // file) -- a product loaded via Edit a Product carries its EXISTING file's URL instead, which
 // stays exactly as-is unless the rep picks a new file, so showing a "renamed" preview for it
 // would be misleading (nothing is actually being renamed on the server in that case).
 function updateFileNamePreviews() {
-  const sku = document.getElementById('skuInput').value.trim();
-  const name = document.getElementById('productNameInput').value.trim();
-  if (!sku || !name) return;
-  const slug = sku + '-' + slugify(name);
+  const slug = computeFileSlug();
+  if (!slug) return;
   if (currentImage && currentImage.filename && currentImage.dataUrl && currentImage.dataUrl.indexOf('data:') === 0) {
     const ext = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
     document.getElementById('photoStatus').textContent = slug + ext + ' (renamed for you)';
   }
   if (currentImage && currentImage.mask && maskImageDataUrl && maskImageDataUrl.indexOf('data:') === 0) {
     const ext = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
-    document.getElementById('maskStatus').textContent = slug + '-logo-area' + ext + ' (renamed for you)';
+    document.getElementById('maskStatus').textContent = slug + '-mask' + ext + ' (renamed for you)';
   }
 }
 
@@ -836,6 +846,7 @@ function syncProductNameField() {
 }
 document.getElementById('productNameInput').addEventListener('input', () => { syncProductNameField(); updateFileNamePreviews(); });
 document.getElementById('productTaglineInput').addEventListener('input', syncProductNameField);
+document.getElementById('productColorInput').addEventListener('input', updateFileNamePreviews);
 
 // ---------- Tier 1 quantity: exactly one of 1 / 100, never both ----------
 document.querySelectorAll('.tier1QtyChk').forEach(cb => cb.addEventListener('change', (e) => {
@@ -974,10 +985,15 @@ function maskForSheet(mask) {
 // a successful Add Product (see below), so a rep never has to manually reset between products.
 // Deliberately does NOT touch #submitStatus -- the success message that triggered this call stays
 // on screen until the rep starts typing the next product.
+function updateSubmitButtonLabel() {
+  document.getElementById('submitProductBtn').textContent = editingExistingSku ? 'Update Product' : 'Add Product';
+}
+
 function resetForm() {
   currentImage = null;
   maskImageDataUrl = null;
   editingExistingSku = null;
+  updateSubmitButtonLabel();
   productMeta = { fields: {}, blankUploadedFor: null, blankUploadedUrl: null, maskUploadedFor: null, maskUploadedUrl: null };
   document.getElementById('skuInput').value = '';
   updateSkuInputValidity();
@@ -985,6 +1001,7 @@ function resetForm() {
   document.getElementById('maskStatus').textContent = 'No file chosen';
   document.getElementById('productNameInput').value = '';
   document.getElementById('productTaglineInput').value = '';
+  document.getElementById('productColorInput').value = '';
   document.querySelectorAll('[data-header]').forEach(el => {
     el.value = el.dataset.default || '';
     if (el.dataset.default) productMeta.fields[el.dataset.header] = el.dataset.default; // else the default would show visually but be silently omitted at submit, which only reads productMeta.fields
@@ -1008,21 +1025,22 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
   if (!sku) { updateSkuInputValidity(); setSubmitStatus('Please enter a product number.', 'error'); return; }
   if (sku.length < 4) { setSubmitStatus('Product number should be 4 digits.', 'error'); return; }
   if (!productName) { setSubmitStatus('Please enter a product name.', 'error'); return; }
-  if (!currentImage) { setSubmitStatus('Please upload a product photo first.', 'error'); return; }
-  if (!currentImage.mask) { setSubmitStatus('Please upload a logo area file first.', 'error'); return; }
+  if (!document.getElementById('productTaglineInput').value.trim()) { setSubmitStatus('Please enter a subtitle.', 'error'); return; }
+  if (!currentImage) { setSubmitStatus('Please choose a blank product image first.', 'error'); return; }
+  if (!currentImage.mask) { setSubmitStatus('Please choose a mask image first.', 'error'); return; }
 
   const submitBtn = document.getElementById('submitProductBtn');
   submitBtn.disabled = true;
   try {
-    const fileSlug = sku + '-' + slugify(productName);
+    const fileSlug = computeFileSlug();
     const photoExt = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
-    const maskExt = photoExt; // logo-area upload filename just needs to be distinct from the photo's
+    const maskExt = photoExt; // mask upload filename just needs to be distinct from the photo's
 
-    setSubmitStatus('Uploading photo…');
+    setSubmitStatus('Uploading blank product image…');
     const blankUrl = await uploadIfNeeded('blank', currentImage.dataUrl, fileSlug + photoExt);
 
-    setSubmitStatus('Uploading logo area file…');
-    const maskUrl = await uploadIfNeeded('mask', maskImageDataUrl, fileSlug + '-logo-area' + maskExt);
+    setSubmitStatus('Uploading mask image…');
+    const maskUrl = await uploadIfNeeded('mask', maskImageDataUrl, fileSlug + '-mask' + maskExt);
     currentImage.mask.layers[0].imageUrl = maskUrl;
 
     setSubmitStatus('Saving…');
@@ -1220,13 +1238,14 @@ async function loadProductForEdit(sku) {
     document.getElementById('maskStatus').textContent = currentImage.mask ? (maskImageDataUrl || '').split('/').pop().split('?')[0] + ' (already on file)' : 'No file chosen';
 
     editingExistingSku = p.sku;
+    updateSubmitButtonLabel();
     renderCurrent();
     renderCategoryCheckboxes();
     renderAddonCheckboxes();
     updateFileNamePreviews();
 
     switchToTab('product');
-    setSubmitStatus('Editing "' + (p.name || p.sku) + '" (#' + p.sku + ').' + shapeWarning + ' Make your changes, then click Add Product to save.', shapeWarning ? 'error' : 'ok');
+    setSubmitStatus('Editing "' + (p.name || p.sku) + '" (#' + p.sku + ').' + shapeWarning + ' Make your changes, then click Update Product to save.', shapeWarning ? 'error' : 'ok');
     setEditSearchStatus('');
   } catch (err) {
     setEditSearchStatus('Could not load that product: ' + err.message, true);
