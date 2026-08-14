@@ -10,9 +10,9 @@ This is the guide for `add-product-simple.html` — the tool for adding one prod
 
 2. **Product Photo & Logo Placement**
    - **Choose Blank Product Image** — a plain photo of the product with no logo or branding on it.
-   - **Choose Mask Image** — a separate file the same size as the photo, with the logo area cut out (made see-through) in an image editor. The tool places it over the whole photo automatically, no drawing required.
+   - **Choose Mask Image** — a separate file the same size as the photo, with the branding area masked out in any solid color in an image editor — everything else in the file left transparent. The tool places it over the whole photo automatically, no drawing required.
    - Once both are loaded, the photo appears with the mask overlaid in purple. If that file has more than one separate shape (e.g. two symmetric spots), each one gets its own purple/blue/orange handle set automatically.
-   - **Positioning the logo in each spot**: drag the purple center dot to move it, the blue dot to set width/angle, the orange dot to set height/angle. The two don't have to stay at a right angle — dragging them independently lets you rotate and stretch to match the branding area's real shape.
+   - **Positioning the logo in each spot**: the **purple dot** marks where the logo will be — drag it to move the whole thing. The **blue dot** pulls towards the right extent of the branding area; the **orange dot** pulls towards the bottom extent. The two don't have to stay at a right angle — dragging them independently lets you rotate and stretch to match the branding area's real shape.
    - **Rotate logo** (90° left/right) — only appears once a mask image is loaded. Use this if the logo is landing sideways.
 
 3. **Material** — leave unchecked for a normal full-color logo. **Black Leather Product**: logo shows as a flat, solid color. **Wood Product**: logo shows as if engraved into the wood. **Clear / Acrylic Product**: logo shows as a light grey etched look, like laser-etching on clear acrylic (e.g. ClearCharge).
