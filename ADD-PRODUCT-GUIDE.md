@@ -6,41 +6,44 @@ This is the guide for `add-product-simple.html` — the tool for adding one prod
 
 ## Adding a product
 
-1. **SKU** — type it in, or skip it: if your photo's filename starts with the SKU (e.g. `4231-widget.png`), it fills in automatically once you choose the photo.
+1. **Product Number and Product Name** — sit side by side at the top. The Product Number is exactly 4 digits (anything else is stripped automatically as you type). Fill both in first — your uploaded files below get renamed to match automatically, so they're easy to find later.
 
-2. **Photo & branding shape**
-   - **Choose product photo…** — the blank (unbranded) product shot.
-   - **Choose mask image…** — a separate file that defines exactly where the logo goes. This needs to already have the branding area cut into its own transparent alpha channel (e.g. authored in Photoshop) — the tool places it to fill the whole photo automatically, no drawing required.
-   - Once both are loaded, the photo appears with the mask overlaid in purple. If your mask has more than one separate shape (e.g. two symmetric spots), each one gets its own purple/blue/orange handle set automatically.
+2. **Product Photo & Logo Placement**
+   - **Upload Product Photo…** — the blank (unbranded) product shot.
+   - **Upload Logo Area File…** — a separate file that defines exactly where the logo goes. This needs to already have that area cut out (made transparent) in an image editor — the tool places it over the whole photo automatically, no drawing required.
+   - Once both are loaded, the photo appears with the logo area overlaid in purple. If that file has more than one separate shape (e.g. two symmetric spots), each one gets its own purple/blue/orange handle set automatically.
    - **Positioning the logo in each spot**: drag the purple center dot to move it, the blue dot to set width/angle, the orange dot to set height/angle. The two don't have to stay at a right angle — dragging them independently lets you rotate and stretch to match the branding area's real shape.
-   - **Rotate logo** (90° left/right) — only appears once a mask is loaded. Use this if the logo is landing sideways.
+   - **Rotate logo** (90° left/right) — only appears once a logo area file is loaded. Use this if the logo is landing sideways.
 
-3. **Material** — check **Black product** if the item is solid black (the logo renders flat, no pattern option). Check **Wood product** if the logo should render as a tinted, recessed laser-engraving instead of a normal flat logo.
+3. **Material** — leave unchecked for a normal full-color logo. **Black Leather Product**: logo shows as a flat, solid color. **Wood Product**: logo shows as if engraved into the wood. **Clear / Acrylic Product**: logo shows as a light grey etched look, like laser-etching on clear acrylic (e.g. ClearCharge).
 
-4. **Product name / tagline** — kept as two separate fields but saved together as `Name: Tagline`, matching how the sheet expects it.
+4. **Subtitle** (optional) — a secondary line shown under the product name, e.g. "(white)" or a fuller description of the specific variant.
 
 5. **Category** — pick one top-level category, then a subcategory if one applies. Type into the "Add a new…" box for one that doesn't exist yet.
 
-6. **Tags** — comma-separated, used for search.
+6. **Search Tags** — comma-separated, used for search.
 
 7. **Description** — aim for under 50 words; the counter turns red past that.
 
-8. **Lead time / setup fee** — default to 5 days / $93.75, both editable.
+8. **Production Time / Setup Fee** — default to 5 days / $93.75, both editable.
 
-9. **Price tiers** — tier 2 and tier 3 default to quantities 500 and 1000 (editable). Tier 1 has no default quantity since it varies by product.
+9. **Price tiers** — Tier 1's quantity is a simple choice between **1** and **100** (whichever applies to this product — only one can be picked). Tier 2 and Tier 3 default to quantities 500 and 1000 (both editable).
 
 10. **Add-ons** — check any that apply (each pre-fills with its usual price, editable per-product). Add a brand-new add-on via the boxes below the list.
 
-11. Click **Submit to sheet** and watch the status line:
-    - *"Saved as a new row"* / *"Updated existing row N"* — it worked.
-    - A **WARNING** about unmatched columns — a field didn't match anything in the sheet (see Troubleshooting).
-    - *"Failed: ..."* — see Troubleshooting.
+11. Click **Add Product**. A green **✓ Product added!** (or **✓ Product updated!**) message confirms it worked and the form clears itself, ready for the next one. A red message means something needs attention — see Troubleshooting.
 
-12. **Confirm it worked**: open the main Deck Builder tool, search for the SKU, and check it renders correctly with a test logo. That's the real proof.
+12. **Confirm it worked**: open the main Deck Builder tool, search for the product number, and check it renders correctly with a test logo. That's the real proof.
 
-You can revisit a SKU any time — load its photo again, redo anything, submit again — it updates the existing row instead of creating a duplicate.
+Nothing is saved until you click **Add Product** — there's no separate "start over" step needed, since a successful save already clears the form for you.
 
-**Click "Start a new product"** to clear everything and begin the next one — nothing is saved automatically, so submit before starting a new one if you want to keep it.
+---
+
+## Editing an existing product
+
+Switch to the **Edit a Product** tab and search by product number or name — pick it from the suggestions that appear. Everything about it (photo, logo placement, category, pricing, add-ons, material) loads into the Add a Product tab, ready to change. Make your edits and click **Add Product** as usual — since the product number already exists, it updates that product instead of creating a duplicate.
+
+One limitation: this simplified tool can only show/edit a product whose logo area was set up as a single uploaded file (the normal case for anything added through this tool). A product whose branding was drawn with the full masking tool (rectangles/polygons) can still have its other details — name, price, category, etc. — edited here, but its logo placement itself needs the full masking tool.
 
 ---
 
@@ -59,8 +62,8 @@ A pattern that tiles edge-to-edge with no baked-in white border looks cleanest �
 ## Troubleshooting
 
 - **"Unauthorized"** — shouldn't happen in normal use (the tool already carries the right credentials). If you see it, the backend's shared secret may have changed — contact whoever manages the Deck Builder backend.
-- **"WARNING — these columns don't exist in the sheet and were skipped"** — a field's column name no longer matches an actual header in the `Products` tab (someone likely renamed a header). The rest of the row still saved; check the sheet for the mismatched column name.
-- **"Failed: GITHUB_PAT is not configured..."** or **"Failed: GitHub API error 401/403..."** — the backend's GitHub access token is missing or expired. This needs a backend fix, not something fixable from this page — see "For the admin" below.
+- **"...something needs attention: these fields didn't match the sheet and were skipped"** — a field's column name no longer matches an actual header in the `Products` tab (someone likely renamed a header). The rest of the row still saved; check the sheet for the mismatched column name.
+- **"Something went wrong: GITHUB_PAT is not configured..."** or **"...GitHub API error 401/403..."** — the backend's GitHub access token is missing or expired. This needs a backend fix, not something fixable from this page — see "For the admin" below.
 - **Photo/pattern shows up on GitHub but the deck builder still shows the old one** — uploads try to purge the image CDN's cache automatically, but that can occasionally lag. Give it a few minutes, then hard-refresh (Ctrl+Shift+R) wherever you're checking.
 - **Status line says "Row saved, but the live snapshot push failed: ..."** — the sheet row itself saved fine; only the `products.json` refresh that makes it show up live failed, usually a transient GitHub hiccup. It retries automatically every 10 minutes — no action needed unless it's still stale after that.
 - **Categories/add-ons show "Couldn't load..." at the top of the form** — the tool couldn't reach the live product data at all. Click **Retry**; if it keeps failing, the backend may be down — see "For the admin."
