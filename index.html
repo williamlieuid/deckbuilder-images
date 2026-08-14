@@ -132,7 +132,8 @@
 
   .note { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-  .brandmark { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .brandmark { display: flex; align-items: center; gap: 10px; }
   .brandmark .mark {
     width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; position: relative;
     background: linear-gradient(135deg, var(--accent), #F2A65A);
@@ -143,6 +144,21 @@
   .brandmark .mark::after { width: 9px; height: 3px; top: 16px; opacity: 0.6; }
   .brandmark .wordmark { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
   .brandmark .wordmark span { font-weight: 800; color: var(--accent); }
+
+  .settingsIconLink {
+    position: relative; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    border: 0.5px solid var(--border); background: #fff; display: flex; align-items: center;
+    justify-content: center; font-size: 16px; color: var(--text-secondary); text-decoration: none;
+    cursor: pointer;
+  }
+  .settingsIconLink:hover { background: var(--surface-1); color: var(--text-primary); }
+  .settingsTooltip {
+    position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: var(--text-primary);
+    color: #fff; font-size: 11px; line-height: 1.5; padding: 8px 10px; border-radius: 6px;
+    opacity: 0; visibility: hidden; transition: opacity 0.15s; pointer-events: none; text-align: left; z-index: 30;
+  }
+  .settingsTooltip::after { content: ''; position: absolute; bottom: 100%; right: 12px; border: 5px solid transparent; border-bottom-color: var(--text-primary); }
+  .settingsIconLink:hover .settingsTooltip, .settingsIconLink:focus .settingsTooltip { opacity: 1; visibility: visible; }
 
   .region-ctrl-btn { border: 1px solid var(--border); border-radius: 3px; }
   .colorize-region-input { -webkit-appearance: none; appearance: none; }
@@ -155,9 +171,15 @@
 <div class="wrap" id="wrap">
 
   <div class="no-print">
-    <div class="brandmark">
-      <span class="mark" aria-hidden="true"></span>
-      <span class="wordmark">Deck<span>Builder</span></span>
+    <div class="header-row">
+      <div class="brandmark">
+        <span class="mark" aria-hidden="true"></span>
+        <span class="wordmark">Deck<span>Builder</span></span>
+      </div>
+      <a href="deckbuilder-settings.html" target="_blank" rel="noopener" class="settingsIconLink" aria-label="Admin settings">
+        <span aria-hidden="true">⚙</span>
+        <span class="settingsTooltip">Admin settings — password required. Not for general use.</span>
+      </a>
     </div>
 
     <div class="panel">
