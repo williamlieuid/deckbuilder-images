@@ -5116,6 +5116,45 @@ function getWoodEngravedLogoSource(logoImg) {
   return out;
 }
 
+const CLEAR_ETCH_COLOR = '#D9D9D9';
+// Simulates a laser-etched mark on clear/frosted acrylic (e.g. ClearCharge): a light grey,
+// slightly translucent fill (acrylic is see-through, so the surface under the mark should still
+// read faintly through it, unlike wood's fully opaque recess) plus a soft outward blur pass
+// underneath it -- a real laser scatters light a little beyond its exact vector path etching into
+// acrylic, which reads as a faint soft halo around the crisp mark rather than a hard edge. Built
+// the same knockout-silhouette technique as getKnockoutLogoSource/getWoodEngravedLogoSource above.
+function getClearEtchedLogoSource(logoImg) {
+  const w = logoImg.naturalWidth || logoImg.width, h = logoImg.naturalHeight || logoImg.height;
+  const pad = Math.round(Math.max(w, h) * 0.04) + 4;
+  const cw = w + pad * 2, ch = h + pad * 2;
+
+  const silhouette = document.createElement('canvas');
+  silhouette.width = cw; silhouette.height = ch;
+  const sctx = silhouette.getContext('2d');
+  sctx.drawImage(logoImg, pad, pad, w, h);
+  sctx.globalCompositeOperation = 'source-in';
+  sctx.fillStyle = CLEAR_ETCH_COLOR;
+  sctx.fillRect(0, 0, cw, ch);
+
+  const out = document.createElement('canvas');
+  out.width = cw; out.height = ch;
+  const octx = out.getContext('2d');
+
+  const blurPx = Math.max(1, Math.round(Math.min(w, h) * 0.02));
+  octx.save();
+  octx.filter = `blur(${blurPx}px)`;
+  octx.globalAlpha = 0.5;
+  octx.drawImage(silhouette, 0, 0);
+  octx.restore();
+
+  octx.save();
+  octx.globalAlpha = 0.88;
+  octx.drawImage(silhouette, 0, 0);
+  octx.restore();
+
+  return out;
+}
+
 // Draws base image (contain-fit into a square canvas, backdrop-filled), the pattern fill
 // clipped to each defined region's own shape (rect/poly/mask — never the whole product), the
 // logo warped on top within that same region (knocked out to a white silhouette when
@@ -5123,7 +5162,7 @@ function getWoodEngravedLogoSource(logoImg) {
 // perspective-warped through the region's own homography instead of flat-tiled, so a diagonal
 // product shot doesn't look like a flat decal; rect/mask stay flat-tiled since they don't carry
 // perspective info the way a hand-placed 4-corner quad does.
-function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply, woodProduct) {
+function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply, woodProduct, clearProduct) {
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
@@ -5141,6 +5180,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
 
   const baseLogoSrc = !logoImg ? null
     : woodProduct ? getWoodEngravedLogoSource(logoImg)
+    : clearProduct ? getClearEtchedLogoSource(logoImg)
     : (pattern && pattern.knockout) ? getKnockoutLogoSource(logoImg)
     : logoImg;
   const skipShading = isDarkBase(baseImg);
@@ -5209,7 +5249,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
         scratch.width = size; scratch.height = size;
         const sctx = scratch.getContext('2d');
         const regionForAxis = axis !== null ? Object.assign({}, region, { logoAxis: axis }) : region;
-        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading, woodProduct);
+        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading, woodProduct, clearProduct);
         sctx.globalCompositeOperation = 'destination-in';
         sctx.drawImage(islandClips ? islandClips[axisIdx] : maskCanvas, 0, 0);
         ctx.drawImage(scratch, 0, 0);
@@ -5242,7 +5282,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
     // pattern render correctly regardless of click order, without touching the clip/radii above.
     const warpQuadPct = normalizeQuadWinding(quadPct);
     const warpQuad = warpQuadPct.map(pctToCanvas);
-    paintRegionContent(ctx, warpQuad, warpQuadPct, region, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, kind === 'poly', hasRectAnchor, logoMultiply, skipShading, woodProduct);
+    paintRegionContent(ctx, warpQuad, warpQuadPct, region, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, kind === 'poly', hasRectAnchor, logoMultiply, skipShading, woodProduct, clearProduct);
     ctx.restore();
   });
 }
@@ -5250,15 +5290,16 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
 // Shared by all three region kinds: fills the pattern within whatever clip/target the caller
 // set up (flat-tiled, or perspective-warped through the region's own quad when perspectiveTile
 // is true), applies shading, then warps the logo on top.
-function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoSrc, rawLogoSrc, baseImg, dx, dy, dw, dh, size, perspectiveTile, hasRectAnchor, logoMultiply, skipShading, woodProduct) {
+function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoSrc, rawLogoSrc, baseImg, dx, dy, dw, dh, size, perspectiveTile, hasRectAnchor, logoMultiply, skipShading, woodProduct, clearProduct) {
   // Per-region override of the card-wide logo source: __colorize (the "Colorize Logo" control)
   // always wins when set, regardless of pattern state -- it's a deliberate solid-color choice, not
   // tied to knockout-vs-pattern logic. Otherwise, __skipPattern (the "hide pattern" control) means
   // there's no pattern left under this one region to justify a plain white silhouette, so fall back
-  // to the logo's real colors instead of the card-wide knocked-out version. Wood-engraved logos
-  // aren't affected -- that treatment is a fixed physical simulation, not a knockout choice.
+  // to the logo's real colors instead of the card-wide knocked-out version. Wood-engraved and
+  // clear-etched logos aren't affected -- those are fixed physical-material simulations, not a
+  // knockout choice a rep can toggle per region.
   let effectiveLogoSrc = baseLogoSrc;
-  if (baseLogoSrc && !woodProduct) {
+  if (baseLogoSrc && !woodProduct && !clearProduct) {
     if (region.__colorize) effectiveLogoSrc = getColorizedLogoSource(rawLogoSrc, region.__colorize);
     else if (colorizeAll) effectiveLogoSrc = getColorizedLogoSource(rawLogoSrc, colorizeAllColor);
     else if (region.__skipPattern && pattern && pattern.knockout) effectiveLogoSrc = rawLogoSrc;
@@ -5743,10 +5784,11 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
     return;
   }
 
-  // Black/wood material overrides skip pattern branding entirely -- ink pattern texture doesn't
-  // apply to a flat black surface (the whole point of "black" here) or to a laser-engraved wood
-  // recess (which uses its own tinted/embossed look instead, see getWoodEngravedLogoSource).
-  const patternActive = p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct;
+  // Black/wood/clear material overrides skip pattern branding entirely -- ink pattern texture
+  // doesn't apply to a flat black surface (the whole point of "black" here), a laser-engraved wood
+  // recess, or a laser-etched clear/acrylic mark (each uses its own fixed look instead, see
+  // getWoodEngravedLogoSource / getClearEtchedLogoSource).
+  const patternActive = p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct && !p.clearProduct;
   const wantsPattern = patternActive && !!selectedPattern; // image mode specifically -- Solid Fill needs no image fetch
   const maskUrls = collectMaskImageUrls(effectiveRegions);
   // Fire every image request for this product at once instead of one-at-a-time -- previously each
@@ -5780,8 +5822,8 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   const maskImageCache = {};
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
   const previewSize = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 350 : 700;
-  const effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : logoMultiply;
-  drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
+  const effectiveLogoMultiply = (p.blackProduct || p.woodProduct || p.clearProduct) ? false : logoMultiply;
+  drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct);
 
   const snapshot = document.createElement('canvas');
   snapshot.width = canvas.width; snapshot.height = canvas.height;
@@ -6002,7 +6044,7 @@ async function exportProductImage(sku) {
     const baseImg = await loadCrossOriginImage(baseUrl);
     const logoImg = logoDataUrl ? await loadCrossOriginImage(logoDataUrl) : null;
     let pattern = null;
-    if (p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct) {
+    if (p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct && !p.clearProduct) {
       const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
       if (selectedPattern) {
         const patternImg = await loadCrossOriginImage(selectedPattern);
@@ -6015,8 +6057,8 @@ async function exportProductImage(sku) {
     const canvas = document.createElement('canvas');
     const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
     const maskImageCache = await loadMaskImageCache(effectiveRegions, loadCrossOriginImage);
-    const effectiveLogoMultiply = (p.blackProduct || p.woodProduct) ? false : logoMultiply;
-    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct);
+    const effectiveLogoMultiply = (p.blackProduct || p.woodProduct || p.clearProduct) ? false : logoMultiply;
+    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + '.jpg');
   } catch (err) {
