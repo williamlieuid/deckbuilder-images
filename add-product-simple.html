@@ -101,7 +101,7 @@
     <input type="file" id="maskInput" accept="image/*" style="display:none;" />
     <span class="status" id="maskStatus">No file chosen</span>
   </div>
-  <p class="empty-note">Tip: a file the same size as the photo above, with the logo area cut out (made see-through) in an image editor — everything else in the file can be left blank. It's placed over the whole photo automatically.</p>
+  <p class="empty-note">Tip: a file the same size as the photo above, with the branding area masked out in any solid color — everything else in the file left transparent. It's placed over the whole photo automatically.</p>
 
   <div id="canvasWrap" style="display:none;">
     <canvas id="canvas"></canvas>
@@ -112,7 +112,13 @@
     <button type="button" class="tiny" id="rotateCCWBtn">90° ↺ Left</button>
     <button type="button" class="tiny" id="rotateCWBtn">90° ↻ Right</button>
   </div>
-  <p class="empty-note" id="axisHint" style="display:none;">Drag the dots on the photo to position, resize, and angle the logo so it fits the spot naturally.</p>
+  <p class="empty-note" id="axisHint" style="display:none; line-height:1.7;">
+    Drag the dots on the photo to position and shape the logo:<br>
+    <strong style="color:#8A4FD8;">Purple dot</strong> — where the logo will be.<br>
+    <strong style="color:#3B6FD4;">Blue dot</strong> — pull towards the right extent of the branding area.<br>
+    <strong style="color:#D8843B;">Orange dot</strong> — pull towards the bottom extent of the branding area.<br>
+    If the logo lands sideways, use the <strong>Rotate Logo</strong> button above instead of fighting the dots.
+  </p>
 
   <div class="section-title">Product Details</div>
 
