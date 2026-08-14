@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Deck Builder Settings</title>
+<style>
+  :root {
+    --border: #E0DED5; --text-primary: #1a1a1a; --text-secondary: #5F5E5A; --text-muted: #918F86;
+    --surface-1: #F7F6F2; --accent: #D85A30; --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; margin: 0; color: var(--text-primary); background: #fff; }
+  .page { max-width: 620px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.hint { font-size: 12px; color: var(--text-secondary); margin: 0 0 20px; line-height: 1.5; }
+  button { font-family: inherit; cursor: pointer; }
+  button.primary { height: 34px; padding: 0 14px; border: none; border-radius: var(--radius); background: var(--accent); color: #fff; font-size: 12px; font-weight: 500; }
+  button.primary:hover { opacity: 0.9; }
+  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { height: 30px; padding: 0 10px; border: 0.5px solid #B4B2A9; border-radius: var(--radius); background: #fff; color: var(--text-primary); font-size: 12px; }
+  button.tiny { height: 24px; padding: 0 8px; font-size: 11px; border: 0.5px solid #B4B2A9; border-radius: 6px; background: #fff; }
+  .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); margin: 24px 0 8px; padding-top: 16px; border-top: 0.5px solid var(--border); }
+  .section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+  .empty-note { font-size: 11px; color: var(--text-muted); }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; padding: 6px 8px; border: 0.5px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 44px; }
+  .fieldRow { display: flex; gap: 10px; }
+  .fieldRow .field { flex: 1; }
+  .tierGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .tierGrid .tierCol h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 4px; }
+  .tierGrid .tierCol input { margin-bottom: 4px; }
+  #topCategoryCheckboxes, #subCategoryCheckboxes, #addonCheckboxes { display: flex; flex-wrap: wrap; gap: 2px 14px; max-height: 110px; overflow-y: auto; border: 0.5px solid var(--border); border-radius: 6px; padding: 8px; }
+  label.chk { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; cursor: pointer; white-space: nowrap; }
+  .addonRow { display: flex; align-items: center; gap: 4px; font-size: 11px; margin: 2px 0; white-space: nowrap; flex: 0 0 auto; }
+  .addonRow .addonCheckLabel { display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer; }
+  .addonRow input[type=number] { width: 54px; height: 20px; padding: 0 4px; font-size: 10px; }
+  .modalActions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 0.5px solid var(--border); }
+  #submitStatus { font-size: 11px; flex: 1; }
+  #submitStatus.error { color: #D8433B; }
+  #submitStatus.ok { color: #2E8B57; }
+  #canvasWrap { position: relative; border: 0.5px solid var(--border); background: repeating-conic-gradient(#a8a8a8 0% 25%, #c4c4c4 0% 50%) 50% / 20px 20px; margin: 10px 0; display: inline-block; }
+  canvas { display: block; cursor: crosshair; max-width: 100%; }
+  .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  .uploadRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .uploadRow .status { font-size: 11px; color: var(--text-muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #skuInput.invalid { border-color: #D8433B; }
+  .tabs { display: flex; gap: 24px; margin-bottom: 24px; border-bottom: 0.5px solid var(--border); }
+  .tabBtn { background: none; border: none; padding: 0 0 10px; font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabBtn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .suggestion-item { padding: 8px 10px; font-size: 12px; cursor: pointer; border-radius: 4px; }
+  .suggestion-item:hover, .suggestion-item.active { background: var(--surface-1); }
+  .suggestion-item .sfx-sku { color: var(--text-muted); font-size: 11px; margin-right: 6px; }
+  .page { display: none; }
+  #settingsLockScreen { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; padding: 20px; text-align: center; }
+  #settingsLockScreen .lockTitle { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  #settingsLockScreen .lockNote { font-size: 12px; color: var(--text-secondary); max-width: 260px; line-height: 1.5; }
+  #settingsLockScreen .lockRow { display: flex; gap: 8px; }
+  #settingsPasswordInput { width: 160px; height: 34px; padding: 0 10px; border: 0.5px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; }
+  #settingsUnlockBtn { height: 34px; }
+  #settingsPasswordError { font-size: 11px; color: #D8433B; min-height: 14px; }
+</style>
+</head>
+<body>
+
+<div id="settingsLockScreen">
+  <div class="lockTitle">Deck Builder Settings</div>
+  <div class="lockNote">This area is for admin use only — adding/editing products and patterns. Enter the password to continue.</div>
+  <div class="lockRow">
+    <input type="password" id="settingsPasswordInput" placeholder="Password" autocomplete="off" />
+    <button type="button" class="primary" id="settingsUnlockBtn">Unlock</button>
+  </div>
+  <div id="settingsPasswordError"></div>
+</div>
+
+<div class="page">
+
+  <div class="tabs">
+    <button type="button" class="tabBtn active" id="tabBtnProduct" data-tab="product">Add a Product</button>
+    <button type="button" class="tabBtn" id="tabBtnEdit" data-tab="edit">Edit a Product</button>
+    <button type="button" class="tabBtn" id="tabBtnPattern" data-tab="pattern">Add a Pattern</button>
+  </div>
+
+  <div class="tabPanel" id="tabPanelProduct">
+
+  <h1 id="productFormHeading">Add a Product</h1>
+  <p class="hint">One product at a time, top to bottom. Nothing is saved until you click the button at the end.</p>
+
+  <div class="fieldRow">
+    <div class="field" style="max-width:140px;">
+      <label>Product Number <span style="color:#D8433B;">*</span></label>
+      <input type="text" id="skuInput" inputmode="numeric" maxlength="4" placeholder="e.g. 4231" required />
+    </div>
+    <div class="field">
+      <label>Product Name <span style="color:#D8433B;">*</span></label>
+      <input type="text" id="productNameInput" placeholder="e.g. Chisel" />
+    </div>
+    <div class="field" style="max-width:150px;">
+      <label>Color (optional)</label>
+      <input type="text" id="productColorInput" placeholder="e.g. Black" />
+    </div>
+  </div>
+
+  <div class="section-title">Product Photo &amp; Logo Placement</div>
+  <p class="empty-note" style="margin-bottom:8px;">Fill in the Product Number, Name, and Color (if used) above first — your uploaded files below will be automatically renamed to match, so they're easy to find later.</p>
+
+  <div class="uploadRow">
+    <button type="button" class="secondary" id="choosePhotoBtn">Choose Blank Product Image</button>
+    <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+    <span class="status" id="photoStatus">No file chosen</span>
+  </div>
+  <p class="empty-note" style="margin:2px 0 10px;">Tip: a plain photo of the product with no logo or branding on it — just the item by itself.</p>
+
+  <div class="uploadRow">
+    <button type="button" class="secondary" id="chooseMaskBtn">Choose Mask Image</button>
+    <input type="file" id="maskInput" accept="image/*" style="display:none;" />
+    <span class="status" id="maskStatus">No file chosen</span>
+  </div>
+  <p class="empty-note">Tip: a file the same size as the photo above, with the branding area masked out in any solid color — everything else in the file left transparent. It's placed over the whole photo automatically.</p>
+
+  <div id="canvasWrap" style="display:none;">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="row" id="rotateRow" style="display:none;">
+    <span style="font-size:11px; color:var(--text-secondary);">Rotate logo</span>
+    <button type="button" class="tiny" id="rotateCCWBtn">90° ↺ Left</button>
+    <button type="button" class="tiny" id="rotateCWBtn">90° ↻ Right</button>
+  </div>
+  <p class="empty-note" id="axisHint" style="display:none; line-height:1.7;">
+    Drag the dots on the photo to position and shape the logo:<br>
+    <strong style="color:#8A4FD8;">Purple dot</strong> — where the logo will be.<br>
+    <strong style="color:#3B6FD4;">Blue dot</strong> — pull towards the right extent of the branding area.<br>
+    <strong style="color:#D8843B;">Orange dot</strong> — pull towards the bottom extent of the branding area.<br>
+    If the logo lands sideways, use the <strong>Rotate Logo</strong> button above instead of fighting the dots.
+  </p>
+
+  <div class="section-title">Product Details</div>
+
+  <div class="field">
+    <label>Material</label>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <label class="chk"><input type="checkbox" id="blackProductChk" /> Black Leather Product</label>
+      <label class="chk"><input type="checkbox" id="woodProductChk" /> Wood Product</label>
+      <label class="chk"><input type="checkbox" id="clearProductChk" /> Clear / Acrylic Product</label>
+    </div>
+    <p class="empty-note" style="margin-top:4px;">Leave unchecked for a normal full-color logo. Black Leather: logo shows as a flat, solid color. Wood: logo shows as if engraved into the wood. Clear / Acrylic: logo shows as a light grey etched look, like laser-etching on clear acrylic (e.g. ClearCharge).</p>
+  </div>
+
+  <div class="fieldRow">
+    <div class="field">
+      <label>Subtitle <span style="color:#D8433B;">*</span></label>
+      <input type="text" id="productTaglineInput" placeholder="e.g. Carpenter Infinity Pencil (white)" />
+    </div>
+  </div>
+  <div class="fieldRow">
+    <div class="field">
+      <label>Category</label>
+      <div id="topCategoryCheckboxes" class="empty-note">Loading existing categories…</div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <input type="text" id="newTopCategoryInput" placeholder="Add a new top-level category…" style="flex:1;" />
+        <button type="button" class="tiny" id="addTopCategoryBtn" style="flex:0 0 auto;">Add</button>
+      </div>
+      <div id="subCategoryWrap" style="margin-top:10px; display:none;">
+        <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Subcategory (optional)</label>
+        <div id="subCategoryCheckboxes"></div>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <input type="text" id="newSubCategoryInput" placeholder="Add a new subcategory…" style="flex:1;" />
+          <button type="button" class="tiny" id="addSubCategoryBtn" style="flex:0 0 auto;">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Search Tags (comma-separated)</label>
+      <input type="text" data-header="Tags (comma-separated)" placeholder="eco-friendly, tech, onboarding" />
+    </div>
+  </div>
+  <div class="field">
+    <label>Description <span id="descWordCount" style="font-weight:400; color:var(--text-muted);">0 / 50 words</span></label>
+    <textarea id="descTextarea" data-header="Description" placeholder="What it is, what makes it worth recommending…" autocomplete="off"></textarea>
+  </div>
+  <div class="fieldRow">
+    <div class="field">
+      <label>Production Time (Days)</label>
+      <input type="number" min="0" data-header="Lead Time (days)" data-default="5" />
+    </div>
+    <div class="field">
+      <label>Setup Fee ($)</label>
+      <input type="number" min="0" step="0.01" data-header="Setup Fee (USD)" data-default="93.75" />
+    </div>
+  </div>
+
+  <div class="tierGrid">
+    <div class="tierCol">
+      <h4>Tier 1</h4>
+      <div style="display:flex; gap:12px; height:26px; align-items:center;">
+        <label class="chk"><input type="checkbox" class="tier1QtyChk" value="1" /> 1</label>
+        <label class="chk"><input type="checkbox" class="tier1QtyChk" value="100" /> 100</label>
+      </div>
+      <input type="number" min="0" step="0.01" placeholder="Price USD" data-header="Price 1 USD" />
+      <input type="number" min="0" step="0.01" placeholder="Price CAD" data-header="Price 1 CAD" />
+    </div>
+    <div class="tierCol">
+      <h4>Tier 2</h4>
+      <input type="number" min="0" placeholder="Qty" data-header="Qty 2" data-default="500" />
+      <input type="number" min="0" step="0.01" placeholder="Price USD" data-header="Price 2 USD" />
+      <input type="number" min="0" step="0.01" placeholder="Price CAD" data-header="Price 2 CAD" />
+    </div>
+    <div class="tierCol">
+      <h4>Tier 3</h4>
+      <input type="number" min="0" placeholder="Qty" data-header="Qty 3" data-default="1000" />
+      <input type="number" min="0" step="0.01" placeholder="Price USD" data-header="Price 3 USD" />
+      <input type="number" min="0" step="0.01" placeholder="Price CAD" data-header="Price 3 CAD" />
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Add-ons (optional)</label>
+    <div id="addonCheckboxes" class="empty-note">Loading existing add-ons…</div>
+    <div style="display:flex; gap:6px; margin-top:6px;">
+      <input type="text" id="newAddonNameInput" placeholder="Add-on name…" style="flex:2;" />
+      <input type="number" min="0" step="0.01" id="newAddonPriceInput" placeholder="Price (optional)" style="flex:1;" />
+      <button type="button" class="tiny" id="addAddonBtn" style="flex:0 0 auto;">Add</button>
+    </div>
+  </div>
+
+  <div class="modalActions">
+    <span id="submitStatus"></span>
+    <button type="button" class="primary" id="submitProductBtn">Add Product</button>
+  </div>
+
+  <div style="text-align:right; margin-top:10px;">
+    <a href="#" id="removeProductLink" style="display:none; color:#D8433B; text-decoration:underline; font-size:11px;">Remove this product</a>
+  </div>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelEdit" style="display:none;">
+
+  <h1>Edit a Product</h1>
+  <p class="hint">Find a product already in the system to change any of its details, photo, or logo placement.</p>
+
+  <div class="field" style="position:relative;">
+    <label>Search by Product Number or Name</label>
+    <input type="text" id="editSearchInput" placeholder="e.g. 4231 or Chisel" autocomplete="off" />
+    <div id="editSearchSuggestions" class="suggestions-panel" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:20; background:#fff; border:0.5px solid var(--border); border-radius:6px; margin-top:4px; max-height:240px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
+  </div>
+  <p class="empty-note" id="editSearchStatus"></p>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelPattern" style="display:none;">
+
+  <h1>Add a Pattern</h1>
+  <p class="hint">Not tied to any product — uploads straight into the shared pattern library, live on the site immediately.</p>
+
+  <button type="button" class="secondary" id="uploadPatternBtn">Upload new pattern…</button>
+  <input type="file" id="uploadPatternInput" accept="image/*" style="display:none;" />
+  <p class="empty-note" id="uploadPatternStatus" style="margin-top:8px;"></p>
+
+  <div class="section-title">Existing Patterns</div>
+  <div id="existingPatternsGrid" style="display:flex; flex-wrap:wrap; gap:14px;">
+    <span class="empty-note">Loading…</span>
+  </div>
+
+  </div>
+
+</div>
+
+<script>
+// ---------- Password gate ----------
+// Not real security (this is a static page, view-source shows the password) -- same threat model
+// as SUBMIT_SECRET elsewhere in this app: a deterrent against a rep stumbling in here by accident,
+// not protection against someone who actually wants in. Remembered per-browser via localStorage so
+// a legitimate admin only has to enter it once, not on every visit.
+const SETTINGS_PASSWORD = '3949';
+const SETTINGS_UNLOCK_KEY = 'deckbuilder_settings_unlocked';
+function unlockSettingsPage() {
+  document.getElementById('settingsLockScreen').style.display = 'none';
+  document.querySelector('.page').style.display = 'block';
+}
+if (localStorage.getItem(SETTINGS_UNLOCK_KEY) === 'true') {
+  unlockSettingsPage();
+}
+document.getElementById('settingsUnlockBtn').addEventListener('click', () => {
+  const input = document.getElementById('settingsPasswordInput');
+  if (input.value === SETTINGS_PASSWORD) {
+    localStorage.setItem(SETTINGS_UNLOCK_KEY, 'true');
+    unlockSettingsPage();
+  } else {
+    document.getElementById('settingsPasswordError').textContent = 'Incorrect password.';
+    input.value = '';
+    input.focus();
+  }
+});
+document.getElementById('settingsPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('settingsUnlockBtn').click();
+});
+
+const MAX_CANVAS = 640;
+
+// The whole tool works on exactly one product at a time -- no queue array, no session save/load,
+// no next/previous. currentImage is null until a photo is chosen, then holds everything about
+// that one photo (mirrors one images[] entry from the full masking-tool.html, just not kept in an
+// array): { filename, dataUrl, img, naturalW, naturalH, mask }.
+let currentImage = null;
+let dragHandle = null;
+let maskImageDataUrl = null; // kept separately from mask.layers[0]._previewDataUrl only for upload-time reuse clarity
+let editingExistingSku = null; // set when a product was loaded via the Edit a Product tab, cleared on submit/reset
+
+function current() { return currentImage; }
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function scaleFor(im) { return Math.min(MAX_CANVAS / im.naturalW, MAX_CANVAS / im.naturalH, 1); }
+function toPct(px, py, im) { const s = scaleFor(im); return { x: (px / (im.naturalW * s)) * 100, y: (py / (im.naturalH * s)) * 100 }; }
+function toCanvasPx(pctX, pctY, im) { const s = scaleFor(im); return { x: (pctX / 100) * im.naturalW * s, y: (pctY / 100) * im.naturalH * s }; }
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+function fileToDataUrl(file) {
+  return new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(file); });
+}
+function loadImage(src) {
+  return new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = src; });
+}
+
+// Finds each distinct opaque island in a mask image using BFS connected components.
+// Returns an array of { cx, cy, box:{x,y,w,h} } in percent, sorted largest-first.
+// Regions smaller than 0.2% of total pixels are treated as noise and dropped.
+function detectMaskRegions(img) {
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const cctx = c.getContext('2d');
+  cctx.drawImage(img, 0, 0);
+  let data;
+  try { data = cctx.getImageData(0, 0, w, h).data; } catch (err) { return null; }
+  const visited = new Uint8Array(w * h);
+  const regions = [];
+  for (let startY = 0; startY < h; startY++) {
+    for (let startX = 0; startX < w; startX++) {
+      const idx = startY * w + startX;
+      if (visited[idx] || data[idx * 4 + 3] < 10) continue;
+      const queue = [idx];
+      visited[idx] = 1;
+      let minX = startX, maxX = startX, minY = startY, maxY = startY, count = 0, qi = 0;
+      while (qi < queue.length) {
+        const cur = queue[qi++];
+        const cy = Math.floor(cur / w), cx = cur % w;
+        count++;
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        if (cx > 0 && !visited[cur - 1] && data[(cur - 1) * 4 + 3] >= 10) { visited[cur - 1] = 1; queue.push(cur - 1); }
+        if (cx < w - 1 && !visited[cur + 1] && data[(cur + 1) * 4 + 3] >= 10) { visited[cur + 1] = 1; queue.push(cur + 1); }
+        if (cy > 0 && !visited[cur - w] && data[(cur - w) * 4 + 3] >= 10) { visited[cur - w] = 1; queue.push(cur - w); }
+        if (cy < h - 1 && !visited[cur + w] && data[(cur + w) * 4 + 3] >= 10) { visited[cur + w] = 1; queue.push(cur + w); }
+      }
+      if (count >= w * h * 0.002) {
+        regions.push({
+          count,
+          box: { x: (minX / w) * 100, y: (minY / h) * 100, w: ((maxX - minX + 1) / w) * 100, h: ((maxY - minY + 1) / h) * 100 },
+          cx: ((minX + maxX) / 2 / w) * 100,
+          cy: ((minY + maxY) / 2 / h) * 100
+        });
+      }
+    }
+  }
+  return regions.sort((a, b) => b.count - a.count);
+}
+
+// Mask is always exactly one full-canvas (x:0,y:0,w:100,h:100) image-type layer here -- no
+// composite add/subtract stack, no rect/ellipse/4-corner primitives, no per-shape resize/rotate
+// (a precisely-authored mask file needs none of that -- the shape/holes live in its own alpha
+// channel). That's the entire simplification versus the full masking-tool.html.
+function defaultLogoAxis() {
+  return { center: { x: 50, y: 50 }, xEnd: { x: 100, y: 50 }, yEnd: { x: 50, y: 100 } };
+}
+
+function drawAllAxes(mask, im) {
+  const axes = mask.axesList && mask.axesList.length ? mask.axesList : (mask.logoAxis ? [mask.logoAxis] : [defaultLogoAxis()]);
+  const multi = axes.length > 1;
+  axes.forEach((axis, i) => {
+    const c = toCanvasPx(axis.center.x, axis.center.y, im);
+    const xe = toCanvasPx(axis.xEnd.x, axis.xEnd.y, im);
+    const ye = toCanvasPx(axis.yEnd.x, axis.yEnd.y, im);
+    ctx.save();
+    ctx.strokeStyle = '#8A4FD8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(xe.x, xe.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(ye.x, ye.y); ctx.stroke();
+    const dot = (p, color) => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    };
+    dot(c, '#8A4FD8'); dot(xe, '#3B6FD4'); dot(ye, '#D8843B');
+    if (multi) {
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), c.x, c.y);
+    }
+    ctx.restore();
+  });
+}
+
+// Composite preview: draws the mask image into its full-canvas placement, tinted, so the user
+// sees the actual masked result rather than just an outline.
+function drawMaskCompositePreview(im) {
+  const layer = im.mask.layers[0];
+  if (!(layer._previewImg instanceof HTMLImageElement)) return; // not loaded yet -- skip silently
+  const mc = document.createElement('canvas');
+  mc.width = canvas.width; mc.height = canvas.height;
+  const mctx = mc.getContext('2d');
+  mctx.drawImage(layer._previewImg, 0, 0, mc.width, mc.height);
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = '#8A4FD8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.drawImage(mc, 0, 0);
+  ctx.restore();
+}
+
+function renderCurrent() {
+  const im = current();
+  document.getElementById('rotateRow').style.display = im && im.mask ? 'flex' : 'none';
+  document.getElementById('axisHint').style.display = im && im.mask ? 'block' : 'none';
+  if (!im) { document.getElementById('canvasWrap').style.display = 'none'; return; }
+  document.getElementById('canvasWrap').style.display = 'inline-block';
+
+  const s = scaleFor(im);
+  canvas.width = im.naturalW * s;
+  canvas.height = im.naturalH * s;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(im.img, 0, 0, canvas.width, canvas.height);
+
+  if (im.mask) {
+    drawMaskCompositePreview(im);
+    drawAllAxes(im.mask, im);
+  }
+}
+
+function canvasPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / r.width, scaleY = canvas.height / r.height; // canvas can be CSS-scaled down on narrow screens
+  return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+}
+
+// Searches all region axes for a hit; returns { shape, regionIdx } or null.
+function hitHandle(pt) {
+  const im = current(); if (!im || !im.mask) return null;
+  const axes = im.mask.axesList && im.mask.axesList.length ? im.mask.axesList : (im.mask.logoAxis ? [im.mask.logoAxis] : []);
+  for (let i = 0; i < axes.length; i++) {
+    const axis = axes[i];
+    const xe = toCanvasPx(axis.xEnd.x, axis.xEnd.y, im);
+    const ye = toCanvasPx(axis.yEnd.x, axis.yEnd.y, im);
+    const c = toCanvasPx(axis.center.x, axis.center.y, im);
+    if (dist(pt, xe) < 9) return { shape: 'logo-axis-x', regionIdx: i };
+    if (dist(pt, ye) < 9) return { shape: 'logo-axis-y', regionIdx: i };
+    if (dist(pt, c) < 9) return { shape: 'logo-axis-center', regionIdx: i };
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const handle = hitHandle(canvasPoint(e));
+  if (handle) dragHandle = handle;
+});
+canvas.addEventListener('mousemove', (e) => {
+  const im = current(); if (!im || !im.mask) return;
+  const pt = canvasPoint(e);
+  if (!dragHandle) {
+    canvas.style.cursor = hitHandle(pt) ? 'move' : 'default';
+    return;
+  }
+  const pct = toPct(pt.x, pt.y, im);
+  pct.x = Math.max(0, Math.min(100, pct.x)); pct.y = Math.max(0, Math.min(100, pct.y));
+  const axes = im.mask.axesList || (im.mask.logoAxis ? [im.mask.logoAxis] : [defaultLogoAxis()]);
+  if (!im.mask.axesList) im.mask.axesList = axes;
+  const axis = axes[dragHandle.regionIdx] || axes[0];
+  if (dragHandle.shape === 'logo-axis-center') {
+    const shiftX = pct.x - axis.center.x, shiftY = pct.y - axis.center.y;
+    axis.center = { x: pct.x, y: pct.y };
+    axis.xEnd = { x: axis.xEnd.x + shiftX, y: axis.xEnd.y + shiftY };
+    axis.yEnd = { x: axis.yEnd.x + shiftX, y: axis.yEnd.y + shiftY };
+  } else {
+    const endKey = dragHandle.shape === 'logo-axis-x' ? 'xEnd' : 'yEnd';
+    axis[endKey] = { x: pct.x, y: pct.y };
+  }
+  renderCurrent();
+});
+window.addEventListener('mouseup', () => { dragHandle = null; });
+
+// ---------- Description word counter ----------
+(function() {
+  const ta = document.getElementById('descTextarea');
+  const counter = document.getElementById('descWordCount');
+  const LIMIT = 50;
+  function countWords(s) { return s.trim() === '' ? 0 : s.trim().split(/\s+/).length; }
+  function updateCounter() {
+    const count = countWords(ta.value);
+    counter.textContent = count + ' / ' + LIMIT + ' words';
+    counter.style.color = count > LIMIT ? '#c0392b' : 'var(--text-muted)';
+    ta.style.borderColor = count > LIMIT ? '#c0392b' : '';
+  }
+  ta.value = ''; // clear any browser-restored value on load
+  ta.addEventListener('input', updateCounter);
+})();
+
+// ---------- SKU ----------
+// Every real product number in this catalog is a plain 4-digit number -- stripping anything else
+// as the rep types (rather than validating after the fact) means there's never a bad character to
+// notice and go back and fix.
+function sanitizeSkuValue(raw) {
+  return String(raw || '').replace(/[^0-9]/g, '').slice(0, 4);
+}
+function updateSkuInputValidity() {
+  const input = document.getElementById('skuInput');
+  const clean = sanitizeSkuValue(input.value);
+  if (clean !== input.value) input.value = clean;
+  input.classList.toggle('invalid', !clean);
+}
+document.getElementById('skuInput').addEventListener('input', () => { updateSkuInputValidity(); updateFileNamePreviews(); });
+updateSkuInputValidity();
+
+// ---------- photo + mask image pickers ----------
+document.getElementById('choosePhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const dataUrl = await fileToDataUrl(file);
+  const img = await loadImage(dataUrl);
+  currentImage = { filename: file.name, dataUrl, img, naturalW: img.naturalWidth, naturalH: img.naturalHeight, mask: currentImage ? currentImage.mask : null };
+  document.getElementById('photoStatus').textContent = file.name;
+  // Convenience only, never required -- if your own photo happens to be named "SKU-name.ext"
+  // (e.g. "4081-nova.png"), the leading number auto-fills SKU so you don't have to type it twice.
+  // Doesn't touch an already-filled SKU field, and does nothing at all if the filename doesn't
+  // start with digits -- you can always just type the SKU in yourself regardless.
+  const skuInput = document.getElementById('skuInput');
+  const skuMatch = file.name.match(/^\d+/);
+  if (skuMatch && !skuInput.value.trim()) {
+    skuInput.value = sanitizeSkuValue(skuMatch[0]);
+    updateSkuInputValidity();
+  }
+  updateFileNamePreviews();
+  renderCurrent();
+});
+
+document.getElementById('chooseMaskBtn').addEventListener('click', () => {
+  if (!currentImage) { alert('Choose a product photo first.'); return; }
+  document.getElementById('maskInput').click();
+});
+document.getElementById('maskInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file || !currentImage) return;
+  const dataUrl = await fileToDataUrl(file);
+  const img = await loadImage(dataUrl);
+  maskImageDataUrl = dataUrl;
+  const layer = { shape: 'image', op: 'add', x: 0, y: 0, w: 100, h: 100, rotation: 0, imageUrl: '', _previewImg: img, _previewDataUrl: dataUrl };
+  // Auto-detect distinct opaque islands via BFS; seed one axis per region.
+  const detectedRegions = detectMaskRegions(img);
+  let axesList;
+  if (detectedRegions && detectedRegions.length > 0) {
+    axesList = detectedRegions.map(r => ({
+      center: { x: r.cx, y: r.cy },
+      xEnd: { x: r.cx + r.box.w / 2, y: r.cy },
+      yEnd: { x: r.cx, y: r.cy + r.box.h / 2 }
+    }));
+  } else {
+    axesList = [defaultLogoAxis()];
+  }
+  currentImage.mask = { layers: [layer], rotateCCW: false, rotateCW: false, centerOffset: null, widthIn: null, logoAxis: axesList[0], axesList };
+  document.getElementById('maskStatus').textContent = file.name;
+  updateFileNamePreviews();
+  renderCurrent();
+});
+
+document.getElementById('rotateCCWBtn').addEventListener('click', () => {
+  if (!currentImage || !currentImage.mask) return;
+  currentImage.mask.rotateCCW = !currentImage.mask.rotateCCW;
+  if (currentImage.mask.rotateCCW) currentImage.mask.rotateCW = false;
+  renderCurrent();
+});
+document.getElementById('rotateCWBtn').addEventListener('click', () => {
+  if (!currentImage || !currentImage.mask) return;
+  currentImage.mask.rotateCW = !currentImage.mask.rotateCW;
+  if (currentImage.mask.rotateCW) currentImage.mask.rotateCCW = false;
+  renderCurrent();
+});
+
+// ---------- product details + submit-to-sheet ----------
+// Same /exec URL as SHEET_API_URL in deckbuilder-production.html, and the exact string set as the
+// SUBMIT_SECRET Script Property on the backend -- see ADD-PRODUCT-GUIDE.md for one-time setup.
+const SCRIPT_API_URL = 'https://deck-builder-api.deckbuilder.workers.dev';
+const SUBMIT_SECRET = '3949camelot';
+// Same static file deckbuilder-production.html reads by default now (see google-apps-script.gs's
+// pushProductsSnapshotToGitHub) -- used as a fallback below when SCRIPT_API_URL itself is down,
+// which happens more than it should for a free-tier Sheets-backed endpoint.
+const PRODUCTS_SNAPSHOT_URL = 'https://williamlieuid.github.io/deckbuilder-images/products.json';
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Timed out after ' + ms + 'ms')), ms);
+    promise.then(v => { clearTimeout(timer); resolve(v); }, err => { clearTimeout(timer); reject(err); });
+  });
+}
+
+function slugify(str) {
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
+}
+
+// Shared by the live filename preview and the real upload at submit time, so the two can never
+// drift apart. Color is optional -- only folded in when the rep actually used that field (e.g. a
+// product sold in multiple colors, where each photo needs its own distinct filename).
+function computeFileSlug() {
+  const sku = document.getElementById('skuInput').value.trim();
+  const name = document.getElementById('productNameInput').value.trim();
+  const color = document.getElementById('productColorInput').value.trim();
+  if (!sku || !name) return null;
+  return sku + '-' + slugify(name) + (color ? '-' + slugify(color) : '');
+}
+
+// Live preview of the actual filename an uploaded photo/logo-area file will be renamed to once
+// Product Number and Product Name (and Color, if used) are filled in -- the real rename happens
+// at submit time (see submitProductBtn's handler), this just shows it ahead of time so it's
+// obvious the naming convention is being followed, not a mystery that happens invisibly on save.
+// Only applies to a file actually pending upload (a real data: URI from a freshly-chosen local
+// file) -- a product loaded via Edit a Product carries its EXISTING file's URL instead, which
+// stays exactly as-is unless the rep picks a new file, so showing a "renamed" preview for it
+// would be misleading (nothing is actually being renamed on the server in that case).
+function updateFileNamePreviews() {
+  const slug = computeFileSlug();
+  if (!slug) return;
+  if (currentImage && currentImage.filename && currentImage.dataUrl && currentImage.dataUrl.indexOf('data:') === 0) {
+    const ext = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
+    document.getElementById('photoStatus').textContent = slug + ext + ' (renamed for you)';
+  }
+  if (currentImage && currentImage.mask && maskImageDataUrl && maskImageDataUrl.indexOf('data:') === 0) {
+    const ext = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
+    document.getElementById('maskStatus').textContent = slug + '-mask' + ext + ' (renamed for you)';
+  }
+}
+
+const ADDONS_HEADER = 'Add-ons (Name:Price, pipe-separated; blank price = no extra charge)';
+
+// One product at a time, so this is a single flat object -- not a SKU-keyed dict like the full
+// tool's productMeta -- but the same fields/data-header shape otherwise.
+let productMeta = { fields: {}, blankUploadedFor: null, blankUploadedUrl: null, maskUploadedFor: null, maskUploadedUrl: null };
+
+let knownTopCategories = [];
+let knownSubCategoriesByTop = {};
+let knownAddons = {};
+let catalogFetchStarted = false;
+let catalogFetchError = null;
+
+// Tries the live sheet first, falling back to the same GitHub products.json snapshot
+// deckbuilder-production.html reads by default now -- the live Apps Script /exec URL bound to a
+// Sheet fails outright often enough (a Drive-level "unable to open the file" error) that this
+// modal's category/add-on lists otherwise went blank on page load any time that happened, even
+// though the same data is one request away in the fallback. 8s timeout because a stuck request
+// here doesn't always fail fast -- it can hang 30+ seconds instead, which would block the
+// fallback from ever kicking in.
+async function fetchProductsWithFallback() {
+  if (SCRIPT_API_URL && SCRIPT_API_URL.indexOf('PASTE_YOUR') !== 0) {
+    try {
+      const res = await withTimeout(fetch(SCRIPT_API_URL + '?t=' + Date.now()), 8000);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const products = await res.json();
+      if (Array.isArray(products)) return products;
+    } catch (err) { /* fall through to snapshot below */ }
+  }
+  const res = await withTimeout(fetch(PRODUCTS_SNAPSHOT_URL + '?t=' + Date.now(), { cache: 'no-store' }), 8000);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const products = await res.json();
+  if (!Array.isArray(products)) throw new Error('Response was not a product list.');
+  return products;
+}
+
+async function fetchCatalogIfNeeded() {
+  if (catalogFetchStarted) return;
+  catalogFetchStarted = true;
+  catalogFetchError = null;
+  try {
+    const products = await fetchProductsWithFallback();
+    const topSet = new Set(), subByTop = {};
+    products.forEach(p => {
+      const parts = String(p.category || '').split('|').map(s => s.trim()).filter(Boolean);
+      if (!parts.length) return;
+      topSet.add(parts[0]);
+      if (parts[1]) (subByTop[parts[0]] || (subByTop[parts[0]] = new Set())).add(parts[1]);
+    });
+    knownTopCategories = [...topSet].sort();
+    knownSubCategoriesByTop = {};
+    Object.keys(subByTop).forEach(top => { knownSubCategoriesByTop[top] = [...subByTop[top]].sort(); });
+    const priceCounts = {};
+    products.forEach(p => (p.addons || []).forEach(a => {
+      if (!a.name) return;
+      const counts = priceCounts[a.name] || (priceCounts[a.name] = {});
+      const price = a.price || '';
+      counts[price] = (counts[price] || 0) + 1;
+    }));
+    knownAddons = {};
+    Object.keys(priceCounts).sort().forEach(name => {
+      const counts = priceCounts[name];
+      let bestPrice = '', bestCount = -1;
+      Object.keys(counts).forEach(price => { if (counts[price] > bestCount) { bestCount = counts[price]; bestPrice = price; } });
+      knownAddons[name] = bestPrice;
+    });
+    if (!knownTopCategories.length) catalogFetchError = 'Connected fine, but got 0 categories back -- is the Products sheet actually empty, or every row missing a Category value?';
+  } catch (err) {
+    catalogFetchError = err.message;
+    console.warn('Could not load the product catalog (categories/add-ons) from the sheet:', err);
+  }
+}
+
+function renderSingleSelectTier(wrapId, options, selected, onSelect) {
+  const wrap = document.getElementById(wrapId);
+  wrap.innerHTML = options.map(opt => `
+    <label class="chk"><input type="checkbox" class="catChk" value="${opt.replace(/"/g, '&quot;')}" ${opt === selected ? 'checked' : ''} /> ${opt}</label>
+  `).join('');
+  wrap.querySelectorAll('.catChk').forEach(cb => cb.addEventListener('change', (e) => {
+    if (e.target.checked) wrap.querySelectorAll('.catChk').forEach(other => { if (other !== e.target) other.checked = false; });
+    onSelect(e.target.checked ? e.target.value : '');
+  }));
+}
+
+function currentCategoryParts() {
+  const parts = String(productMeta.fields['Category'] || '').split('|').map(s => s.trim()).filter(Boolean);
+  return { top: parts[0] || '', sub: parts[1] || '' };
+}
+function setCategoryParts(top, sub) {
+  productMeta.fields['Category'] = sub ? (top + ' | ' + sub) : top;
+}
+
+function renderCategoryCheckboxes() {
+  const { top, sub } = currentCategoryParts();
+  if (catalogFetchError && !knownTopCategories.length) {
+    const wrap = document.getElementById('topCategoryCheckboxes');
+    wrap.innerHTML = `<span class="empty-note" style="color:#D8433B;">Couldn't load categories: ${catalogFetchError.replace(/</g, '&lt;')} <a href="#" id="retryCatalogLink">Retry</a></span>`;
+    document.getElementById('subCategoryWrap').style.display = 'none';
+    const retry = document.getElementById('retryCatalogLink');
+    if (retry) retry.addEventListener('click', async (e) => {
+      e.preventDefault();
+      catalogFetchStarted = false;
+      wrap.innerHTML = '<span class="empty-note">Loading…</span>';
+      await fetchCatalogIfNeeded();
+      renderCategoryCheckboxes();
+      renderAddonCheckboxes();
+    });
+    return;
+  }
+  const topOptions = top && !knownTopCategories.includes(top) ? [top].concat(knownTopCategories) : knownTopCategories;
+  if (!topOptions.length) {
+    document.getElementById('topCategoryCheckboxes').innerHTML = '<span class="empty-note">No categories found yet -- add one below.</span>';
+    document.getElementById('subCategoryWrap').style.display = 'none';
+    return;
+  }
+  renderSingleSelectTier('topCategoryCheckboxes', topOptions, top, (newTop) => {
+    setCategoryParts(newTop, '');
+    renderCategoryCheckboxes();
+  });
+  const subWrap = document.getElementById('subCategoryWrap');
+  if (!top) { subWrap.style.display = 'none'; return; }
+  subWrap.style.display = 'block';
+  const subsForTop = knownSubCategoriesByTop[top] || [];
+  const subOptions = sub && !subsForTop.includes(sub) ? [sub].concat(subsForTop) : subsForTop;
+  if (!subOptions.length) {
+    document.getElementById('subCategoryCheckboxes').innerHTML = '<span class="empty-note">None yet for this category.</span>';
+  } else {
+    renderSingleSelectTier('subCategoryCheckboxes', subOptions, sub, (newSub) => setCategoryParts(top, newSub));
+  }
+}
+
+document.getElementById('addTopCategoryBtn').addEventListener('click', () => {
+  const input = document.getElementById('newTopCategoryInput');
+  const val = input.value.trim();
+  if (!val) return;
+  if (!knownTopCategories.includes(val)) knownTopCategories.push(val);
+  setCategoryParts(val, '');
+  input.value = '';
+  renderCategoryCheckboxes();
+});
+document.getElementById('newTopCategoryInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTopCategoryBtn').click(); } });
+
+document.getElementById('addSubCategoryBtn').addEventListener('click', () => {
+  const input = document.getElementById('newSubCategoryInput');
+  const val = input.value.trim();
+  const { top } = currentCategoryParts();
+  if (!val || !top) return;
+  if (!knownSubCategoriesByTop[top]) knownSubCategoriesByTop[top] = [];
+  if (!knownSubCategoriesByTop[top].includes(val)) knownSubCategoriesByTop[top].push(val);
+  setCategoryParts(top, val);
+  input.value = '';
+  renderCategoryCheckboxes();
+});
+document.getElementById('newSubCategoryInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubCategoryBtn').click(); } });
+
+function parseAddonsString(str) {
+  const result = {};
+  String(str || '').split('|').forEach(part => {
+    part = part.trim();
+    if (!part) return;
+    const idx = part.lastIndexOf(':');
+    const name = idx === -1 ? part : part.slice(0, idx).trim();
+    const price = idx === -1 ? '' : part.slice(idx + 1).trim();
+    if (name) result[name] = price;
+  });
+  return result;
+}
+function serializeAddonsString(checkedMap) {
+  return Object.keys(checkedMap).map(name => checkedMap[name] ? `${name}:${checkedMap[name]}` : name).join(' | ');
+}
+
+function renderAddonCheckboxes() {
+  const wrap = document.getElementById('addonCheckboxes');
+  const checkedMap = parseAddonsString(productMeta.fields[ADDONS_HEADER]);
+  const names = [...new Set(Object.keys(knownAddons).concat(Object.keys(checkedMap)))].sort();
+  if (!names.length) {
+    wrap.innerHTML = catalogFetchError
+      ? `<span class="empty-note" style="color:#D8433B;">Couldn't load add-ons: ${catalogFetchError.replace(/</g, '&lt;')}</span>`
+      : '<span class="empty-note">No add-ons found yet -- add one below.</span>';
+    return;
+  }
+  wrap.innerHTML = names.map(name => {
+    const isChecked = Object.prototype.hasOwnProperty.call(checkedMap, name);
+    const price = isChecked ? checkedMap[name] : (knownAddons[name] || '');
+    const safeName = name.replace(/"/g, '&quot;');
+    return `<div class="addonRow">
+      <label class="addonCheckLabel"><input type="checkbox" class="addonChk" data-name="${safeName}" ${isChecked ? 'checked' : ''} /> ${name}</label>
+      <input type="number" min="0" step="0.01" class="addonPrice" data-name="${safeName}" value="${price}" placeholder="free" ${isChecked ? '' : 'disabled'} />
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.addonChk').forEach(cb => cb.addEventListener('change', () => {
+    wrap.querySelector(`.addonPrice[data-name="${CSS.escape(cb.dataset.name)}"]`).disabled = !cb.checked;
+    syncAddonsField();
+  }));
+  wrap.querySelectorAll('.addonPrice').forEach(inp => inp.addEventListener('input', syncAddonsField));
+}
+function syncAddonsField() {
+  const wrap = document.getElementById('addonCheckboxes');
+  const checkedMap = {};
+  wrap.querySelectorAll('.addonChk').forEach(cb => {
+    if (cb.checked) checkedMap[cb.dataset.name] = wrap.querySelector(`.addonPrice[data-name="${CSS.escape(cb.dataset.name)}"]`).value.trim();
+  });
+  productMeta.fields[ADDONS_HEADER] = serializeAddonsString(checkedMap);
+}
+document.getElementById('addAddonBtn').addEventListener('click', () => {
+  const nameInput = document.getElementById('newAddonNameInput');
+  const priceInput = document.getElementById('newAddonPriceInput');
+  const name = nameInput.value.trim();
+  if (!name) return;
+  if (!(name in knownAddons)) knownAddons[name] = priceInput.value.trim();
+  const checkedMap = parseAddonsString(productMeta.fields[ADDONS_HEADER]);
+  checkedMap[name] = priceInput.value.trim();
+  productMeta.fields[ADDONS_HEADER] = serializeAddonsString(checkedMap);
+  nameInput.value = ''; priceInput.value = '';
+  renderAddonCheckboxes();
+});
+document.getElementById('newAddonNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addAddonBtn').click(); } });
+
+// Apply data-defaults immediately (Lead Time, Setup Fee, Qty 2/3) so an untouched default still
+// gets submitted -- same reasoning as the full tool's product-details modal.
+document.querySelectorAll('[data-header]').forEach(el => {
+  if (el.dataset.default) { el.value = el.dataset.default; productMeta.fields[el.dataset.header] = el.dataset.default; }
+});
+document.querySelectorAll('[data-header]').forEach(el => {
+  el.addEventListener('input', (e) => { productMeta.fields[e.target.dataset.header] = e.target.value; });
+});
+
+// Material checkboxes -- submitted as their own Y/N columns (same shape as every other Y/N field
+// in the sheet), read by cloudflare-worker.js's mapRowToProduct into blackProduct/woodProduct/
+// clearProduct booleans, which deckbuilder-production.html's drawBrandedCard uses to swap in a
+// flat logo (black), a tinted recessed-engraving logo (wood), or a light-grey etched-acrylic logo
+// (clear) instead of the normal render. Default all three to 'N' up front (same reasoning as the
+// Lead Time/Setup Fee data-defaults above) so an untouched submission still writes an explicit
+// value rather than leaving the column blank.
+productMeta.fields['Black Product (Y/N)'] = 'N';
+productMeta.fields['Wood Product (Y/N)'] = 'N';
+productMeta.fields['Clear Product (Y/N)'] = 'N';
+document.getElementById('blackProductChk').addEventListener('change', (e) => {
+  productMeta.fields['Black Product (Y/N)'] = e.target.checked ? 'Y' : 'N';
+});
+document.getElementById('woodProductChk').addEventListener('change', (e) => {
+  productMeta.fields['Wood Product (Y/N)'] = e.target.checked ? 'Y' : 'N';
+});
+document.getElementById('clearProductChk').addEventListener('change', (e) => {
+  productMeta.fields['Clear Product (Y/N)'] = e.target.checked ? 'Y' : 'N';
+});
+
+// deckbuilder-production.html's own formatName() already splits "Product Name" on its first
+// colon to style a brand/eyebrow line separately from the main headline (e.g. "PowerSnap:" above
+// "Portable Charge with Flip-up Connector") -- these two fields are kept apart in the form for
+// clarity, then joined into that exact "Name: Tagline" shape the sheet column expects.
+function syncProductNameField() {
+  const name = document.getElementById('productNameInput').value.trim();
+  const tagline = document.getElementById('productTaglineInput').value.trim();
+  productMeta.fields['Product Name'] = tagline ? (name + ': ' + tagline) : name;
+}
+document.getElementById('productNameInput').addEventListener('input', () => { syncProductNameField(); updateFileNamePreviews(); });
+document.getElementById('productTaglineInput').addEventListener('input', syncProductNameField);
+document.getElementById('productColorInput').addEventListener('input', updateFileNamePreviews);
+
+// ---------- Tier 1 quantity: exactly one of 1 / 100, never both ----------
+document.querySelectorAll('.tier1QtyChk').forEach(cb => cb.addEventListener('change', (e) => {
+  if (e.target.checked) {
+    document.querySelectorAll('.tier1QtyChk').forEach(other => { if (other !== e.target) other.checked = false; });
+    productMeta.fields['Qty 1'] = e.target.value;
+  } else {
+    delete productMeta.fields['Qty 1'];
+  }
+}));
+function setTier1Qty(value) {
+  const v = String(value || '');
+  document.querySelectorAll('.tier1QtyChk').forEach(cb => { cb.checked = (cb.value === v); });
+  if (v === '1' || v === '100') productMeta.fields['Qty 1'] = v; else delete productMeta.fields['Qty 1'];
+}
+
+function setSubmitStatus(msg, kind) {
+  const el = document.getElementById('submitStatus');
+  el.textContent = msg;
+  el.className = kind || '';
+}
+
+async function postToScript(payload) {
+  const res = await fetch(SCRIPT_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ secret: SUBMIT_SECRET }, payload))
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function uploadIfNeeded(kind, dataUrl, filename) {
+  const forKey = kind + 'UploadedFor', urlKey = kind + 'UploadedUrl';
+  if (productMeta[forKey] === dataUrl && productMeta[urlKey]) return productMeta[urlKey];
+  const res = await postToScript({ action: 'uploadImage', filename, contentBase64: dataUrl.split(',')[1] });
+  if (!res.ok) throw new Error(`Upload failed (${kind}): ${res.error}`);
+  productMeta[forKey] = dataUrl;
+  productMeta[urlKey] = res.url;
+  return res.url;
+}
+
+document.getElementById('uploadPatternBtn').addEventListener('click', () => document.getElementById('uploadPatternInput').click());
+document.getElementById('uploadPatternInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const statusEl = document.getElementById('uploadPatternStatus');
+  statusEl.textContent = 'Uploading ' + file.name + '…';
+  statusEl.style.color = '';
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const res = await postToScript({ action: 'uploadImage', filename: 'patterns/' + file.name, contentBase64: dataUrl.split(',')[1] });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Uploaded -- live on the site now (may take a minute to show up in the swatch list).';
+    loadExistingPatterns();
+  } catch (err) {
+    statusEl.textContent = 'Failed: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+});
+
+// ---------- existing patterns: view + remove ----------
+// Same GitHub folder-listing endpoint deckbuilder-production.html's own pattern swatches read
+// from (a plain, anonymous GET against the public repo -- no secret needed for this part, only
+// the actual delete below needs SUBMIT_SECRET). Read-only, so it's safe to fire eagerly on page
+// load rather than waiting for the Pattern tab to actually be opened.
+const PATTERN_REPO = 'williamlieuid/deckbuilder-images';
+const PATTERN_BRANCH = 'main';
+
+async function loadExistingPatterns() {
+  const grid = document.getElementById('existingPatternsGrid');
+  grid.innerHTML = '<span class="empty-note">Loading…</span>';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${PATTERN_REPO}/contents/patterns?ref=${PATTERN_BRANCH}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error('Unexpected response shape');
+    const imageExt = /\.(jpe?g|png|webp|gif)$/i;
+    const images = files.filter(f => f.type === 'file' && imageExt.test(f.name));
+    if (!images.length) { grid.innerHTML = '<span class="empty-note">No patterns uploaded yet.</span>'; return; }
+    grid.innerHTML = images.map(f => {
+      const url = `https://cdn.jsdelivr.net/gh/${PATTERN_REPO}@${PATTERN_BRANCH}/patterns/${f.name}`;
+      const safeName = f.name.replace(/"/g, '&quot;');
+      return `<div style="position:relative; width:76px;">
+        <div style="width:76px; height:76px; border-radius:6px; background-image:url('${url}'); background-size:cover; background-position:center; border:0.5px solid var(--border);"></div>
+        <button type="button" class="removePatternTileBtn" data-name="${safeName}" title="Remove this pattern" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; padding:0; border-radius:50%; border:1.5px solid #fff; background:#D8433B; color:#fff; font-size:11px; line-height:1; cursor:pointer;">✕</button>
+        <div style="font-size:9px; color:var(--text-muted); margin-top:4px; word-break:break-all; text-align:center;" title="${safeName}">${f.name}</div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.removePatternTileBtn').forEach(btn => btn.addEventListener('click', () => removeExistingPattern(btn.dataset.name)));
+  } catch (err) {
+    grid.innerHTML = `<span class="empty-note" style="color:#D8433B;">Couldn't load existing patterns: ${String(err.message || err).replace(/</g, '&lt;')} <a href="#" id="retryPatternsLink">Retry</a></span>`;
+    const retry = document.getElementById('retryPatternsLink');
+    if (retry) retry.addEventListener('click', (e) => { e.preventDefault(); loadExistingPatterns(); });
+  }
+}
+
+async function removeExistingPattern(name) {
+  const ok = confirm(`Remove pattern "${name}"?\n\nThis deletes it from the live pattern library immediately. Any product a rep has already branded with this exact pattern will lose it. This can't be undone.`);
+  if (!ok) return;
+  const statusEl = document.getElementById('uploadPatternStatus');
+  statusEl.textContent = 'Removing ' + name + '…';
+  statusEl.style.color = '';
+  try {
+    const res = await postToScript({ action: 'deleteImage', filename: 'patterns/' + name });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Removed ' + name + '.';
+    loadExistingPatterns();
+  } catch (err) {
+    statusEl.textContent = 'Failed to remove: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+}
+loadExistingPatterns();
+
+// round2 + the exact Mask JSON shape deckbuilder-production.html's regions.mask expects (matches
+// the full masking-tool.html's maskForSheet/layerToExport/exportLogoAxis exactly).
+function round2(n) { return Math.round(n * 100) / 100; }
+function maskForSheet(mask) {
+  const axes = mask.axesList && mask.axesList.length ? mask.axesList : (mask.logoAxis ? [mask.logoAxis] : []);
+  const serializeAxis = a => ({ center: { x: round2(a.center.x), y: round2(a.center.y) }, xEnd: { x: round2(a.xEnd.x), y: round2(a.xEnd.y) }, yEnd: { x: round2(a.yEnd.x), y: round2(a.yEnd.y) } });
+  const result = {
+    layers: mask.layers.map(l => ({ shape: 'image', op: l.op, x: round2(l.x), y: round2(l.y), w: round2(l.w), h: round2(l.h), rotation: round2(l.rotation || 0), imageUrl: l.imageUrl || '' })),
+    rotateCCW: !!mask.rotateCCW,
+    rotateCW: !!mask.rotateCW,
+    centerOffset: null,
+    widthIn: mask.widthIn || null,
+    logoAxis: axes[0] ? serializeAxis(axes[0]) : null
+  };
+  if (axes.length > 1) result.extraLogoAxes = axes.slice(1).map(serializeAxis);
+  return result;
+}
+
+// Clears every field back to a blank form, ready for the next product -- used automatically after
+// a successful Add Product (see below), so a rep never has to manually reset between products.
+// Deliberately does NOT touch #submitStatus -- the success message that triggered this call stays
+// on screen until the rep starts typing the next product.
+function updateSubmitButtonLabel() {
+  document.getElementById('submitProductBtn').textContent = editingExistingSku ? 'Update Product' : 'Add Product';
+  document.getElementById('removeProductLink').style.display = editingExistingSku ? 'inline' : 'none';
+}
+
+document.getElementById('removeProductLink').addEventListener('click', async (e) => {
+  e.preventDefault();
+  if (!editingExistingSku) return;
+  const name = document.getElementById('productNameInput').value.trim() || editingExistingSku;
+  const ok = confirm(`Remove "${name}" (#${editingExistingSku}) completely?\n\nThis deletes the product from the sheet entirely -- not just this session. It will no longer show up anywhere, for anyone. This cannot be undone.`);
+  if (!ok) return;
+  const link = document.getElementById('removeProductLink');
+  link.style.pointerEvents = 'none';
+  link.style.opacity = '0.5';
+  setSubmitStatus('Removing…');
+  try {
+    const res = await postToScript({ action: 'deleteProduct', sku: editingExistingSku });
+    if (!res.ok) throw new Error(res.error);
+    const removedLabel = '"' + name + '" (#' + editingExistingSku + ')';
+    resetForm();
+    setSubmitStatus('✓ Removed ' + removedLabel + (res.snapshotWarning ? '. ' + res.snapshotWarning : '.'), res.snapshotWarning ? 'error' : 'ok');
+  } catch (err) {
+    setSubmitStatus('Could not remove that product: ' + err.message, 'error');
+  } finally {
+    link.style.pointerEvents = '';
+    link.style.opacity = '';
+  }
+});
+
+function resetForm() {
+  currentImage = null;
+  maskImageDataUrl = null;
+  editingExistingSku = null;
+  updateSubmitButtonLabel();
+  productMeta = { fields: {}, blankUploadedFor: null, blankUploadedUrl: null, maskUploadedFor: null, maskUploadedUrl: null };
+  document.getElementById('skuInput').value = '';
+  updateSkuInputValidity();
+  document.getElementById('photoStatus').textContent = 'No file chosen';
+  document.getElementById('maskStatus').textContent = 'No file chosen';
+  document.getElementById('productNameInput').value = '';
+  document.getElementById('productTaglineInput').value = '';
+  document.getElementById('productColorInput').value = '';
+  document.querySelectorAll('[data-header]').forEach(el => {
+    el.value = el.dataset.default || '';
+    if (el.dataset.default) productMeta.fields[el.dataset.header] = el.dataset.default; // else the default would show visually but be silently omitted at submit, which only reads productMeta.fields
+  });
+  document.querySelectorAll('.addonChk, .catChk, .tier1QtyChk').forEach(el => { el.checked = false; });
+  document.getElementById('blackProductChk').checked = false;
+  document.getElementById('woodProductChk').checked = false;
+  document.getElementById('clearProductChk').checked = false;
+  productMeta.fields['Black Product (Y/N)'] = 'N';
+  productMeta.fields['Wood Product (Y/N)'] = 'N';
+  productMeta.fields['Clear Product (Y/N)'] = 'N';
+  delete productMeta.fields['Qty 1'];
+  renderCurrent();
+  renderCategoryCheckboxes();
+  renderAddonCheckboxes();
+}
+
+document.getElementById('submitProductBtn').addEventListener('click', async () => {
+  const sku = document.getElementById('skuInput').value.trim();
+  const productName = document.getElementById('productNameInput').value.trim();
+  if (!sku) { updateSkuInputValidity(); setSubmitStatus('Please enter a product number.', 'error'); return; }
+  if (sku.length < 4) { setSubmitStatus('Product number should be 4 digits.', 'error'); return; }
+  if (!productName) { setSubmitStatus('Please enter a product name.', 'error'); return; }
+  if (!document.getElementById('productTaglineInput').value.trim()) { setSubmitStatus('Please enter a subtitle.', 'error'); return; }
+  if (!currentImage) { setSubmitStatus('Please choose a blank product image first.', 'error'); return; }
+  if (!currentImage.mask) { setSubmitStatus('Please choose a mask image first.', 'error'); return; }
+
+  const submitBtn = document.getElementById('submitProductBtn');
+  submitBtn.disabled = true;
+  try {
+    const fileSlug = computeFileSlug();
+    const photoExt = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
+    const maskExt = photoExt; // mask upload filename just needs to be distinct from the photo's
+
+    setSubmitStatus('Uploading blank product image…');
+    const blankUrl = await uploadIfNeeded('blank', currentImage.dataUrl, fileSlug + photoExt);
+
+    setSubmitStatus('Uploading mask image…');
+    const maskUrl = await uploadIfNeeded('mask', maskImageDataUrl, fileSlug + '-mask' + maskExt);
+    currentImage.mask.layers[0].imageUrl = maskUrl;
+
+    setSubmitStatus('Saving…');
+    const fields = Object.assign({}, productMeta.fields);
+    fields['SKU'] = sku;
+    fields['Blank Image URL'] = blankUrl;
+    if (!fields['Master Image URL']) fields['Master Image URL'] = blankUrl; // see deckbuilder-production.html's imageBlock fallback
+    fields['Mask Eligible (Y/N)'] = 'Y';
+    fields['Mask JSON'] = JSON.stringify(maskForSheet(currentImage.mask));
+
+    const res = await postToScript({ action: 'submitProduct', fields });
+    if (!res.ok) throw new Error(res.error);
+    if ((res.unmatchedFields && res.unmatchedFields.length) || res.snapshotWarning) {
+      let msg = (res.created ? 'Saved as a new product, but something needs attention: ' : 'Updated, but something needs attention: ');
+      if (res.unmatchedFields && res.unmatchedFields.length) msg += `these fields didn't match the sheet and were skipped: ${res.unmatchedFields.join(', ')}. `;
+      if (res.snapshotWarning) msg += res.snapshotWarning;
+      setSubmitStatus(msg, 'error');
+    } else {
+      const successMsg = (res.created ? '✓ Product added! ' : '✓ Product updated! ') + '"' + productName + '" (#' + sku + ') is saved. Ready for the next one.';
+      resetForm();
+      setSubmitStatus(successMsg, 'ok');
+    }
+  } catch (err) {
+    setSubmitStatus('Something went wrong: ' + err.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+// ---------- tabs ----------
+const TAB_PANEL_IDS = { product: 'tabPanelProduct', edit: 'tabPanelEdit', pattern: 'tabPanelPattern' };
+function switchToTab(tabKey) {
+  document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
+  document.querySelectorAll('.tabPanel').forEach(p => p.style.display = 'none');
+  document.getElementById(TAB_PANEL_IDS[tabKey]).style.display = 'block';
+}
+document.querySelectorAll('.tabBtn').forEach(btn => btn.addEventListener('click', () => switchToTab(btn.dataset.tab)));
+
+// ---------- Edit a Product: search + load ----------
+// Reuses fetchProductsWithFallback (the same live-sheet-with-snapshot-fallback loader the
+// category/add-on lists already use) but keeps its own full copy of the list, since search needs
+// every product's full record (photo URLs, mask JSON, pricing...), not just the category/add-on
+// summaries fetchCatalogIfNeeded() distills out of it.
+let allProductsForEdit = [];
+let editProductsFetchStarted = false;
+async function fetchAllProductsForEdit() {
+  if (editProductsFetchStarted) return;
+  editProductsFetchStarted = true;
+  try {
+    allProductsForEdit = await fetchProductsWithFallback();
+  } catch (err) {
+    setEditSearchStatus("Couldn't load the product list: " + err.message, true);
+  }
+}
+function setEditSearchStatus(msg, isError) {
+  const el = document.getElementById('editSearchStatus');
+  el.textContent = msg;
+  el.style.color = isError ? '#D8433B' : '';
+}
+
+// Same crossOrigin-only-for-remote-URLs guard used throughout deckbuilder-production.html --
+// needed here because a loaded product's photo/logo-area files live on the jsDelivr CDN, a
+// different origin than this page, and the canvas preview needs to read their pixels.
+function loadCrossOriginImageEl(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (/^https?:\/\//i.test(url)) img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Could not load ' + url));
+    img.src = url;
+  });
+}
+
+const editSearchInput = document.getElementById('editSearchInput');
+const editSearchSuggestions = document.getElementById('editSearchSuggestions');
+function renderEditSuggestions(list) {
+  if (!list.length) { editSearchSuggestions.style.display = 'none'; editSearchSuggestions.innerHTML = ''; return; }
+  editSearchSuggestions.innerHTML = list.slice(0, 12).map(p => `
+    <div class="suggestion-item" data-sku="${String(p.sku).replace(/"/g, '&quot;')}"><span class="sfx-sku">#${p.sku}</span>${String(p.name || '(unnamed)').replace(/</g, '&lt;')}</div>
+  `).join('');
+  editSearchSuggestions.style.display = 'block';
+  editSearchSuggestions.querySelectorAll('.suggestion-item').forEach(el => {
+    // mousedown (not click) so this fires before the input's own blur handler hides the panel first.
+    el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      editSearchSuggestions.style.display = 'none';
+      editSearchInput.value = '';
+      loadProductForEdit(el.dataset.sku);
+    });
+  });
+}
+editSearchInput.addEventListener('input', async () => {
+  await fetchAllProductsForEdit();
+  const q = editSearchInput.value.trim().toLowerCase();
+  if (!q) { renderEditSuggestions([]); return; }
+  const matches = allProductsForEdit.filter(p =>
+    String(p.sku).toLowerCase().startsWith(q) || String(p.name || '').toLowerCase().includes(q)
+  );
+  renderEditSuggestions(matches);
+});
+editSearchInput.addEventListener('focus', () => { if (editSearchInput.value.trim()) editSearchInput.dispatchEvent(new Event('input')); });
+editSearchInput.addEventListener('blur', () => setTimeout(() => { editSearchSuggestions.style.display = 'none'; }, 150));
+
+// Populates the entire Add a Product form (fields, material, pricing, add-ons, photo, and logo
+// area with all its position/angle handles) from an existing live product record, then switches
+// to that tab so the rep can change anything and save -- since Add Product already updates a
+// matching SKU instead of duplicating it, no separate "save edit" path is needed.
+async function loadProductForEdit(sku) {
+  const p = allProductsForEdit.find(x => String(x.sku) === String(sku));
+  if (!p) { setEditSearchStatus('Could not find that product.', true); return; }
+  setEditSearchStatus('Loading "' + (p.name || sku) + '"…');
+  try {
+    const photoUrl = p.blankImage || p.masterImage;
+    if (!photoUrl) throw new Error("This product has no photo on file yet, so there's nothing to load here.");
+    const img = await loadCrossOriginImageEl(photoUrl);
+    currentImage = { filename: photoUrl.split('/').pop().split('?')[0], dataUrl: photoUrl, img, naturalW: img.naturalWidth, naturalH: img.naturalHeight, mask: null };
+    productMeta.blankUploadedFor = photoUrl;
+    productMeta.blankUploadedUrl = photoUrl;
+
+    let shapeWarning = '';
+    if (p.regions && p.regions.mask && p.regions.mask.layers && p.regions.mask.layers[0]) {
+      const maskUrl = p.regions.mask.layers[0].imageUrl || '';
+      let previewImg = null;
+      if (maskUrl) { try { previewImg = await loadCrossOriginImageEl(maskUrl); } catch (e) { /* preview is a nice-to-have, not required to keep editing everything else */ } }
+      const axesList = [p.regions.mask.logoAxis].concat(p.regions.mask.extraLogoAxes || []).filter(Boolean);
+      currentImage.mask = {
+        layers: [{ shape: 'image', op: 'add', x: 0, y: 0, w: 100, h: 100, rotation: 0, imageUrl: maskUrl, _previewImg: previewImg, _previewDataUrl: maskUrl }],
+        rotateCCW: !!p.regions.mask.rotateCCW,
+        rotateCW: !!p.regions.mask.rotateCW,
+        centerOffset: null,
+        widthIn: p.regions.mask.widthIn || null,
+        logoAxis: axesList[0] || defaultLogoAxis(),
+        axesList: axesList.length ? axesList : [defaultLogoAxis()]
+      };
+      maskImageDataUrl = maskUrl || null;
+      if (maskUrl) { productMeta.maskUploadedFor = maskUrl; productMeta.maskUploadedUrl = maskUrl; }
+    } else if (p.regions && (p.regions.rect || p.regions.poly)) {
+      shapeWarning = " Note: this product's logo area was drawn with the full masking tool (not a simple logo-area file), so it can't be shown or edited here -- everything else below is still safe to change and save.";
+    } else {
+      shapeWarning = ' Note: this product has no logo area set up yet -- upload one below.';
+    }
+
+    document.getElementById('skuInput').value = sanitizeSkuValue(p.sku);
+    updateSkuInputValidity();
+    const nameParts = String(p.name || '').split(':');
+    document.getElementById('productNameInput').value = nameParts[0].trim();
+    document.getElementById('productTaglineInput').value = nameParts.slice(1).join(':').trim();
+    syncProductNameField();
+
+    const catParts = String(p.category || '').split('|').map(s => s.trim()).filter(Boolean);
+    setCategoryParts(catParts[0] || '', catParts[1] || '');
+
+    const tagsInput = document.querySelector('[data-header="Tags (comma-separated)"]');
+    tagsInput.value = (p.tags || []).join(', ');
+    productMeta.fields['Tags (comma-separated)'] = tagsInput.value;
+
+    document.getElementById('descTextarea').value = p.description || '';
+    productMeta.fields['Description'] = p.description || '';
+    document.getElementById('descTextarea').dispatchEvent(new Event('input'));
+
+    document.querySelector('[data-header="Lead Time (days)"]').value = p.leadTime || '';
+    productMeta.fields['Lead Time (days)'] = p.leadTime || '';
+    document.querySelector('[data-header="Setup Fee (USD)"]').value = p.setupFee || '';
+    productMeta.fields['Setup Fee (USD)'] = p.setupFee || '';
+
+    for (let n = 1; n <= 3; n++) {
+      const t = (p.tiers || [])[n - 1];
+      if (n === 1) {
+        setTier1Qty(t ? t.qty : '');
+      } else {
+        const qtyEl = document.querySelector(`[data-header="Qty ${n}"]`);
+        qtyEl.value = t ? t.qty : '';
+        productMeta.fields['Qty ' + n] = t ? t.qty : '';
+      }
+      const usdEl = document.querySelector(`[data-header="Price ${n} USD"]`);
+      usdEl.value = t ? t.priceUS : '';
+      productMeta.fields['Price ' + n + ' USD'] = t ? t.priceUS : '';
+      const cadEl = document.querySelector(`[data-header="Price ${n} CAD"]`);
+      cadEl.value = t ? t.priceCAD : '';
+      productMeta.fields['Price ' + n + ' CAD'] = t ? t.priceCAD : '';
+    }
+
+    const addonMap = {};
+    (p.addons || []).forEach(a => { addonMap[a.name] = a.price || ''; });
+    productMeta.fields[ADDONS_HEADER] = serializeAddonsString(addonMap);
+
+    document.getElementById('blackProductChk').checked = !!p.blackProduct;
+    document.getElementById('woodProductChk').checked = !!p.woodProduct;
+    document.getElementById('clearProductChk').checked = !!p.clearProduct;
+    productMeta.fields['Black Product (Y/N)'] = p.blackProduct ? 'Y' : 'N';
+    productMeta.fields['Wood Product (Y/N)'] = p.woodProduct ? 'Y' : 'N';
+    productMeta.fields['Clear Product (Y/N)'] = p.clearProduct ? 'Y' : 'N';
+
+    document.getElementById('photoStatus').textContent = currentImage.filename + ' (already on file)';
+    document.getElementById('maskStatus').textContent = currentImage.mask ? (maskImageDataUrl || '').split('/').pop().split('?')[0] + ' (already on file)' : 'No file chosen';
+
+    editingExistingSku = p.sku;
+    updateSubmitButtonLabel();
+    renderCurrent();
+    renderCategoryCheckboxes();
+    renderAddonCheckboxes();
+    updateFileNamePreviews();
+
+    switchToTab('product');
+    setSubmitStatus('Editing "' + (p.name || p.sku) + '" (#' + p.sku + ').' + shapeWarning + ' Make your changes, then click Update Product to save.', shapeWarning ? 'error' : 'ok');
+    setEditSearchStatus('');
+  } catch (err) {
+    setEditSearchStatus('Could not load that product: ' + err.message, true);
+  }
+}
+
+// Categories/add-ons only depend on the live sheet, not on any per-product state, so they can load
+// immediately on page load rather than waiting for a modal to open (there's no modal here).
+fetchCatalogIfNeeded().then(() => { renderCategoryCheckboxes(); renderAddonCheckboxes(); });
+renderCurrent();
+</script>
+</body>
+</html>
