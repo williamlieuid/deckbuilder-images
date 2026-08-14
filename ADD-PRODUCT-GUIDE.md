@@ -1,6 +1,6 @@
 # Adding a product to Deck Builder
 
-This is the guide for `add-product-simple.html` — the tool for adding one product (or one pattern) at a time. No setup needed: it's already connected to the live sheet and image library. Just open it and go.
+This is the guide for `deckbuilder-settings.html` — the admin tool for adding, editing, or removing one product (or one pattern) at a time. It's reachable from the gear icon in the top-right corner of the main Deck Builder tool, or directly at its own URL. Password-protected (**3949**) since it's admin-only, not for general reps. No other setup needed: it's already connected to the live sheet and image library.
 
 ---
 
@@ -44,6 +44,8 @@ Nothing is saved until you click that button — there's no separate "start over
 Switch to the **Edit a Product** tab and search by product number or name — pick it from the suggestions that appear. Everything about it (photo, logo placement, category, pricing, add-ons, material) loads into the Add a Product tab, ready to change, and the button there switches to **Update Product**. Make your edits and click it — since the product number already exists, it updates that product instead of creating a duplicate. If you didn't touch the photo or mask image, they're left exactly as they were (no wasted re-upload).
 
 One limitation: this simplified tool can only show/edit a product whose logo area was set up as a single uploaded mask file (the normal case for anything added through this tool). A product whose branding was drawn with the full masking tool (rectangles/polygons) can still have its other details — name, price, category, etc. — edited here, but its logo placement itself needs the full masking tool.
+
+**Removing a product entirely**: once you've loaded a product for editing, a small red **Remove this product** link appears below the Update Product button. Clicking it asks you to confirm — **this deletes the product from the sheet completely and cannot be undone**, not just from this session. Only use it when you're sure the product should no longer exist anywhere.
 
 ---
 
