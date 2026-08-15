@@ -4120,36 +4120,61 @@ function addToLogoHistory(dataUrl, name) {
   saveLogoHistory();
   renderLogoHistory();
 }
-// A bundled sample logo, always available to anyone on any device -- unlike the rest of
-// logoHistoryRow (genuinely per-browser, via localStorage, so a logo tried on one machine never
-// shows up on another), this needs no prior upload and no shared state at all. Deliberately
-// colorful with four distinct filled shapes (good for previewing knockout/colorize/pattern
-// behavior at a glance) and built from this app's own accent palette rather than any real
-// company's branding. Rendered as the first thumbnail in the same row real history entries use,
-// not a separate button, so it reads as "just another logo to try" rather than a special control.
-// Hosted alongside product/pattern images in the deckbuilder-images repo (test-logo.png) rather
-// than embedded inline -- same CDN loadCrossOriginImage/loadImageCached already use for every
-// other remote asset.
-const TEST_LOGO_URL = "https://cdn.jsdelivr.net/gh/williamlieuid/deckbuilder-images@main/test-logo.png";
+// Pinned/shared logos -- admin-managed via deckbuilder-settings.html's "Add a Logo" tab, live in
+// the GitHub repo's logos/ folder (mirrors PATTERN_LIBRARY/patterns/ below exactly), and available
+// to anyone on any device, unlike the rest of logoHistoryRow (genuinely per-browser, via
+// localStorage, so a logo tried on one machine never shows up on another). Rendered as the first
+// thumbnails in the same row real history entries use, not separate buttons, so they read as
+// "just another logo to try" rather than a special control. Bundled fallback below is the one
+// known logo until the live GitHub folder listing loads.
+let LOGO_LIBRARY = [
+  { url: "https://cdn.jsdelivr.net/gh/williamlieuid/deckbuilder-images@main/logos/test-logo.png", name: "test-logo" }
+];
+const LOGO_REPO = 'williamlieuid/deckbuilder-images';
+const LOGO_BRANCH = 'main';
+async function loadLogoLibraryFromGitHub() {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${LOGO_REPO}/contents/logos?ref=${LOGO_BRANCH}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error('Unexpected response shape');
+    const imageExt = /\.(jpe?g|png|webp|gif)$/i;
+    const entries = files
+      .filter(f => f.type === 'file' && imageExt.test(f.name))
+      .map(f => ({ url: `https://cdn.jsdelivr.net/gh/${LOGO_REPO}@${LOGO_BRANCH}/logos/${f.name}`, name: f.name.replace(/\.[^.]+$/, '') }));
+    if (!entries.length) throw new Error('No logo image files found in logos/ folder');
+    LOGO_LIBRARY = entries;
+    renderLogoHistory();
+    console.log('Loaded ' + entries.length + ' pinned logos from GitHub.');
+  } catch (err) {
+    console.warn('Could not load live logo library from GitHub, using bundled snapshot instead.', err);
+  }
+}
+loadLogoLibraryFromGitHub();
+
 function renderLogoHistory() {
   const row = document.getElementById('logoHistoryRow');
   if (!row) return;
   row.style.display = 'flex';
-  const testThumb = `<button type="button" id="testLogoThumbBtn" title="Test Logo — a bundled sample, always here, for previewing branding without a real file handy"
-    style="width:32px; height:32px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; padding:0;
-    background:#fff center/contain no-repeat url('${TEST_LOGO_URL}');"></button>`;
+  const pinnedThumbs = LOGO_LIBRARY.map(entry => `
+    <button type="button" class="pinnedLogoBtn" data-url="${entry.url}" title="${entry.name.replace(/"/g, '&quot;')} — shared logo, available to everyone"
+      style="width:32px; height:32px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; padding:0;
+      background:#fff center/contain no-repeat url('${entry.url}');"></button>
+  `).join('');
   const historyThumbs = logoHistory.map((entry, i) => `
     <button type="button" class="logoHistoryBtn" data-idx="${i}" title="${entry.name.replace(/"/g, '&quot;')}"
       style="width:32px; height:32px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; padding:0;
       background:#fff center/contain no-repeat url('${entry.dataUrl}');"></button>
   `).join('');
-  row.innerHTML = testThumb + historyThumbs;
-  document.getElementById('testLogoThumbBtn').addEventListener('click', () => {
-    logoDataUrl = TEST_LOGO_URL;
+  row.innerHTML = pinnedThumbs + historyThumbs;
+  row.querySelectorAll('.pinnedLogoBtn').forEach(btn => btn.addEventListener('click', () => {
+    const entry = LOGO_LIBRARY.find(l => l.url === btn.dataset.url);
+    if (!entry) return;
+    logoDataUrl = entry.url;
     document.getElementById('logoInput').value = '';
-    document.getElementById('logoFileName').textContent = 'Test Logo';
+    document.getElementById('logoFileName').textContent = entry.name;
     renderGrid(applySort(currentResults));
-  });
+  }));
   row.querySelectorAll('.logoHistoryBtn').forEach(btn => btn.addEventListener('click', () => {
     const entry = logoHistory[Number(btn.dataset.idx)];
     logoDataUrl = entry.dataUrl;
