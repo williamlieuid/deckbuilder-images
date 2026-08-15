@@ -4,22 +4,76 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Deck Builder Prototype</title>
+<script>
+// Applied synchronously, before the stylesheet paints anything, so a stored dark/light override
+// takes effect on first frame instead of flashing the wrong theme for a moment. Absent a stored
+// override, no attribute is set here -- the CSS's own prefers-color-scheme media query handles
+// following the system setting with no JS involved at all.
+(function() {
+  try {
+    var t = localStorage.getItem('deckbuilder_theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23D85A30'/%3E%3Cstop offset='1' stop-color='%23F2A65A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Crect x='8' y='11' width='16' height='3.2' rx='1.6' fill='%23fff' opacity='0.95'/%3E%3Crect x='8' y='18' width='10' height='3.2' rx='1.6' fill='%23fff' opacity='0.6'/%3E%3C/svg%3E" />
 <style>
   :root {
     --border: #E0DED5;
+    --border-strong: #B4B2A9;
     --text-primary: #1a1a1a;
     --text-secondary: #5F5E5A;
     --text-muted: #918F86;
+    --sku-gray: #C7C5BB;
     --surface-1: #F7F6F2;
+    --surface-2: #fff;
+    --page-bg: #fff;
     --backdrop: #E8E6DE;
     --accent: #D85A30;
+    --accent-2: #F2A65A;
     --radius: 8px;
+    color-scheme: light;
+  }
+  /* Dark mode: follows the OS/browser preference by default (unset data-theme), overridable either
+     way via the toggle button, which stamps data-theme and persists it to localStorage. The
+     :not([data-theme="light"]) guard is what lets an explicit light override win even when the
+     system itself prefers dark -- without it, the media query would always beat a plain :root rule. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --border: #3A362F;
+      --border-strong: #4F4A41;
+      --text-primary: #F3F1EC;
+      --text-secondary: #B7B3A9;
+      --text-muted: #8A8579;
+      --sku-gray: #57534A;
+      --surface-1: #211F1B;
+      --surface-2: #2A2823;
+      --page-bg: #17150F;
+      /* --backdrop deliberately NOT overridden here -- it's dual-purpose (also the rep's explicit
+         canvas-background choice, set as an inline style by setBackdrop()), so it needs to stay
+         theme-independent or the visibly-selected swatch and the actually-rendered backdrop would
+         disagree the moment dark mode is active but no swatch has been clicked yet. */
+      --accent: #E2764A;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --border: #3A362F;
+    --border-strong: #4F4A41;
+    --text-primary: #F3F1EC;
+    --text-secondary: #B7B3A9;
+    --text-muted: #8A8579;
+    --sku-gray: #57534A;
+    --surface-1: #211F1B;
+    --surface-2: #2A2823;
+    --page-bg: #17150F;
+    --accent: #E2764A;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    margin: 0; padding: 0; color: var(--text-primary); background: #fff;
+    margin: 0; padding: 0; color: var(--text-primary); background: var(--page-bg);
   }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 80px; }
   .wrap.deck-mode { max-width: none; }
@@ -32,13 +86,13 @@
   .field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 500; }
   input[type=text], input[type=number], select {
     width: 100%; height: 36px; padding: 0 10px; border: 0.5px solid var(--border);
-    border-radius: var(--radius); font-size: 14px; background: #fff;
+    border-radius: var(--radius); font-size: 14px; background: var(--surface-2); color: var(--text-primary);
   }
   input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
   .price-field-wrap {
     flex: 1; display: flex; align-items: center; height: 36px; padding: 0 10px;
-    border: 0.5px solid var(--border); border-radius: var(--radius); background: #fff;
+    border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
   }
   .price-field-wrap .dollar-prefix {
     color: var(--text-muted); font-size: 14px; width: 0; overflow: hidden;
@@ -53,7 +107,7 @@
     position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
     display: flex; flex-direction: column; max-height: 220px; overflow-y: auto;
     border: 0.5px solid var(--border); border-radius: var(--radius); padding: 4px;
-    background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    background: var(--surface-2); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
   .suggestion-item { padding: 7px 10px; font-size: 13px; border-radius: 6px; cursor: pointer; }
   .suggestion-item:hover, .suggestion-item.active { background: var(--surface-1); }
@@ -61,7 +115,7 @@
     position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
     display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;
     border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px;
-    background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    background: var(--surface-2); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
   .cat-dropdown-panel label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; margin: 0; }
   .radio-group { display: flex; gap: 14px; align-items: center; height: 36px; }
@@ -72,12 +126,12 @@
   }
   button.primary:hover { opacity: 0.9; }
   button.secondary {
-    height: 40px; padding: 0 16px; border: 0.5px solid #B4B2A9; border-radius: var(--radius);
-    background: white; color: var(--text-primary); font-size: 14px; cursor: pointer;
+    height: 40px; padding: 0 16px; border: 0.5px solid var(--border-strong); border-radius: var(--radius);
+    background: var(--surface-2); color: var(--text-primary); font-size: 14px; cursor: pointer;
   }
   button.tiny-remove {
-    flex: 0 0 auto; width: 26px; height: 26px; border: 0.5px solid #B4B2A9; border-radius: 6px;
-    background: #fff; color: var(--text-secondary); font-size: 12px; cursor: pointer; line-height: 1;
+    flex: 0 0 auto; width: 26px; height: 26px; border: 0.5px solid var(--border-strong); border-radius: 6px;
+    background: var(--surface-2); color: var(--text-secondary); font-size: 12px; cursor: pointer; line-height: 1;
   }
   button.tiny-remove:hover { background: var(--surface-1); color: var(--accent); }
 
@@ -90,7 +144,7 @@
   .card .check { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 2; }
   .imgwrap { position: relative; aspect-ratio: 1; background: var(--backdrop); border-radius: 8px; overflow: hidden; }
   .imgwrap img.base { width: 100%; height: 100%; object-fit: contain; }
-  span.sku { font-size: 12px; font-weight: 400; color: #C7C5BB; }
+  span.sku { font-size: 12px; font-weight: 400; color: var(--sku-gray); }
   p.name { font-size: 13px; font-weight: 700; text-align: left; line-height: 1.35; overflow: hidden; margin: 10px 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
   p.name .name-eyebrow { color: var(--text-muted); }
   p.name .name-main { font-size: 15px; }
@@ -106,7 +160,7 @@
 
   #emptyState { display: none; text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
 
-  #deckBar { display: none; position: sticky; bottom: 0; z-index: 10; background: #fff; border-top: 0.5px solid var(--border); padding: 14px 24px; margin: 0 -24px; justify-content: space-between; align-items: center; }
+  #deckBar { display: none; position: sticky; bottom: 0; z-index: 10; background: var(--page-bg); border-top: 0.5px solid var(--border); padding: 14px 24px; margin: 0 -24px; justify-content: space-between; align-items: center; }
   #deckBar p { font-size: 13px; color: var(--text-secondary); margin: 0; }
 
   #deckView { display: none; }
@@ -139,9 +193,7 @@
     background: linear-gradient(135deg, var(--accent), #F2A65A);
     box-shadow: 0 2px 6px rgba(216, 90, 48, 0.35);
   }
-  .brandmark .mark::before, .brandmark .mark::after { content: ''; position: absolute; left: 8px; border-radius: 3px; background: #fff; }
-  .brandmark .mark::before { width: 14px; height: 3px; top: 10px; opacity: 0.95; }
-  .brandmark .mark::after { width: 9px; height: 3px; top: 16px; opacity: 0.6; }
+  .brandmark .mark svg { position: absolute; top: 6px; left: 6px; }
   .brandmark .wordmark { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
   .brandmark .wordmark span { font-weight: 800; color: var(--accent); }
 
@@ -152,11 +204,13 @@
   }
   .settingsIconLink:hover { opacity: 0.7; }
   .settingsTooltip {
-    position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: var(--text-primary);
+    /* Deliberately a fixed dark chip, not var(--text-primary) -- that token flips to a light color
+       in dark mode, which would invert this into unreadable light-text-on-light-background. */
+    position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: #1a1a1a;
     color: #fff; font-size: 11px; line-height: 1.5; padding: 8px 10px; border-radius: 6px;
     opacity: 0; visibility: hidden; transition: opacity 0.15s; pointer-events: none; text-align: left; z-index: 30;
   }
-  .settingsTooltip::after { content: ''; position: absolute; bottom: 100%; right: 12px; border: 5px solid transparent; border-bottom-color: var(--text-primary); }
+  .settingsTooltip::after { content: ''; position: absolute; bottom: 100%; right: 12px; border: 5px solid transparent; border-bottom-color: #1a1a1a; }
   .settingsIconLink:hover .settingsTooltip, .settingsIconLink:focus .settingsTooltip { opacity: 1; visibility: visible; }
 
   .region-ctrl-btn { border: 1px solid var(--border); border-radius: 3px; width: 22px; height: 18px; flex-shrink: 0; }
@@ -184,9 +238,31 @@
   <div class="no-print">
     <div class="header-row">
       <div class="brandmark">
-        <span class="mark" aria-hidden="true"></span>
+        <span class="mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 18 18">
+            <defs>
+              <linearGradient id="markGlyphGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fff" stop-opacity="1"></stop>
+                <stop offset="1" stop-color="#fff" stop-opacity="0.55"></stop>
+              </linearGradient>
+            </defs>
+            <rect x="1" y="1" width="16" height="8" rx="2" fill="url(#markGlyphGrad)"></rect>
+            <rect x="1" y="10.2" width="16" height="2.2" rx="1.1" fill="url(#markGlyphGrad)"></rect>
+            <rect x="1" y="13.4" width="16" height="2.2" rx="1.1" fill="url(#markGlyphGrad)"></rect>
+          </svg>
+        </span>
         <span class="wordmark">Deck<span>Builder</span></span>
       </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+      <button type="button" id="themeToggleBtn" aria-label="Toggle dark mode" title="Toggle dark mode" style="width:30px; height:30px; border:0.5px solid var(--border); border-radius:50%; background:var(--surface-2); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0;">
+        <svg id="themeToggleIconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+        <svg id="themeToggleIconMoon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
       <a href="deckbuilder-settings.html" target="_blank" rel="noopener" class="settingsIconLink" aria-label="Admin settings">
         <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
           <defs>
@@ -200,6 +276,7 @@
         </svg>
         <span class="settingsTooltip">Admin settings — password required. Not for general use.</span>
       </a>
+      </div>
     </div>
 
     <div class="panel">
@@ -267,7 +344,7 @@
         <div class="field" id="patternField" style="max-width:340px;">
           <label>Pattern</label>
           <div id="patternSwatches" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <button type="button" class="pattern-swatch" data-pattern="" style="width:36px;height:36px;border-radius:6px;background:#F1EFE8;border:2px solid var(--accent);cursor:pointer;padding:0;font-size:9px;color:var(--text-muted);">None</button>
+            <button type="button" class="pattern-swatch" data-pattern="" style="width:36px;height:36px;border-radius:6px;background:var(--surface-1);border:2px solid var(--accent);cursor:pointer;padding:0;font-size:9px;color:var(--text-muted);">None</button>
             <button type="button" class="pattern-swatch" id="patternSolidBtn" style="width:36px;height:36px;border-radius:6px;background:#D85A30;border:2px solid transparent;cursor:pointer;padding:0;font-size:7.5px;line-height:1.15;color:#fff;font-weight:600;">Solid<br>Fill</button>
             <input type="color" id="patternSolidColorInput" value="#D85A30" style="width:36px;height:36px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Solid Fill Color" />
           </div>
@@ -299,6 +376,7 @@
             <button type="button" class="bg-swatch" data-color="#6D4FC4" style="width:26px;height:26px;border-radius:6px;background:#6D4FC4;border:2px solid transparent;cursor:pointer;padding:0;" title="Ultraviolet"></button>
             <button type="button" class="bg-swatch" data-color="#C15A9E" style="width:26px;height:26px;border-radius:6px;background:#C15A9E;border:2px solid transparent;cursor:pointer;padding:0;" title="Magenta Orchid"></button>
             <button type="button" class="bg-swatch" data-color="#D9455F" style="width:26px;height:26px;border-radius:6px;background:#D9455F;border:2px solid transparent;cursor:pointer;padding:0;" title="Coral Red"></button>
+            <button type="button" class="bg-swatch" id="transparentBgSwatch" data-color="transparent" style="width:26px;height:26px;border-radius:6px;background-image:repeating-conic-gradient(#bbb 0% 25%, #eee 0% 50%);background-size:8px 8px;border:2px solid transparent;cursor:pointer;padding:0;" title="Transparent — downloads save as a transparent PNG"></button>
             <input type="color" id="customBgColor" value="#E8E6DE" style="width:26px;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Custom Color" />
           </div>
         </div>
@@ -311,7 +389,7 @@
       </div>
     </div>
 
-    <div id="renderProgress" class="no-print" style="display:none; align-items:center; gap:10px; position:sticky; top:0; z-index:20; background:#fff; border-bottom:0.5px solid var(--border); padding:8px 0; margin-bottom:10px;">
+    <div id="renderProgress" class="no-print" style="display:none; align-items:center; gap:10px; position:sticky; top:0; z-index:20; background:var(--page-bg); border-bottom:0.5px solid var(--border); padding:8px 0; margin-bottom:10px;">
       <span id="renderProgressLabel" style="font-size:12px; color:var(--text-secondary); white-space:nowrap;">Rendering Images…</span>
       <div style="flex:1; height:4px; background:var(--surface-1); border-radius:2px; overflow:hidden;">
         <div id="renderProgressFill" style="height:100%; width:0%; background:var(--accent); transition:width 0.15s;"></div>
@@ -4346,6 +4424,7 @@ document.getElementById('colorizeAllChk').addEventListener('change', (e) => {
   colorizeAll = e.target.checked;
   colorizeAllColorInput.disabled = !colorizeAll;
   colorizeAllColorInput.style.opacity = colorizeAll ? '' : '0.4';
+  if (colorizeAllCmykBtn) colorizeAllCmykBtn.disabled = !colorizeAll;
   renderGrid(applySort(currentResults));
 });
 colorizeAllColorInput.addEventListener('change', (e) => {
@@ -4748,12 +4827,121 @@ document.getElementById('removePatternBtn').addEventListener('click', () => {
   renderGrid(applySort(currentResults));
 });
 
+// ---------- CMYK color entry ----------
+// Native <input type=color> only offers RGB/HSV pickers -- no browser has a CMYK tab -- which
+// matters here since promo-industry brand colors are very often specified in CMYK, not hex. One
+// shared floating popover (not a separate one built per color input) keeps this cheap even for the
+// per-region colorize inputs, which can appear many times on one page.
+function cmykToHex(c, m, y, k) {
+  c = Math.max(0, Math.min(100, c)) / 100;
+  m = Math.max(0, Math.min(100, m)) / 100;
+  y = Math.max(0, Math.min(100, y)) / 100;
+  k = Math.max(0, Math.min(100, k)) / 100;
+  const r = Math.round(255 * (1 - c) * (1 - k));
+  const g = Math.round(255 * (1 - m) * (1 - k));
+  const b = Math.round(255 * (1 - y) * (1 - k));
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+function hexToCmyk(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const k = 1 - Math.max(r, g, b);
+  if (k >= 1) return { c: 0, m: 0, y: 0, k: 100 };
+  return {
+    c: Math.round((1 - r - k) / (1 - k) * 100),
+    m: Math.round((1 - g - k) / (1 - k) * 100),
+    y: Math.round((1 - b - k) / (1 - k) * 100),
+    k: Math.round(k * 100)
+  };
+}
+
+const cmykPopover = document.createElement('div');
+cmykPopover.id = 'cmykPopover';
+cmykPopover.style.cssText = 'display:none; position:fixed; z-index:100; background:var(--surface-2); border:0.5px solid var(--border); border-radius:8px; padding:10px; box-shadow:0 4px 16px rgba(0,0,0,0.16); width:150px;';
+cmykPopover.innerHTML = `
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    ${['C', 'M', 'Y', 'K'].map(ch => `
+      <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary);">
+        <span style="width:10px;">${ch}</span>
+        <input type="number" min="0" max="100" step="1" class="cmykField" data-ch="${ch.toLowerCase()}" style="width:100%; height:22px; padding:0 6px; border:0.5px solid var(--border); border-radius:4px; font-size:11px;" />
+        <span style="font-size:10px; color:var(--text-muted);">%</span>
+      </label>
+    `).join('')}
+  </div>
+`;
+document.body.appendChild(cmykPopover);
+let cmykActiveInput = null;
+
+function closeCmykPopover() {
+  cmykPopover.style.display = 'none';
+  cmykActiveInput = null;
+}
+function openCmykPopover(triggerEl, colorInputEl) {
+  if (colorInputEl.disabled) return;
+  cmykActiveInput = colorInputEl;
+  const cmyk = hexToCmyk(colorInputEl.value);
+  cmykPopover.querySelectorAll('.cmykField').forEach(f => { f.value = cmyk[f.dataset.ch]; });
+  cmykPopover.style.display = 'block';
+  const rect = triggerEl.getBoundingClientRect();
+  const popRect = cmykPopover.getBoundingClientRect();
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
+  if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 6;
+  cmykPopover.style.top = top + 'px';
+  cmykPopover.style.left = left + 'px';
+}
+cmykPopover.addEventListener('input', () => {
+  if (!cmykActiveInput) return;
+  const vals = {};
+  cmykPopover.querySelectorAll('.cmykField').forEach(f => { vals[f.dataset.ch] = parseFloat(f.value) || 0; });
+  const hex = cmykToHex(vals.c, vals.m, vals.y, vals.k);
+  cmykActiveInput.value = hex;
+  cmykActiveInput.dispatchEvent(new Event('input', { bubbles: true }));
+  cmykActiveInput.dispatchEvent(new Event('change', { bubbles: true }));
+});
+cmykPopover.addEventListener('mousedown', (e) => e.stopPropagation());
+document.addEventListener('mousedown', (e) => {
+  if (cmykPopover.style.display !== 'none' && !cmykPopover.contains(e.target) && !e.target.classList.contains('cmykToggleBtn')) {
+    closeCmykPopover();
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCmykPopover(); });
+
+// Inserts a small "CMYK" toggle button right after a static (non-dynamically-regenerated) color
+// input -- the per-region colorize inputs are handled separately since their whole row is
+// regenerated as an HTML string each render (see regionControlsHtml/the delegated click handler).
+function insertCmykToggle(colorInputId) {
+  const input = document.getElementById(colorInputId);
+  if (!input) return null;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'cmykToggleBtn';
+  btn.textContent = 'CMYK';
+  btn.title = 'Enter this color as CMYK percentages';
+  btn.style.cssText = 'margin-left:6px; height:20px; padding:0 6px; font-size:9px; border:0.5px solid var(--border); border-radius:4px; background:var(--surface-2); color:var(--text-secondary); cursor:pointer; vertical-align:middle;';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (cmykActiveInput === input && cmykPopover.style.display !== 'none') { closeCmykPopover(); return; }
+    openCmykPopover(btn, input);
+  });
+  btn.disabled = input.disabled;
+  input.insertAdjacentElement('afterend', btn);
+  return btn;
+}
+const colorizeAllCmykBtn = insertCmykToggle('colorizeAllColor');
+insertCmykToggle('patternSolidColorInput');
+insertCmykToggle('customBgColor');
+
 function setBackdrop(hex) {
   document.documentElement.style.setProperty('--backdrop', hex);
   document.querySelectorAll('.bg-swatch').forEach(btn => {
     btn.style.border = btn.dataset.color.toLowerCase() === hex.toLowerCase() ? '2px solid var(--accent)' : '2px solid transparent';
   });
-  document.getElementById('customBgColor').value = hex;
+  // "transparent" isn't a value <input type=color> accepts -- leave its own last-picked hex alone
+  // rather than have the browser silently reject the assignment.
+  if (hex !== 'transparent') document.getElementById('customBgColor').value = hex;
   // Branded cards bake the backdrop color into their canvas at paint time (paintBrandedCanvases
   // reads --backdrop then), unlike plain product cards which reference the CSS var live via
   // .imgwrap's background -- so branded ones go stale without an explicit re-render here.
@@ -5278,7 +5466,10 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = backdropColor; ctx.fillRect(0, 0, size, size);
+  // "transparent" leaves the canvas's own already-clear alpha channel alone instead of filling it
+  // -- the letterboxed margin around the product photo then stays genuinely transparent in a PNG
+  // export, rather than baking in an opaque color.
+  if (backdropColor !== 'transparent') { ctx.fillStyle = backdropColor; ctx.fillRect(0, 0, size, size); }
 
   const iw = baseImg.naturalWidth || baseImg.width, ih = baseImg.naturalHeight || baseImg.height;
   const scale = Math.min(size / iw, size / ih);
@@ -6083,10 +6274,11 @@ function regionControlsHtml(p) {
       const ov = getRegionOverride(p.sku, r.key);
       return `<div class="region-ctrl-row" style="display:flex; align-items:center; gap:4px; font-size:9.5px; color:var(--text-muted);">
         <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span>
-        <button type="button" class="tiny region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise" style="padding:0; font-size:11px; line-height:1; background:#fff;">↻</button>
+        <button type="button" class="tiny region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise" style="padding:0; font-size:11px; line-height:1; background:var(--surface-2);">↻</button>
         <input type="color" class="tiny region-ctrl-btn colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#ff0000'}" title="${ov.colorize ? ('Colorized ' + ov.colorize + ' — click to clear') : 'Colorize logo (click to pick a color)'}" style="padding:0; cursor:pointer; ${ov.colorize ? '' : 'opacity:0.35;'}" />
+        <button type="button" class="cmyk-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Enter this color as CMYK" style="flex:0 0 auto; height:18px; padding:0 4px; font-size:8px; line-height:1; border:1px solid var(--border); border-radius:3px; background:var(--surface-2); color:var(--text-muted); cursor:pointer;">CMYK</button>
         <button type="button" class="tiny region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="padding:0; background-image:linear-gradient(to top right, transparent 44%, #e0332f 44%, #e0332f 56%, transparent 56%), repeating-conic-gradient(#999 0% 25%, #ddd 0% 50%); background-size:100% 100%, 6px 6px; ${ov.hidePattern ? 'opacity:0.4;' : ''}"></button>
-        <button type="button" class="tiny region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="padding:0; font-size:10px; line-height:1; background:#fff; ${ov.hidden ? 'opacity:0.5;' : ''}">${ov.hidden ? '\u{1F6AB}' : '\u{1F441}'}</button>
+        <button type="button" class="tiny region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="padding:0; font-size:10px; line-height:1; background:var(--surface-2); ${ov.hidden ? 'opacity:0.5;' : ''}">${ov.hidden ? '\u{1F6AB}' : '\u{1F441}'}</button>
       </div>`;
     }).join('')}
   </div>`;
@@ -6170,9 +6362,16 @@ async function exportProductImage(sku) {
     const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
     const maskImageCache = await loadMaskImageCache(effectiveRegions, loadCrossOriginImage);
     const effectiveLogoMultiply = (p.blackProduct || p.woodProduct || p.clearProduct) ? false : logoMultiply;
-    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + '.jpg');
+    // Exports always render onto opaque white regardless of the live preview's backdrop choice --
+    // except "Transparent", which needs the export itself to actually carry an alpha channel, so
+    // that one case alone follows the live --backdrop value through to both the canvas fill and
+    // the output format (JPEG has no alpha at all).
+    const liveBackdrop = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim();
+    const isTransparent = liveBackdrop === 'transparent';
+    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, isTransparent ? 'transparent' : '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct);
+    const dataUrl = isTransparent ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92);
+    const ext = isTransparent ? '.png' : '.jpg';
+    triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + ext);
   } catch (err) {
     alert('This image can\'t be exported directly due to the source site\'s cross-origin security settings. Opening the original image in a new tab instead — right-click (or long-press) it there to save it manually.');
     window.open(baseUrl, '_blank');
@@ -6217,6 +6416,9 @@ document.addEventListener('click', (e) => {
       e.target.style.opacity = '0.35';
       invalidateAndRepaintSku(sku);
     }
+  } else if (e.target.classList.contains('cmyk-region-btn')) {
+    const colorInput = document.querySelector(`.colorize-region-input[data-sku="${sku}"][data-region="${regionKey}"]`);
+    if (colorInput) openCmykPopover(e.target, colorInput);
   }
 });
 
@@ -6603,6 +6805,39 @@ async function loadProducts() {
 }
 loadProducts();
 renderLogoHistory();
+
+// ---------- dark mode ----------
+// The actual data-theme attribute (if any override is stored) is already applied synchronously in
+// <head>, before first paint -- this just keeps the toggle button's icon in sync with whatever
+// theme ends up effective, including the no-override case where the system setting decides it.
+const THEME_KEY = 'deckbuilder_theme';
+function getStoredTheme() { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } }
+function effectiveTheme() {
+  const stored = getStoredTheme();
+  if (stored === 'light' || stored === 'dark') return stored;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+function applyThemeIcon() {
+  const eff = effectiveTheme();
+  document.getElementById('themeToggleIconSun').style.display = eff === 'dark' ? 'block' : 'none';
+  document.getElementById('themeToggleIconMoon').style.display = eff === 'light' ? 'block' : 'none';
+}
+function setTheme(theme) {
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* storage unavailable -- toggle still works this session, just doesn't persist */ }
+  document.documentElement.setAttribute('data-theme', theme);
+  applyThemeIcon();
+}
+applyThemeIcon();
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+  setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
+});
+// Keeps the icon (and, since no override is stored, the actual theme) following the OS live if the
+// system setting changes while this tab is open -- only matters when there's no explicit override.
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (!getStoredTheme()) applyThemeIcon();
+  });
+}
 
 // Show every product immediately on page open (using the bundled snapshot) rather than leaving
 // the grid blank until a rep manually clicks Search -- an unfiltered click of the same button
