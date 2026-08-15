@@ -73,6 +73,11 @@
   .grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
   .card { border: 0.5px solid var(--border); border-radius: 10px; padding: 12px; position: relative; }
   .imgwrap { position: relative; aspect-ratio: 1; background: var(--backdrop); border-radius: 8px; overflow: hidden; }
+  /* "Transparent" backdrop sets --backdrop to the literal string "transparent" (see setBackdrop),
+     which makes .imgwrap show whatever's behind it rather than any visible cue that this is the
+     transparent option -- add an actual checkerboard so it reads the same way any image editor
+     signals transparency, instead of just looking blank. */
+  body.transparent-backdrop .imgwrap { background-image: repeating-conic-gradient(#bbb 0% 25%, #eee 0% 50%); background-size: 16px 16px; }
   .imgwrap img.base { width: 100%; height: 100%; object-fit: contain; }
   span.sku { font-size: 12px; font-weight: 400; color: #C7C5BB; }
   p.name { font-size: 13px; font-weight: 700; text-align: left; line-height: 1.35; overflow: hidden; margin: 10px 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
@@ -4226,7 +4231,6 @@ document.getElementById('colorizeAllChk').addEventListener('change', (e) => {
   colorizeAll = e.target.checked;
   colorizeAllColorInput.disabled = !colorizeAll;
   colorizeAllColorInput.style.opacity = colorizeAll ? '' : '0.4';
-  if (colorizeAllCmykBtn) colorizeAllCmykBtn.disabled = !colorizeAll;
   renderGrid(applySort(currentResults));
 });
 colorizeAllColorInput.addEventListener('change', (e) => {
@@ -4546,115 +4550,9 @@ document.getElementById('removePatternBtn').addEventListener('click', () => {
   renderGrid(applySort(currentResults));
 });
 
-// ---------- CMYK color entry ----------
-// Native <input type=color> only offers RGB/HSV pickers -- no browser has a CMYK tab -- which
-// matters here since promo-industry brand colors are very often specified in CMYK, not hex. One
-// shared floating popover (not a separate one built per color input) keeps this cheap even for the
-// per-region colorize inputs, which can appear many times on one page.
-function cmykToHex(c, m, y, k) {
-  c = Math.max(0, Math.min(100, c)) / 100;
-  m = Math.max(0, Math.min(100, m)) / 100;
-  y = Math.max(0, Math.min(100, y)) / 100;
-  k = Math.max(0, Math.min(100, k)) / 100;
-  const r = Math.round(255 * (1 - c) * (1 - k));
-  const g = Math.round(255 * (1 - m) * (1 - k));
-  const b = Math.round(255 * (1 - y) * (1 - k));
-  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
-}
-function hexToCmyk(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const k = 1 - Math.max(r, g, b);
-  if (k >= 1) return { c: 0, m: 0, y: 0, k: 100 };
-  return {
-    c: Math.round((1 - r - k) / (1 - k) * 100),
-    m: Math.round((1 - g - k) / (1 - k) * 100),
-    y: Math.round((1 - b - k) / (1 - k) * 100),
-    k: Math.round(k * 100)
-  };
-}
-
-const cmykPopover = document.createElement('div');
-cmykPopover.id = 'cmykPopover';
-cmykPopover.style.cssText = 'display:none; position:fixed; z-index:100; background:#fff; border:0.5px solid var(--border); border-radius:8px; padding:10px; box-shadow:0 4px 16px rgba(0,0,0,0.16); width:150px;';
-cmykPopover.innerHTML = `
-  <div style="display:flex; flex-direction:column; gap:6px;">
-    ${['C', 'M', 'Y', 'K'].map(ch => `
-      <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary);">
-        <span style="width:10px;">${ch}</span>
-        <input type="number" min="0" max="100" step="1" class="cmykField" data-ch="${ch.toLowerCase()}" style="width:100%; height:22px; padding:0 6px; border:0.5px solid var(--border); border-radius:4px; font-size:11px;" />
-        <span style="font-size:10px; color:var(--text-muted);">%</span>
-      </label>
-    `).join('')}
-  </div>
-`;
-document.body.appendChild(cmykPopover);
-let cmykActiveInput = null;
-
-function closeCmykPopover() {
-  cmykPopover.style.display = 'none';
-  cmykActiveInput = null;
-}
-function openCmykPopover(triggerEl, colorInputEl) {
-  if (colorInputEl.disabled) return;
-  cmykActiveInput = colorInputEl;
-  const cmyk = hexToCmyk(colorInputEl.value);
-  cmykPopover.querySelectorAll('.cmykField').forEach(f => { f.value = cmyk[f.dataset.ch]; });
-  cmykPopover.style.display = 'block';
-  const rect = triggerEl.getBoundingClientRect();
-  const popRect = cmykPopover.getBoundingClientRect();
-  let top = rect.bottom + 6;
-  let left = rect.left;
-  if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
-  if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 6;
-  cmykPopover.style.top = top + 'px';
-  cmykPopover.style.left = left + 'px';
-}
-cmykPopover.addEventListener('input', () => {
-  if (!cmykActiveInput) return;
-  const vals = {};
-  cmykPopover.querySelectorAll('.cmykField').forEach(f => { vals[f.dataset.ch] = parseFloat(f.value) || 0; });
-  const hex = cmykToHex(vals.c, vals.m, vals.y, vals.k);
-  cmykActiveInput.value = hex;
-  cmykActiveInput.dispatchEvent(new Event('input', { bubbles: true }));
-  cmykActiveInput.dispatchEvent(new Event('change', { bubbles: true }));
-});
-cmykPopover.addEventListener('mousedown', (e) => e.stopPropagation());
-document.addEventListener('mousedown', (e) => {
-  if (cmykPopover.style.display !== 'none' && !cmykPopover.contains(e.target) && !e.target.classList.contains('cmykToggleBtn')) {
-    closeCmykPopover();
-  }
-});
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCmykPopover(); });
-
-// Inserts a small "CMYK" toggle button right after a static (non-dynamically-regenerated) color
-// input -- the per-region colorize inputs are handled separately since their whole row is
-// regenerated as an HTML string each render (see regionControlsHtml/the delegated click handler).
-function insertCmykToggle(colorInputId) {
-  const input = document.getElementById(colorInputId);
-  if (!input) return null;
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'cmykToggleBtn';
-  btn.textContent = 'CMYK';
-  btn.title = 'Enter this color as CMYK percentages';
-  btn.style.cssText = 'margin-left:6px; height:20px; padding:0 6px; font-size:9px; border:0.5px solid var(--border); border-radius:4px; background:#fff; color:var(--text-secondary); cursor:pointer; vertical-align:middle;';
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (cmykActiveInput === input && cmykPopover.style.display !== 'none') { closeCmykPopover(); return; }
-    openCmykPopover(btn, input);
-  });
-  btn.disabled = input.disabled;
-  input.insertAdjacentElement('afterend', btn);
-  return btn;
-}
-const colorizeAllCmykBtn = insertCmykToggle('colorizeAllColor');
-insertCmykToggle('patternSolidColorInput');
-insertCmykToggle('customBgColor');
-
 function setBackdrop(hex) {
   document.documentElement.style.setProperty('--backdrop', hex);
+  document.body.classList.toggle('transparent-backdrop', hex === 'transparent');
   document.querySelectorAll('.bg-swatch').forEach(btn => {
     btn.style.border = btn.dataset.color.toLowerCase() === hex.toLowerCase() ? '2px solid var(--accent)' : '2px solid transparent';
   });
@@ -5905,10 +5803,11 @@ function imageBlock(p, includeControls = true) {
   }
 
   if (hasRegionBranding) {
+    const isTransparent = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim() === 'transparent';
     return `<div class="imgwrap">
       <canvas class="branded-canvas" data-sku="${p.sku}" data-base="${baseImg}" style="width:100%; height:100%; display:block;"></canvas>
     </div>
-    ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">Download Image</button>
+    ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isTransparent ? 'Download Transparent Image' : 'Download Image'}</button>
     ${regionControlsHtml(p)}` : ''}`;
   }
 
@@ -5941,7 +5840,6 @@ function regionControlsHtml(p) {
         <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span>
         <button type="button" class="tiny region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise" style="padding:0; font-size:11px; line-height:1; background:#fff;">↻</button>
         <input type="color" class="tiny region-ctrl-btn colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#ff0000'}" title="${ov.colorize ? ('Colorized ' + ov.colorize + ' — click to clear') : 'Colorize logo (click to pick a color)'}" style="padding:0; cursor:pointer; ${ov.colorize ? '' : 'opacity:0.35;'}" />
-        <button type="button" class="cmyk-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Enter this color as CMYK" style="flex:0 0 auto; height:18px; padding:0 4px; font-size:8px; line-height:1; border:1px solid var(--border); border-radius:3px; background:#fff; color:var(--text-muted); cursor:pointer;">CMYK</button>
         <button type="button" class="tiny region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="padding:0; background-image:linear-gradient(to top right, transparent 44%, #e0332f 44%, #e0332f 56%, transparent 56%), repeating-conic-gradient(#999 0% 25%, #ddd 0% 50%); background-size:100% 100%, 6px 6px; ${ov.hidePattern ? 'opacity:0.4;' : ''}"></button>
         <button type="button" class="tiny region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="padding:0; font-size:10px; line-height:1; background:#fff; ${ov.hidden ? 'opacity:0.5;' : ''}">${ov.hidden ? '\u{1F6AB}' : '\u{1F441}'}</button>
       </div>`;
@@ -6114,9 +6012,6 @@ document.addEventListener('click', (e) => {
       e.target.style.opacity = '0.35';
       invalidateAndRepaintSku(sku);
     }
-  } else if (e.target.classList.contains('cmyk-region-btn')) {
-    const colorInput = document.querySelector(`.colorize-region-input[data-sku="${sku}"][data-region="${regionKey}"]`);
-    if (colorInput) openCmykPopover(e.target, colorInput);
   }
 });
 
