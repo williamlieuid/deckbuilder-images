@@ -1424,7 +1424,12 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
   if (!productName) { setSubmitStatus('Please enter a product name.', 'error'); return; }
   if (!document.getElementById('productTaglineInput').value.trim()) { setSubmitStatus('Please enter a subtitle.', 'error'); return; }
   if (!currentImage) { setSubmitStatus('Please choose a blank product image first.', 'error'); return; }
-  if (!currentImage.mask) { setSubmitStatus('Please choose a mask image first.', 'error'); return; }
+  // A mask file is the only way this simplified tool can define NEW logo placement, so it's
+  // required when adding a product. Editing an existing one is different: a product whose branding
+  // was drawn with the full masking tool (rect/poly, not a mask file) never has one to begin with,
+  // and per the guide, other details on a product like that should still be editable here even
+  // though its logo placement can't be -- requiring a mask unconditionally blocked that entirely.
+  if (!currentImage.mask && !editingExistingSku) { setSubmitStatus('Please choose a mask image first.', 'error'); return; }
   const tierProblems = checkTierConsistency();
   if (tierProblems.length) {
     setSubmitStatus(`Please double check ${tierProblems.join(', ')} — quantity and USD price should both be filled in, or both left blank.`, 'error');
@@ -1449,17 +1454,24 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
     setSubmitStatus('Uploading blank product image…');
     const blankUrl = await uploadIfNeeded('blank', currentImage.dataUrl, fileSlug + photoExt);
 
-    setSubmitStatus('Uploading mask image…');
-    const maskUrl = await uploadIfNeeded('mask', maskImageDataUrl, fileSlug + '-mask' + maskExt);
-    currentImage.mask.layers[0].imageUrl = maskUrl;
+    // Skipped entirely for a rect/poly product being edited (see the validation above) -- there's
+    // no mask to upload and no Mask JSON to write, so those columns are simply left out of the
+    // fields payload below rather than sent as blank/null and overwriting whatever's already there.
+    if (currentImage.mask) {
+      setSubmitStatus('Uploading mask image…');
+      const maskUrl = await uploadIfNeeded('mask', maskImageDataUrl, fileSlug + '-mask' + maskExt);
+      currentImage.mask.layers[0].imageUrl = maskUrl;
+    }
 
     setSubmitStatus('Saving…');
     const fields = Object.assign({}, productMeta.fields);
     fields['SKU'] = sku;
     fields['Blank Image URL'] = blankUrl;
     if (!fields['Master Image URL']) fields['Master Image URL'] = blankUrl; // see deckbuilder-production.html's imageBlock fallback
-    fields['Mask Eligible (Y/N)'] = 'Y';
-    fields['Mask JSON'] = JSON.stringify(maskForSheet(currentImage.mask));
+    if (currentImage.mask) {
+      fields['Mask Eligible (Y/N)'] = 'Y';
+      fields['Mask JSON'] = JSON.stringify(maskForSheet(currentImage.mask));
+    }
 
     const res = await postToScript({ action: 'submitProduct', fields });
     if (!res.ok) throw new Error(res.error);
