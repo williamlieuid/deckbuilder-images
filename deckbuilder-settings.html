@@ -63,6 +63,9 @@
   #settingsPasswordInput { width: 160px; height: 34px; padding: 0 10px; border: 0.5px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; }
   #settingsUnlockBtn { height: 34px; }
   #settingsPasswordError { font-size: 11px; color: #D8433B; min-height: 14px; }
+  .stickyActionsBar { position: sticky; bottom: 0; background: #fff; padding-bottom: 14px; z-index: 10; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: none; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; flex: 0 0 auto; }
 </style>
 </head>
 <body>
@@ -232,7 +235,9 @@
     </div>
   </div>
 
+  <div class="stickyActionsBar">
   <div class="modalActions">
+    <span id="submitSpinner" class="spinner"></span>
     <span id="submitStatus"></span>
     <button type="button" class="primary" id="submitProductBtn">Add Product</button>
   </div>
@@ -240,6 +245,7 @@
   <div style="text-align:right; margin-top:10px; display:flex; justify-content:flex-end; gap:16px;">
     <a href="#" id="cancelEditLink" style="display:none; color:var(--text-secondary); text-decoration:underline; font-size:11px;">Cancel editing</a>
     <a href="#" id="removeProductLink" style="display:none; color:#D8433B; text-decoration:underline; font-size:11px;">Remove this product</a>
+  </div>
   </div>
 
   </div>
@@ -287,6 +293,7 @@ const SETTINGS_UNLOCK_KEY = 'deckbuilder_settings_unlocked';
 function unlockSettingsPage() {
   document.getElementById('settingsLockScreen').style.display = 'none';
   document.querySelector('.page').style.display = 'block';
+  document.getElementById('skuInput').focus();
 }
 if (localStorage.getItem(SETTINGS_UNLOCK_KEY) === 'true') {
   unlockSettingsPage();
@@ -1116,6 +1123,7 @@ document.getElementById('removeProductLink').addEventListener('click', async (e)
   const link = document.getElementById('removeProductLink');
   link.style.pointerEvents = 'none';
   link.style.opacity = '0.5';
+  document.getElementById('submitSpinner').style.display = 'inline-block';
   setSubmitStatus('Removing…');
   try {
     const res = await postToScript({ action: 'deleteProduct', sku: editingExistingSku });
@@ -1128,6 +1136,7 @@ document.getElementById('removeProductLink').addEventListener('click', async (e)
   } finally {
     link.style.pointerEvents = '';
     link.style.opacity = '';
+    document.getElementById('submitSpinner').style.display = 'none';
   }
 });
 
@@ -1201,6 +1210,7 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
 
   const submitBtn = document.getElementById('submitProductBtn');
   submitBtn.disabled = true;
+  document.getElementById('submitSpinner').style.display = 'inline-block';
   try {
     const fileSlug = computeFileSlug();
     const photoExt = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
@@ -1237,6 +1247,7 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
     setSubmitStatus('Something went wrong: ' + err.message, 'error');
   } finally {
     submitBtn.disabled = false;
+    document.getElementById('submitSpinner').style.display = 'none';
   }
 });
 
