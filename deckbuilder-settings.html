@@ -104,12 +104,14 @@
       <input type="text" id="productColorInput" placeholder="e.g. Black" />
     </div>
   </div>
+  <p class="empty-note" id="skuCollisionWarning" style="display:none; color:#D8433B; margin:-6px 0 12px;"></p>
 
   <div class="section-title">Product Photo &amp; Logo Placement</div>
   <p class="empty-note" style="margin-bottom:8px;">Fill in the Product Number, Name, and Color (if used) above first — your uploaded files below will be automatically renamed to match, so they're easy to find later.</p>
 
   <div class="uploadRow">
     <button type="button" class="secondary" id="choosePhotoBtn">Choose Blank Product Image</button>
+    <span style="color:#D8433B; font-size:13px;">*</span>
     <input type="file" id="photoInput" accept="image/*" style="display:none;" />
     <span class="status" id="photoStatus">No file chosen</span>
   </div>
@@ -117,10 +119,12 @@
 
   <div class="uploadRow">
     <button type="button" class="secondary" id="chooseMaskBtn">Choose Mask Image</button>
+    <span style="color:#D8433B; font-size:13px;">*</span>
     <input type="file" id="maskInput" accept="image/*" style="display:none;" />
     <span class="status" id="maskStatus">No file chosen</span>
   </div>
   <p class="empty-note">Tip: a file the same size as the photo above, with the branding area masked out in any solid color — everything else in the file left transparent. It's placed over the whole photo automatically.</p>
+  <p class="empty-note" id="maskSizeWarning" style="display:none; color:#D8433B;"></p>
 
   <div id="canvasWrap" style="display:none;">
     <canvas id="canvas"></canvas>
@@ -233,7 +237,8 @@
     <button type="button" class="primary" id="submitProductBtn">Add Product</button>
   </div>
 
-  <div style="text-align:right; margin-top:10px;">
+  <div style="text-align:right; margin-top:10px; display:flex; justify-content:flex-end; gap:16px;">
+    <a href="#" id="cancelEditLink" style="display:none; color:var(--text-secondary); text-decoration:underline; font-size:11px;">Cancel editing</a>
     <a href="#" id="removeProductLink" style="display:none; color:#D8433B; text-decoration:underline; font-size:11px;">Remove this product</a>
   </div>
 
@@ -525,7 +530,27 @@ function updateSkuInputValidity() {
   if (clean !== input.value) input.value = clean;
   input.classList.toggle('invalid', !clean);
 }
-document.getElementById('skuInput').addEventListener('input', () => { updateSkuInputValidity(); updateFileNamePreviews(); });
+// Catches the single most damaging mistake possible in this tool: typing an existing product's
+// number by accident while trying to ADD a new one. Add Product silently updates a matching SKU
+// instead of creating a new row (that's the whole point when genuinely editing), so a typo here
+// would overwrite a real, unrelated product with no error of any kind -- this surfaces it before
+// that can happen. Only checked while NOT already in an intentional edit (editingExistingSku unset).
+function checkSkuCollision() {
+  const warning = document.getElementById('skuCollisionWarning');
+  if (editingExistingSku) { warning.style.display = 'none'; return null; }
+  const sku = document.getElementById('skuInput').value.trim();
+  if (sku.length !== 4) { warning.style.display = 'none'; return null; }
+  const existing = allProductsForEdit.find(p => String(p.sku) === sku);
+  if (existing) {
+    warning.textContent = `⚠ Product #${sku} already exists: "${existing.name}". Saving will overwrite it, not create a new product.`;
+    warning.style.display = 'block';
+    return existing;
+  }
+  warning.style.display = 'none';
+  return null;
+}
+
+document.getElementById('skuInput').addEventListener('input', () => { updateSkuInputValidity(); updateFileNamePreviews(); checkSkuCollision(); });
 updateSkuInputValidity();
 
 // ---------- photo + mask image pickers ----------
@@ -549,6 +574,12 @@ document.getElementById('photoInput').addEventListener('change', async (e) => {
     updateSkuInputValidity();
   }
   updateFileNamePreviews();
+  // A mask carried over from before this new photo was chosen -- re-check proportions against it,
+  // same as when the mask itself is chosen, since replacing just the photo can just as easily
+  // introduce a mismatch as replacing just the mask can.
+  if (currentImage.mask && currentImage.mask.layers[0]._previewImg instanceof HTMLImageElement) {
+    checkMaskAspectRatio(currentImage.mask.layers[0]._previewImg);
+  }
   renderCurrent();
 });
 
@@ -579,8 +610,29 @@ document.getElementById('maskInput').addEventListener('change', async (e) => {
   currentImage.mask = { layers: [layer], rotateCCW: false, rotateCW: false, centerOffset: null, widthIn: null, logoAxis: axesList[0], axesList };
   document.getElementById('maskStatus').textContent = file.name;
   updateFileNamePreviews();
+  checkMaskAspectRatio(img);
   renderCurrent();
 });
+
+// The mask gets stretched to cover the photo's own full frame at render time, so it only lines up
+// correctly if the two share the same PROPORTIONS -- exact pixel size doesn't matter (a lower-
+// resolution mask is fine), but a different aspect ratio means the mask silently warps once it's
+// on the actual product card, which is easy to not notice until a real client-facing card looks
+// subtly wrong. Checked here (right after choosing the mask) rather than only at submit time, so
+// it's caught while the mismatched file is still fresh in mind.
+function checkMaskAspectRatio(maskImg) {
+  const warning = document.getElementById('maskSizeWarning');
+  if (!currentImage || !maskImg.naturalWidth || !maskImg.naturalHeight) { warning.style.display = 'none'; return; }
+  const photoRatio = currentImage.naturalW / currentImage.naturalH;
+  const maskRatio = maskImg.naturalWidth / maskImg.naturalHeight;
+  const diff = Math.abs(photoRatio - maskRatio) / photoRatio;
+  if (diff > 0.02) {
+    warning.textContent = `⚠ This mask's proportions (${maskImg.naturalWidth}×${maskImg.naturalHeight}) don't match the photo's (${currentImage.naturalW}×${currentImage.naturalH}) -- the branding area may look stretched or shifted on the real card. Best to re-crop the mask to match the photo's shape.`;
+    warning.style.display = 'block';
+  } else {
+    warning.style.display = 'none';
+  }
+}
 
 document.getElementById('rotateCCWBtn').addEventListener('click', () => {
   if (!currentImage || !currentImage.mask) return;
@@ -1046,7 +1098,14 @@ function maskForSheet(mask) {
 function updateSubmitButtonLabel() {
   document.getElementById('submitProductBtn').textContent = editingExistingSku ? 'Update Product' : 'Add Product';
   document.getElementById('removeProductLink').style.display = editingExistingSku ? 'inline' : 'none';
+  document.getElementById('cancelEditLink').style.display = editingExistingSku ? 'inline' : 'none';
 }
+
+document.getElementById('cancelEditLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  resetForm();
+  setSubmitStatus('Cancelled. Nothing was changed.', 'ok');
+});
 
 document.getElementById('removeProductLink').addEventListener('click', async (e) => {
   e.preventDefault();
@@ -1085,6 +1144,8 @@ function resetForm() {
   document.getElementById('productNameInput').value = '';
   document.getElementById('productTaglineInput').value = '';
   document.getElementById('productColorInput').value = '';
+  document.getElementById('skuCollisionWarning').style.display = 'none';
+  document.getElementById('maskSizeWarning').style.display = 'none';
   document.querySelectorAll('[data-header]').forEach(el => {
     el.value = el.dataset.default || '';
     if (el.dataset.default) productMeta.fields[el.dataset.header] = el.dataset.default; // else the default would show visually but be silently omitted at submit, which only reads productMeta.fields
@@ -1102,6 +1163,20 @@ function resetForm() {
   renderAddonCheckboxes();
 }
 
+// A tier with a quantity but no USD price (or the reverse) produces a half-filled, meaningless
+// price break on the sheet -- easy to do by accident (e.g. typing a quantity into Tier 3 "just in
+// case" without following through on pricing it). Checked as one of/both being blank being fine
+// (that tier simply isn't used) but a lone half-filled tier is always a mistake, never intentional.
+function checkTierConsistency() {
+  const problems = [];
+  for (let n = 1; n <= 3; n++) {
+    const qty = n === 1 ? (productMeta.fields['Qty 1'] || '') : (document.querySelector(`[data-header="Qty ${n}"]`).value || '').trim();
+    const usd = (document.querySelector(`[data-header="Price ${n} USD"]`).value || '').trim();
+    if ((qty && !usd) || (!qty && usd)) problems.push('Tier ' + n);
+  }
+  return problems;
+}
+
 document.getElementById('submitProductBtn').addEventListener('click', async () => {
   const sku = document.getElementById('skuInput').value.trim();
   const productName = document.getElementById('productNameInput').value.trim();
@@ -1111,6 +1186,18 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
   if (!document.getElementById('productTaglineInput').value.trim()) { setSubmitStatus('Please enter a subtitle.', 'error'); return; }
   if (!currentImage) { setSubmitStatus('Please choose a blank product image first.', 'error'); return; }
   if (!currentImage.mask) { setSubmitStatus('Please choose a mask image first.', 'error'); return; }
+  const tierProblems = checkTierConsistency();
+  if (tierProblems.length) {
+    setSubmitStatus(`Please double check ${tierProblems.join(', ')} — quantity and USD price should both be filled in, or both left blank.`, 'error');
+    return;
+  }
+  if (!editingExistingSku) {
+    const existing = checkSkuCollision();
+    if (existing) {
+      const proceed = confirm(`Product #${sku} already exists: "${existing.name}".\n\nContinuing will overwrite it, not create a new product. Continue anyway?`);
+      if (!proceed) { setSubmitStatus('Cancelled — double check the Product Number.', 'error'); return; }
+    }
+  }
 
   const submitBtn = document.getElementById('submitProductBtn');
   submitBtn.disabled = true;
@@ -1338,7 +1425,25 @@ async function loadProductForEdit(sku) {
 // Categories/add-ons only depend on the live sheet, not on any per-product state, so they can load
 // immediately on page load rather than waiting for a modal to open (there's no modal here).
 fetchCatalogIfNeeded().then(() => { renderCategoryCheckboxes(); renderAddonCheckboxes(); });
+// Also loaded eagerly (not just when Edit a Product's search box is first touched) so the SKU-
+// collision check works immediately, the moment a rep types a Product Number on a fresh page load.
+fetchAllProductsForEdit();
 renderCurrent();
+
+// ---------- Unsaved-work warning ----------
+// A rep who's mid-way through a product (chosen a photo, typed a name...) and accidentally closes
+// the tab, hits back, or navigates away loses everything typed with zero warning otherwise -- this
+// is deliberately a loose/cheap check (a few key fields), not exhaustive, since the cost of a false
+// positive (an extra "leave site?" prompt on an essentially-empty form) is low but the cost of a
+// false negative (silently losing real work) is exactly the thing this exists to prevent.
+function formHasUnsavedWork() {
+  return !!(currentImage || document.getElementById('skuInput').value.trim() || document.getElementById('productNameInput').value.trim());
+}
+window.addEventListener('beforeunload', (e) => {
+  if (!formHasUnsavedWork()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 </script>
 </body>
 </html>
