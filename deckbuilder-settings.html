@@ -86,6 +86,7 @@
     <button type="button" class="tabBtn active" id="tabBtnProduct" data-tab="product">Add a Product</button>
     <button type="button" class="tabBtn" id="tabBtnEdit" data-tab="edit">Edit a Product</button>
     <button type="button" class="tabBtn" id="tabBtnPattern" data-tab="pattern">Add a Pattern</button>
+    <button type="button" class="tabBtn" id="tabBtnLogo" data-tab="logo">Add a Logo</button>
   </div>
 
   <div class="tabPanel" id="tabPanelProduct">
@@ -275,6 +276,22 @@
 
   <div class="section-title">Existing Patterns</div>
   <div id="existingPatternsGrid" style="display:flex; flex-wrap:wrap; gap:14px;">
+    <span class="empty-note">Loading…</span>
+  </div>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelLogo" style="display:none;">
+
+  <h1>Add a Logo</h1>
+  <p class="hint">Not tied to any product — uploads straight into the shared, pinned logo library. Shows up as a small thumbnail next to Upload Logo on the main tool and the distributor tool, on any device, no upload needed by whoever's using it.</p>
+
+  <button type="button" class="secondary" id="uploadLogoLibraryBtn">Upload new logo…</button>
+  <input type="file" id="uploadLogoLibraryInput" accept="image/*" style="display:none;" />
+  <p class="empty-note" id="uploadLogoLibraryStatus" style="margin-top:8px;"></p>
+
+  <div class="section-title">Existing Logos</div>
+  <div id="existingLogosGrid" style="display:flex; flex-wrap:wrap; gap:14px;">
     <span class="empty-note">Loading…</span>
   </div>
 
@@ -1080,6 +1097,77 @@ async function removeExistingPattern(name) {
 }
 loadExistingPatterns();
 
+document.getElementById('uploadLogoLibraryBtn').addEventListener('click', () => document.getElementById('uploadLogoLibraryInput').click());
+document.getElementById('uploadLogoLibraryInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const statusEl = document.getElementById('uploadLogoLibraryStatus');
+  statusEl.textContent = 'Uploading ' + file.name + '…';
+  statusEl.style.color = '';
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const res = await postToScript({ action: 'uploadImage', filename: 'logos/' + file.name, contentBase64: dataUrl.split(',')[1] });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Uploaded -- live on the site now (may take a minute to show up as a pinned thumbnail).';
+    loadExistingLogos();
+  } catch (err) {
+    statusEl.textContent = 'Failed: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+});
+
+// ---------- existing pinned logos: view + remove ----------
+// Same GitHub folder-listing endpoint deckbuilder-production.html's/deckbuilder-client.html's own
+// pinned-logo thumbnails read from (a plain, anonymous GET against the public repo -- no secret
+// needed for this part, only the actual delete below needs SUBMIT_SECRET). Read-only, so it's safe
+// to fire eagerly on page load rather than waiting for the Logo tab to actually be opened.
+async function loadExistingLogos() {
+  const grid = document.getElementById('existingLogosGrid');
+  grid.innerHTML = '<span class="empty-note">Loading…</span>';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${PATTERN_REPO}/contents/logos?ref=${PATTERN_BRANCH}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error('Unexpected response shape');
+    const imageExt = /\.(jpe?g|png|webp|gif)$/i;
+    const images = files.filter(f => f.type === 'file' && imageExt.test(f.name));
+    if (!images.length) { grid.innerHTML = '<span class="empty-note">No logos uploaded yet.</span>'; return; }
+    grid.innerHTML = images.map(f => {
+      const url = `https://cdn.jsdelivr.net/gh/${PATTERN_REPO}@${PATTERN_BRANCH}/logos/${f.name}`;
+      const safeName = f.name.replace(/"/g, '&quot;');
+      return `<div style="position:relative; width:76px;">
+        <div style="width:76px; height:76px; border-radius:6px; background:#fff center/contain no-repeat url('${url}'); border:0.5px solid var(--border);"></div>
+        <button type="button" class="removeLogoTileBtn" data-name="${safeName}" title="Remove this logo" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; padding:0; border-radius:50%; border:1.5px solid #fff; background:#D8433B; color:#fff; font-size:11px; line-height:1; cursor:pointer;">✕</button>
+        <div style="font-size:9px; color:var(--text-muted); margin-top:4px; word-break:break-all; text-align:center;" title="${safeName}">${f.name}</div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.removeLogoTileBtn').forEach(btn => btn.addEventListener('click', () => removeExistingLogo(btn.dataset.name)));
+  } catch (err) {
+    grid.innerHTML = `<span class="empty-note" style="color:#D8433B;">Couldn't load existing logos: ${String(err.message || err).replace(/</g, '&lt;')} <a href="#" id="retryLogosLink">Retry</a></span>`;
+    const retry = document.getElementById('retryLogosLink');
+    if (retry) retry.addEventListener('click', (e) => { e.preventDefault(); loadExistingLogos(); });
+  }
+}
+
+async function removeExistingLogo(name) {
+  const ok = confirm(`Remove logo "${name}"?\n\nThis deletes it from the shared, pinned logo library immediately -- it will no longer show up as a thumbnail for anyone, on any device. This can't be undone.`);
+  if (!ok) return;
+  const statusEl = document.getElementById('uploadLogoLibraryStatus');
+  statusEl.textContent = 'Removing ' + name + '…';
+  statusEl.style.color = '';
+  try {
+    const res = await postToScript({ action: 'deleteImage', filename: 'logos/' + name });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Removed ' + name + '.';
+    loadExistingLogos();
+  } catch (err) {
+    statusEl.textContent = 'Failed to remove: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+}
+loadExistingLogos();
+
 // round2 + the exact Mask JSON shape deckbuilder-production.html's regions.mask expects (matches
 // the full masking-tool.html's maskForSheet/layerToExport/exportLogoAxis exactly).
 function round2(n) { return Math.round(n * 100) / 100; }
@@ -1253,7 +1341,7 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
 });
 
 // ---------- tabs ----------
-const TAB_PANEL_IDS = { product: 'tabPanelProduct', edit: 'tabPanelEdit', pattern: 'tabPanelPattern' };
+const TAB_PANEL_IDS = { product: 'tabPanelProduct', edit: 'tabPanelEdit', pattern: 'tabPanelPattern', logo: 'tabPanelLogo' };
 function switchToTab(tabKey) {
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
   document.querySelectorAll('.tabPanel').forEach(p => p.style.display = 'none');
