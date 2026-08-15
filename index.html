@@ -4990,6 +4990,10 @@ document.getElementById('searchBtn').addEventListener('click', () => {
   document.getElementById('resultsHeader').style.display = 'flex';
   document.getElementById('resultsCount').textContent = currentResults.length + ' Product' + (currentResults.length===1?'':'s') + ' Found';
   renderGrid(applySort(currentResults));
+
+  if (lo !== null || hi !== null) {
+    logAnalyticsEvents([{ eventType: 'budgetSearched', value: currency(), extra: JSON.stringify({ min: lo, max: hi }) }]);
+  }
 });
 
 document.getElementById('selectAllBtn').addEventListener('click', () => {
@@ -6522,6 +6526,24 @@ document.getElementById('buildDeckBtn').addEventListener('click', () => {
     </div>
   `).join('');
   paintBrandedCanvases(pageContainer);
+
+  // Analytics: one event per fact this build represents, batched into a single beacon. "Second
+  // location" = the first extra region beyond a product's primary one (regionOverrideKeyList's
+  // index 1, key "extra0") -- only counted if it's actually enabled, not hidden via override.
+  const analyticsEvents = [];
+  chosen.forEach(p => {
+    analyticsEvents.push({ eventType: 'decked', value: p.sku });
+    const patternApplied = p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct && !p.clearProduct;
+    if (patternApplied) analyticsEvents.push({ eventType: 'patterned', value: p.sku });
+    const regionList = regionOverrideKeyList(p.regions);
+    if (regionList.length >= 2 && !getRegionOverride(p.sku, regionList[1].key).hidden) {
+      analyticsEvents.push({ eventType: 'secondLocationUsed', value: p.sku });
+    }
+  });
+  if (logoDataUrl) {
+    analyticsEvents.push({ eventType: 'logoUsed', value: document.getElementById('logoFileName').textContent || 'unknown' });
+  }
+  logAnalyticsEvents(analyticsEvents);
 });
 
 document.getElementById('backToEditBtn').addEventListener('click', () => {
@@ -6734,6 +6756,20 @@ document.getElementById('downloadJpgBtn').addEventListener('click', () => downlo
 //   3. The bundled snapshot at the top of this file, if both of the above fail.
 const PRODUCTS_SNAPSHOT_URL = 'https://williamlieuid.github.io/deckbuilder-images/products.json';
 const SHEET_API_URL = 'https://deck-builder-api.deckbuilder.workers.dev';
+
+// ---------- analytics (feeds deckbuilder-settings.html's Analytics tab) ----------
+// Fire-and-forget: a failed beacon should never surface an error to a rep or block anything they're
+// doing, so errors are swallowed silently. Uses the Worker's logAnalyticsEvent action, which is
+// deliberately not gated behind the admin secret (see cloudflare-worker.js) since this file has no
+// secret embedded in it at all.
+function logAnalyticsEvents(events) {
+  if (!events || !events.length) return;
+  fetch(SHEET_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'logAnalyticsEvent', events })
+  }).catch(() => {});
+}
 
 // Shared by both sources below so applying a fresh product list never drifts between them.
 function applyLoadedProducts(data, sourceLabel) {
