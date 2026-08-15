@@ -1170,6 +1170,7 @@ function resetForm() {
   renderCurrent();
   renderCategoryCheckboxes();
   renderAddonCheckboxes();
+  document.getElementById('skuInput').focus();
 }
 
 // A tier with a quantity but no USD price (or the reverse) produces a half-filled, meaningless
@@ -1324,6 +1325,39 @@ editSearchInput.addEventListener('input', async () => {
 });
 editSearchInput.addEventListener('focus', () => { if (editSearchInput.value.trim()) editSearchInput.dispatchEvent(new Event('input')); });
 editSearchInput.addEventListener('blur', () => setTimeout(() => { editSearchSuggestions.style.display = 'none'; }, 150));
+
+// Arrow-key navigation through the visible suggestions, matching deckbuilder-production.html's
+// search box -- Down/Up move a highlighted "active" item (wrapping at each end), Enter loads the
+// active suggestion, Escape closes the panel without picking anything.
+editSearchInput.addEventListener('keydown', (e) => {
+  const isOpen = editSearchSuggestions.style.display !== 'none';
+  const items = [...editSearchSuggestions.querySelectorAll('.suggestion-item')];
+  if (e.key === 'ArrowDown' && isOpen && items.length) {
+    e.preventDefault();
+    const cur = items.findIndex(el => el.classList.contains('active'));
+    items.forEach(el => el.classList.remove('active'));
+    const next = items[((cur + 1) % items.length + items.length) % items.length];
+    next.classList.add('active');
+    next.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp' && isOpen && items.length) {
+    e.preventDefault();
+    const cur = items.findIndex(el => el.classList.contains('active'));
+    items.forEach(el => el.classList.remove('active'));
+    const prev = items[((cur - 1) % items.length + items.length) % items.length];
+    prev.classList.add('active');
+    prev.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' && isOpen) {
+    const active = editSearchSuggestions.querySelector('.suggestion-item.active');
+    if (active) {
+      e.preventDefault();
+      editSearchSuggestions.style.display = 'none';
+      editSearchInput.value = '';
+      loadProductForEdit(active.dataset.sku);
+    }
+  } else if (e.key === 'Escape') {
+    editSearchSuggestions.style.display = 'none';
+  }
+});
 
 // Populates the entire Add a Product form (fields, material, pricing, add-ons, photo, and logo
 // area with all its position/angle handles) from an existing live product record, then switches
