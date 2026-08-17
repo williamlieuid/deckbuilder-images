@@ -4488,21 +4488,34 @@ const patternOffsetY = 50;
 // idea as pattern shading) so it picks up real folds/shadows instead of sitting as a flat decal.
 const logoMultiply = true;
 
-document.getElementById('patternKnockoutChk').addEventListener('change', (e) => {
-  patternKnockout = e.target.checked;
-  renderGrid(applySort(currentResults));
-});
-
+// Knockout Logo and the two stroke checkboxes are mutually exclusive -- a stroke rings the logo's
+// real-color render to keep it readable over a pattern, which makes no sense once Knockout has
+// already replaced that render with a flat white silhouette (and a black stroke on top of a white
+// knockout reads as a totally different, unintended look). Checking any one of the three always
+// clears the other two.
+const patternKnockoutChk = document.getElementById('patternKnockoutChk');
 const strokeWhiteChk = document.getElementById('strokeWhiteChk');
 const strokeBlackChk = document.getElementById('strokeBlackChk');
+
+patternKnockoutChk.addEventListener('change', (e) => {
+  patternKnockout = e.target.checked;
+  if (patternKnockout) {
+    logoStrokeMode = 'none';
+    strokeWhiteChk.checked = false;
+    strokeBlackChk.checked = false;
+  }
+  renderGrid(applySort(currentResults));
+});
 strokeWhiteChk.addEventListener('change', (e) => {
   logoStrokeMode = e.target.checked ? 'white' : 'none';
   strokeBlackChk.checked = false;
+  if (e.target.checked) { patternKnockout = false; patternKnockoutChk.checked = false; }
   renderGrid(applySort(currentResults));
 });
 strokeBlackChk.addEventListener('change', (e) => {
   logoStrokeMode = e.target.checked ? 'black' : 'none';
   strokeWhiteChk.checked = false;
+  if (e.target.checked) { patternKnockout = false; patternKnockoutChk.checked = false; }
   renderGrid(applySort(currentResults));
 });
 
