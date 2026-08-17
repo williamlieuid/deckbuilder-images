@@ -4300,7 +4300,7 @@ let PRODUCTS = [
 // key ('primary', or 'extra0'/'extra1'/... matching regions.extra's own array order).
 let regionOverrides = {};
 function getRegionOverride(sku, key) {
-  return (regionOverrides[sku] && regionOverrides[sku][key]) || { rotateSteps: 0, hidden: false, hidePattern: false, colorize: null };
+  return (regionOverrides[sku] && regionOverrides[sku][key]) || { rotateSteps: 0, hidden: false, hidePattern: false, colorize: null, logoScale: 1 };
 }
 function setRegionOverride(sku, key, patch) {
   if (!regionOverrides[sku]) regionOverrides[sku] = {};
@@ -4342,6 +4342,7 @@ function applyRegionOverrides(regions, sku) {
     if (ov.rotateSteps) next = Object.assign({}, next, { __extraRotateSteps: ov.rotateSteps });
     if (ov.hidePattern) next = Object.assign({}, next, { __skipPattern: true });
     if (ov.colorize) next = Object.assign({}, next, { __colorize: ov.colorize });
+    if (ov.logoScale && ov.logoScale !== 1) next = Object.assign({}, next, { __logoScale: ov.logoScale });
     return next;
   }
   const primaryKind = out.rect ? 'rect' : (out.poly ? 'poly' : (out.mask ? 'mask' : null));
@@ -4471,6 +4472,14 @@ let selectedPattern = null; // URL of the chosen pattern (library or custom-uplo
 let selectedPatternSolidColor = null; // hex color when "Solid Fill" is chosen instead of an image pattern -- mutually exclusive with selectedPattern
 function patternIsSelected() { return !!(selectedPattern || selectedPatternSolidColor); }
 let patternScale = 100; // percentage; 100 = fills the product silhouette, lower = smaller/tiled, higher = zoomed in
+// Per-SKU nudge away from the global pattern scale above -- a rep sizing one specific card's
+// pattern doesn't want that to drag every other card's pattern along with it. Absent here means
+// "just use the global slider's value", which is also what Reset restores.
+let patternScaleOverride = {};
+function effectivePatternScale(sku) {
+  const v = patternScaleOverride[sku];
+  return v !== undefined ? v : patternScale;
+}
 let patternKnockout = true; // when true, the logo over a pattern renders as a white silhouette; when false, it shows in its real colors
 // Rings the logo with a colored outline (drawn from several offset copies of its own silhouette,
 // a cheap stand-in for a true per-pixel dilation) so it stays readable against a busy pattern --
@@ -5154,6 +5163,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
   regionOverrides = {};
   materialFullColorOverride = {};
+  patternScaleOverride = {};
 
   updateDeckBar();
   applyFilters();
@@ -5369,7 +5379,7 @@ function normalizeQuadWinding(quad) {
 
 // Contain-fit-centered sub-quad within a full region quad, optionally centered on a
 // custom point (normalized 0-1 within the quad) instead of the quad's own geometric middle.
-function containFitSubQuad(quad, logoW, logoH, centerUV) {
+function containFitSubQuad(quad, logoW, logoH, centerUV, scaleMult) {
   const [tl, tr, br, bl] = quad;
   const width = (quadDist(tr, tl) + quadDist(br, bl)) / 2;
   const height = (quadDist(bl, tl) + quadDist(br, tr)) / 2;
@@ -5385,6 +5395,12 @@ function containFitSubQuad(quad, logoW, logoH, centerUV) {
   const LOGO_PADDING_FRAC = 0.15;
   normW *= 1 - LOGO_PADDING_FRAC * 2;
   normH *= 1 - LOGO_PADDING_FRAC * 2;
+  // Session-only per-region nudge on top of the natural contain-fit size (the card's Logo Size
+  // +/-/Reset control) -- applied after padding, around the same center point, so scaling up
+  // grows the logo outward symmetrically rather than shifting it toward one corner. u0/v0 below
+  // already clamp to the quad's own 0-1 bounds, so an aggressive scale-up simply reaches the
+  // region's edge rather than warping past it.
+  if (scaleMult && scaleMult !== 1) { normW *= scaleMult; normH *= scaleMult; }
   const cu = centerUV ? centerUV.x : 0.5, cv = centerUV ? centerUV.y : 0.5;
   const u0 = Math.max(0, Math.min(1 - normW, cu - normW / 2));
   const v0 = Math.max(0, Math.min(1 - normH, cv - normH / 2));
@@ -5777,6 +5793,7 @@ function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoS
     // adapts to the rotated width/height in both cases with no other change needed.
     const overrideSteps = region.__extraRotateSteps || 0;
     const overriddenLogoSrc = overrideSteps ? rotateImageSteps(effectiveLogoSrc, overrideSteps) : effectiveLogoSrc;
+    const logoScaleMult = region.__logoScale || 1;
     if (region.logoAxis) {
       // The axis handles already encode whatever rotation is wanted, continuously -- applying
       // rotateCCW's coarse 90° swap on top would double up, so skip it for this path only.
@@ -5786,13 +5803,13 @@ function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoS
       // wins regardless of how the two handles happen to be dragged.
       const axisQuad = quadFromAxis(region.logoAxis, dx, dy, dw, dh);
       const axisLogoW = overriddenLogoSrc.naturalWidth || overriddenLogoSrc.width, axisLogoH = overriddenLogoSrc.naturalHeight || overriddenLogoSrc.height;
-      logoDst = containFitSubQuad(axisQuad, axisLogoW, axisLogoH, null);
+      logoDst = containFitSubQuad(axisQuad, axisLogoW, axisLogoH, null, logoScaleMult);
       logoSrcForDraw = overriddenLogoSrc;
     } else {
       logoSrcForDraw = getRotatedLogoSource(overriddenLogoSrc, region.rotateCCW, region.rotateCW);
       const logoW = logoSrcForDraw.naturalWidth || logoSrcForDraw.width, logoH = logoSrcForDraw.naturalHeight || logoSrcForDraw.height;
       const centerUV = region.centerOffset ? computeCenterUV(quadPct, region.centerOffset) : null;
-      logoDst = containFitSubQuad(quad, logoW, logoH, centerUV);
+      logoDst = containFitSubQuad(quad, logoW, logoH, centerUV, logoScaleMult);
     }
   }
 
@@ -6257,7 +6274,7 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   // reused forever afterward, since none of the global settings need to change for that stale hit
   // to persist. A product's own region JSON (and now its override state) is the one thing that
   // can change data-side with zero global-setting interaction.
-  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions) + '' + JSON.stringify(regionOverrides[p.sku] || null) + '' + (materialFullColorOverride[p.sku] ? '1' : '0');
+  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions) + '' + JSON.stringify(regionOverrides[p.sku] || null) + '' + (materialFullColorOverride[p.sku] ? '1' : '0') + '' + effectivePatternScale(p.sku);
   const cached = brandedRenderCache.get(p.sku);
   if (cached && cached.recipeKey === recipeKey) {
     canvas.width = cached.canvas.width; canvas.height = cached.canvas.height;
@@ -6298,7 +6315,7 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
 
   const pattern = !patternActive ? null
     : wantsPattern
-    ? { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY }
+    ? { img: patternImg, scale: effectivePatternScale(p.sku), knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY }
     : { solidColor: selectedPatternSolidColor, knockout: patternKnockout, overlayImg: overlayImg };
   const maskImageCache = {};
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
@@ -6423,10 +6440,12 @@ function imageBlock(p, includeControls = true) {
     const isMaterialLocked = !!(p.blackProduct || p.woodProduct || p.clearProduct);
     const isFullColor = !!materialFullColorOverride[p.sku];
     const materialLabel = p.blackProduct ? 'leather etching' : (p.woodProduct ? 'wood engraving' : 'etching');
+    const isPatternScaleAdjustable = includeControls && p.patternEligible && !!selectedPattern && !isMaterialLocked;
     return `<div class="imgwrap">
       <canvas class="branded-canvas" data-sku="${p.sku}" data-base="${baseImg}" style="width:100%; height:100%; display:block;"></canvas>
     </div>
     ${isMaterialLocked ? `<button type="button" class="secondary laser-toggle-btn no-print" data-sku="${p.sku}" title="${isFullColor ? 'Switch back to the ' + materialLabel + ' look' : 'Preview a full-color logo instead of the ' + materialLabel + ' look'}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isFullColor ? 'Full Color (click for ' + (p.blackProduct ? 'Etched' : 'Engraved') + ')' : (p.blackProduct ? 'Etched' : 'Engraved') + ' (click for Full Color)'}</button>` : ''}
+    ${isPatternScaleAdjustable ? patternScaleControlHtml(p) : ''}
     ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isTransparent ? 'Download Transparent Image' : 'Download Image'}</button>
     ${regionControlsHtml(p)}` : ''}`;
   }
@@ -6435,6 +6454,21 @@ function imageBlock(p, includeControls = true) {
     <img class="base" src="${baseImg}" />
   </div>
   ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">Download Image</button>` : ''}`;
+}
+
+// Per-card nudge on top of the global Pattern Scale slider (Pricing, Currency & Branding Options
+// panel) -- +/- step by the same 5% the slider itself steps by, clamped to the slider's own
+// 20-200% range so a card can never drift somewhere the global control couldn't also reach. Reset
+// only shows enabled (full opacity) once this card actually has an override to clear.
+function patternScaleControlHtml(p) {
+  const scale = effectivePatternScale(p.sku);
+  const hasOverride = patternScaleOverride[p.sku] !== undefined;
+  return `<div class="region-ctrl-row patternScaleCtrl" style="display:flex; align-items:center; gap:4px; margin-top:4px;">
+    <span style="font-size:9.5px; font-weight:600; color:var(--text-muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Pattern Size: <span class="patternScaleValue">${scale}%</span></span>
+    <button type="button" class="region-ctrl-btn patternScaleMinusBtn" data-sku="${p.sku}" title="Decrease this card's pattern size by 5%" ${scale <= 20 ? 'disabled' : ''}>−</button>
+    <button type="button" class="region-ctrl-btn patternScalePlusBtn" data-sku="${p.sku}" title="Increase this card's pattern size by 5%" ${scale >= 200 ? 'disabled' : ''}>+</button>
+    <button type="button" class="region-ctrl-btn patternScaleResetBtn" data-sku="${p.sku}" title="Reset to the default pattern size" style="${hasOverride ? '' : 'opacity:0.4; cursor:default;'}">Reset</button>
+  </div>`;
 }
 
 function escapeHtml(str) {
@@ -6466,8 +6500,25 @@ function regionControlsHtml(p) {
           <button type="button" class="region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="${ov.hidePattern ? 'opacity:0.55;' : ''}">▦ ${ov.hidePattern ? 'Pattern Hidden' : 'Hide Pattern'}</button>
           <button type="button" class="region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="${ov.hidden ? 'opacity:0.55;' : ''}">${ov.hidden ? '\u{1F6AB} Branding Hidden' : '\u{1F441} Hide Branding'}</button>
         </div>
+        ${logoScaleControlHtml(p, r)}
       </div>`;
     }).join('')}
+  </div>`;
+}
+
+// Per-region logo size nudge on top of the natural contain-fit size -- +/- steps by 5%, clamped
+// to 50-150% so the logo stays a recognizable, contained mark rather than either vanishing or
+// blowing out past its region (contain-fit's own edge clamping in containFitSubQuad crops rather
+// than distorts at the high end, but there's no reason to invite that by allowing it further).
+function logoScaleControlHtml(p, r) {
+  const ov = getRegionOverride(p.sku, r.key);
+  const pct = Math.round((ov.logoScale || 1) * 100);
+  const hasOverride = pct !== 100;
+  return `<div style="display:flex; align-items:center; gap:4px;">
+    <span style="font-size:9.5px; font-weight:600; color:var(--text-muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Logo Size: <span class="logoScaleValue">${pct}%</span></span>
+    <button type="button" class="region-ctrl-btn logo-scale-minus-btn" data-sku="${p.sku}" data-region="${r.key}" title="Decrease this area's logo size by 5%" ${pct <= 50 ? 'disabled' : ''}>−</button>
+    <button type="button" class="region-ctrl-btn logo-scale-plus-btn" data-sku="${p.sku}" data-region="${r.key}" title="Increase this area's logo size by 5%" ${pct >= 150 ? 'disabled' : ''}>+</button>
+    <button type="button" class="region-ctrl-btn logo-scale-reset-btn" data-sku="${p.sku}" data-region="${r.key}" title="Reset to the default logo size" style="${hasOverride ? '' : 'opacity:0.4; cursor:default;'}">Reset</button>
   </div>`;
 }
 
@@ -6539,7 +6590,7 @@ async function exportProductImage(sku) {
       const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
       if (selectedPattern) {
         const patternImg = await loadCrossOriginImage(selectedPattern);
-        pattern = { img: patternImg, scale: patternScale, knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
+        pattern = { img: patternImg, scale: effectivePatternScale(p.sku), knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
       } else {
         pattern = { solidColor: selectedPatternSolidColor, knockout: patternKnockout, overlayImg: overlayImg };
       }
@@ -6582,6 +6633,27 @@ document.addEventListener('click', (e) => {
     e.target.title = isFullColor ? ('Switch back to the ' + materialLabel + ' look') : ('Preview a full-color logo instead of the ' + materialLabel + ' look');
     return;
   }
+  if (e.target.classList.contains('patternScaleMinusBtn') || e.target.classList.contains('patternScalePlusBtn') || e.target.classList.contains('patternScaleResetBtn')) {
+    const psSku = e.target.dataset.sku;
+    if (e.target.classList.contains('patternScaleResetBtn')) {
+      delete patternScaleOverride[psSku];
+    } else {
+      const delta = e.target.classList.contains('patternScaleMinusBtn') ? -5 : 5;
+      const next = Math.max(20, Math.min(200, effectivePatternScale(psSku) + delta));
+      patternScaleOverride[psSku] = next;
+    }
+    const newScale = effectivePatternScale(psSku);
+    const ctrl = e.target.closest('.patternScaleCtrl');
+    ctrl.querySelector('.patternScaleValue').textContent = newScale + '%';
+    ctrl.querySelector('.patternScaleMinusBtn').disabled = newScale <= 20;
+    ctrl.querySelector('.patternScalePlusBtn').disabled = newScale >= 200;
+    const resetBtn = ctrl.querySelector('.patternScaleResetBtn');
+    const hasOverride = patternScaleOverride[psSku] !== undefined;
+    resetBtn.style.opacity = hasOverride ? '' : '0.4';
+    resetBtn.style.cursor = hasOverride ? '' : 'default';
+    invalidateAndRepaintSku(psSku);
+    return;
+  }
   const sku = e.target.dataset.sku, regionKey = e.target.dataset.region;
   if (e.target.classList.contains('rotate-region-btn')) {
     const cur = getRegionOverride(sku, regionKey);
@@ -6616,6 +6688,26 @@ document.addEventListener('click', (e) => {
       e.target.style.opacity = '0.35';
       invalidateAndRepaintSku(sku);
     }
+  } else if (e.target.classList.contains('logo-scale-minus-btn') || e.target.classList.contains('logo-scale-plus-btn') || e.target.classList.contains('logo-scale-reset-btn')) {
+    const cur = getRegionOverride(sku, regionKey);
+    let newScale;
+    if (e.target.classList.contains('logo-scale-reset-btn')) {
+      newScale = 1;
+    } else {
+      const delta = e.target.classList.contains('logo-scale-minus-btn') ? -0.05 : 0.05;
+      newScale = Math.max(0.5, Math.min(1.5, Math.round(((cur.logoScale || 1) + delta) * 100) / 100));
+    }
+    setRegionOverride(sku, regionKey, { logoScale: newScale });
+    const scaleRow = e.target.parentElement;
+    const pct = Math.round(newScale * 100);
+    scaleRow.querySelector('.logoScaleValue').textContent = pct + '%';
+    scaleRow.querySelector('.logo-scale-minus-btn').disabled = pct <= 50;
+    scaleRow.querySelector('.logo-scale-plus-btn').disabled = pct >= 150;
+    const resetBtn = scaleRow.querySelector('.logo-scale-reset-btn');
+    const hasOverride = pct !== 100;
+    resetBtn.style.opacity = hasOverride ? '' : '0.4';
+    resetBtn.style.cursor = hasOverride ? '' : 'default';
+    invalidateAndRepaintSku(sku);
   }
 });
 
