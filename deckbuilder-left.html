@@ -91,7 +91,12 @@
   .sidebar .header-row { margin-bottom: 6px; }
   .sidebar .brandmark .mark { width: 30px; height: 30px; border-radius: 9px; }
   .sidebar .brandmark .mark svg { width: 16px; height: 16px; }
-  .sidebar .brandStack .pwrLogo, .sidebar .brandStack .pwrLogoDark { height: 17px; }
+  /* !important needed here: a dark-mode media-query rule targeting .pwrLogoDark elsewhere in this
+     file (:root:not([data-theme="light"]) .brandStack .pwrLogoDark) out-specifies a plain
+     .sidebar .brandStack .pwrLogoDark selector, so a same-weight override silently loses in dark
+     mode -- matched to the "DeckBuilder" wordmark's own rendered width (~79px) per request, height
+     auto so the logo's real aspect ratio still holds instead of being stretched/squashed. */
+  .sidebar .brandStack .pwrLogo, .sidebar .brandStack .pwrLogoDark { width: 79px !important; height: auto !important; }
   .sidebar .brandmark .wordmark { font-size: 14px; }
   .sidebar .field-row { gap: 10px; margin-bottom: 4px; }
   .sidebar .field label { font-size: 10.5px; margin-bottom: 3px; }
@@ -413,12 +418,14 @@
         <div class="field" id="logoField" style="max-width:220px;">
           <label>Upload Logo</label>
           <input type="file" id="logoInput" accept="image/*,.pdf,.ai,application/pdf,application/postscript,application/illustrator" style="display:none;" />
-          <button type="button" class="secondary" id="logoChooseBtn" style="width:100%;">Choose File</button>
-          <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
-            <span id="logoFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No File Chosen</span>
-            <button type="button" class="tiny-remove" id="removeLogoBtn" title="Remove Logo">✕</button>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button type="button" id="logoChooseBtn" title="Upload a new logo" style="width:26px;height:26px;border-radius:6px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-secondary);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;">+</button>
+            <div id="logoHistoryRow" style="display:contents;"></div>
           </div>
-          <div id="logoHistoryRow" style="display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;"></div>
+          <div style="display:none;">
+            <span id="logoFileName">No File Chosen</span>
+            <button type="button" id="removeLogoBtn" title="Remove Logo">✕</button>
+          </div>
           <a href="#" id="clearLogoHistoryLink" style="display:inline-block; font-size:10px; color:var(--text-muted); margin-top:3px; text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Clear Logo History</a>
           <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
             <label class="chk" style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-secondary); font-weight:400; flex:1; min-width:0;">
@@ -429,16 +436,16 @@
         </div>
         <div class="field" id="patternField" style="max-width:340px;">
           <label>Pattern</label>
+          <input type="file" id="customPatternInput" accept="image/*" style="display:none;" />
           <div id="patternSwatches" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <button type="button" id="patternChooseBtn" title="Upload a custom pattern" style="width:26px;height:26px;border-radius:6px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-secondary);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;">+</button>
             <button type="button" class="pattern-swatch" data-pattern="" style="width:26px;height:26px;border-radius:6px;background:var(--surface-1);border:2px solid var(--accent);cursor:pointer;padding:0;font-size:6px;color:var(--text-muted);">None</button>
             <button type="button" class="pattern-swatch" id="patternSolidBtn" style="width:26px;height:26px;border-radius:6px;background:#1a1a1a;border:2px solid transparent;cursor:pointer;padding:0;font-size:5.5px;line-height:1.1;color:#fff;font-weight:600;">Solid<br>Fill</button>
             <input type="color" id="patternSolidColorInput" value="#1a1a1a" style="width:26px;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Solid Fill Color" />
           </div>
-          <input type="file" id="customPatternInput" accept="image/*" style="display:none;" />
-          <button type="button" class="secondary" id="patternChooseBtn" style="width:100%; height:26px; font-size:11px; margin-top:5px;">Choose File</button>
-          <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
-            <span id="patternFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No File Chosen</span>
-            <button type="button" class="tiny-remove" id="removePatternBtn" title="Remove Pattern">✕</button>
+          <div style="display:none;">
+            <span id="patternFileName">No File Chosen</span>
+            <button type="button" id="removePatternBtn" title="Remove Pattern">✕</button>
           </div>
           <div id="patternHistoryRow" style="display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;"></div>
           <a href="#" id="clearPatternHistoryLink" style="display:inline-block; font-size:10px; color:var(--text-muted); margin-top:3px; text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Clear Pattern History</a>
@@ -4471,7 +4478,7 @@ loadLogoLibraryFromGitHub();
 function renderLogoHistory() {
   const row = document.getElementById('logoHistoryRow');
   if (!row) return;
-  row.style.display = 'flex';
+  row.style.display = 'contents';
   const pinnedThumbs = LOGO_LIBRARY.map(entry => `
     <button type="button" class="pinnedLogoBtn" data-url="${entry.url}" title="${entry.name.replace(/"/g, '&quot;')} — shared logo, available to everyone"
       style="width:24px; height:24px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; padding:0;
