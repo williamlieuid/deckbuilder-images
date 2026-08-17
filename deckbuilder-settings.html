@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Deck Builder Settings</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23EC2027'/%3E%3Cstop offset='1' stop-color='%23F26169'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Crect x='11' y='8' width='10' height='10' rx='2' fill='%23fff' opacity='0.95'/%3E%3Crect x='11' y='18.8' width='10' height='2.2' rx='1.1' fill='%23fff' opacity='0.75'/%3E%3Crect x='11' y='21.8' width='10' height='2.2' rx='1.1' fill='%23fff' opacity='0.6'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23EC2027'/%3E%3Cstop offset='1' stop-color='%23F26169'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Crect x='10' y='6.4' width='12' height='12' rx='2.4' fill='%23fff' opacity='0.95'/%3E%3Crect x='10' y='19.4' width='12' height='2.6' rx='1.3' fill='%23fff' opacity='0.75'/%3E%3Crect x='10' y='23' width='12' height='2.6' rx='1.3' fill='%23fff' opacity='0.6'/%3E%3C/svg%3E" />
 <style>
   :root {
     --border: #E0DED5; --text-primary: #1a1a1a; --text-secondary: #5F5E5A; --text-muted: #918F86;
@@ -89,6 +89,7 @@
     <button type="button" class="tabBtn" id="tabBtnPattern" data-tab="pattern">Add a Pattern</button>
     <button type="button" class="tabBtn" id="tabBtnLogo" data-tab="logo">Add a Logo</button>
     <button type="button" class="tabBtn" id="tabBtnAnalytics" data-tab="analytics">Analytics</button>
+    <button type="button" class="tabBtn" id="tabBtnPricing" data-tab="pricing">Pricing Sync</button>
   </div>
 
   <div class="tabPanel" id="tabPanelProduct">
@@ -323,6 +324,39 @@
     <div class="section-title">Typical budgets</div>
     <p id="analyticsBudgetSummary" style="font-size:13px; margin:0;"></p>
 
+  </div>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelPricing" style="display:none;">
+
+  <h1>Pricing Sync</h1>
+  <p class="empty-note" style="margin-bottom:16px;">
+    Pulls USD and CAD pricing straight from the distributor's own "Coded Pricelist" spreadsheet and
+    updates the matching products here to match, so our numbers never drift out of sync with the
+    real net pricelist. Matches by product code; a bundle/kit row that lists more than one SKU (e.g.
+    the Chisel 4-pack) is skipped rather than guessed at, since a kit's price isn't any one
+    component's real standalone price — those need a manual check. Always preview before applying —
+    preview never changes anything, it just shows what would happen.
+  </p>
+  <div style="display:flex; gap:10px; margin-bottom:16px;">
+    <button type="button" class="secondary" id="pricingPreviewBtn">Preview Changes</button>
+    <button type="button" class="primary" id="pricingApplyBtn" disabled>Apply Pricing Update</button>
+  </div>
+  <p class="empty-note" id="pricingSyncStatus"></p>
+  <div id="pricingSyncResult" style="display:none;">
+    <div class="section-title">Summary</div>
+    <p id="pricingSyncSummary" style="font-size:13px; margin:0 0 14px;"></p>
+
+    <div class="section-title">Products that would change (<span id="pricingUpdatedCount">0</span>)</div>
+    <div style="max-height:260px; overflow-y:auto; border:0.5px solid var(--border); border-radius:6px; padding:8px; margin-bottom:14px;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;" id="pricingUpdatedTable"></table>
+    </div>
+
+    <div class="section-title">Skipped (<span id="pricingSkippedCount">0</span>) — needs a manual look</div>
+    <div style="max-height:180px; overflow-y:auto; border:0.5px solid var(--border); border-radius:6px; padding:8px;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;" id="pricingSkippedTable"></table>
+    </div>
   </div>
 
   </div>
@@ -1494,13 +1528,79 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
 });
 
 // ---------- tabs ----------
-const TAB_PANEL_IDS = { product: 'tabPanelProduct', edit: 'tabPanelEdit', pattern: 'tabPanelPattern', logo: 'tabPanelLogo', analytics: 'tabPanelAnalytics' };
+const TAB_PANEL_IDS = { product: 'tabPanelProduct', edit: 'tabPanelEdit', pattern: 'tabPanelPattern', logo: 'tabPanelLogo', analytics: 'tabPanelAnalytics', pricing: 'tabPanelPricing' };
 function switchToTab(tabKey) {
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
   document.querySelectorAll('.tabPanel').forEach(p => p.style.display = 'none');
   document.getElementById(TAB_PANEL_IDS[tabKey]).style.display = 'block';
 }
 document.querySelectorAll('.tabBtn').forEach(btn => btn.addEventListener('click', () => switchToTab(btn.dataset.tab)));
+
+// ---------- Pricing Sync ----------
+// Preview (dryRun) never writes anything -- Apply is disabled until a preview has actually run, so
+// there's no path to writing pricing changes nobody has looked at first. Re-preview after Apply
+// re-runs against the now-updated sheet, which doubles as a same-tool confirmation that the write
+// actually landed (a clean sync afterwards reports everything "unchanged").
+let lastPricingPreview = null;
+
+async function runPricingSync(dryRun) {
+  const previewBtn = document.getElementById('pricingPreviewBtn');
+  const applyBtn = document.getElementById('pricingApplyBtn');
+  const status = document.getElementById('pricingSyncStatus');
+  previewBtn.disabled = true;
+  applyBtn.disabled = true;
+  status.textContent = dryRun ? 'Checking the pricelist…' : 'Applying — writing updated prices to the sheet…';
+  status.style.color = '';
+  try {
+    const res = await fetch(SCRIPT_API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ secret: SUBMIT_SECRET, action: 'syncPricingFromCodedPricelist', dryRun })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Sync failed');
+
+    lastPricingPreview = dryRun ? data : null;
+    renderPricingSyncResult(data);
+    status.textContent = dryRun
+      ? '✓ Preview complete — nothing has been changed yet.'
+      : '✓ Applied — ' + data.cellsWritten + ' price cell' + (data.cellsWritten === 1 ? '' : 's') + ' updated across ' + data.productsUpdated + ' product' + (data.productsUpdated === 1 ? '' : 's') + '.';
+    status.style.color = '';
+  } catch (err) {
+    status.textContent = 'Something went wrong: ' + err.message;
+    status.style.color = '#D8433B';
+  } finally {
+    previewBtn.disabled = false;
+    applyBtn.disabled = !lastPricingPreview || !lastPricingPreview.productsUpdated;
+  }
+}
+
+function renderPricingSyncResult(data) {
+  document.getElementById('pricingSyncResult').style.display = 'block';
+  document.getElementById('pricingSyncSummary').textContent =
+    data.pricelistSkusFound + ' SKUs found in the pricelist · ' +
+    data.productsUpdated + ' would update · ' +
+    data.productsUnchanged + ' already correct · ' +
+    data.productsSkipped + ' skipped';
+
+  document.getElementById('pricingUpdatedCount').textContent = data.productsUpdated;
+  const updatedTable = document.getElementById('pricingUpdatedTable');
+  updatedTable.innerHTML = data.updated.length
+    ? data.updated.map(u => '<tr><td style="padding:4px 8px 4px 0; white-space:nowrap; color:var(--text-secondary);">#' + escapeHtml(u.sku) + '</td><td style="padding:4px 0;">' + escapeHtml(u.changes.join(', ')) + '</td></tr>').join('')
+    : '<tr><td style="padding:4px 0; color:var(--text-secondary);">Nothing to update.</td></tr>';
+
+  document.getElementById('pricingSkippedCount').textContent = data.productsSkipped;
+  const skippedTable = document.getElementById('pricingSkippedTable');
+  const reasonLabel = { 'no-match': 'No clean single-SKU match (likely a kit/bundle)', 'ambiguous': 'Multiple conflicting price rows found', 'no-qty-data': 'No quantity tiers set on this product yet' };
+  skippedTable.innerHTML = data.skipped.length
+    ? data.skipped.map(s => '<tr><td style="padding:4px 8px 4px 0; white-space:nowrap; color:var(--text-secondary);">#' + escapeHtml(s.sku) + '</td><td style="padding:4px 0;">' + escapeHtml(reasonLabel[s.reason] || s.reason) + '</td></tr>').join('')
+    : '<tr><td style="padding:4px 0; color:var(--text-secondary);">Nothing skipped.</td></tr>';
+}
+
+document.getElementById('pricingPreviewBtn').addEventListener('click', () => runPricingSync(true));
+document.getElementById('pricingApplyBtn').addEventListener('click', () => {
+  if (!confirm('This will write updated USD/CAD pricing for ' + lastPricingPreview.productsUpdated + ' product(s) directly to the live Products sheet. Continue?')) return;
+  runPricingSync(false);
+});
 
 // ---------- Edit a Product: search + load ----------
 // Reuses fetchProductsWithFallback (the same live-sheet-with-snapshot-fallback loader the
