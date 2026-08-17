@@ -125,6 +125,12 @@
     background: var(--surface-2); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
   .cat-dropdown-panel label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; margin: 0; }
+  .cat-dropdown-panel .cat-group-heading {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--text-muted); margin: 6px 0 0;
+  }
+  .cat-dropdown-panel .cat-group-heading:first-child { margin-top: 0; }
+  .cat-dropdown-panel label.cat-sub-label { padding-left: 14px; }
   .radio-group { display: flex; gap: 14px; align-items: center; height: 36px; }
   .radio-group label { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-primary); font-weight: 400; margin: 0; }
   button.primary {
@@ -427,9 +433,9 @@
         <div class="field" style="max-width:220px;">
           <label>Background Color</label>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#333232;border:2px solid transparent;cursor:pointer;padding:0;"></button>
-            <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;"></button>
-            <button type="button" class="bg-swatch" data-color="#E8E6DE" style="width:26px;height:26px;border-radius:6px;background:#E8E6DE;border:2px solid var(--accent);cursor:pointer;padding:0;"></button>
+            <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#333232;border:2px solid transparent;cursor:pointer;padding:0;" title="Charcoal Black"></button>
+            <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;" title="Soft White"></button>
+            <button type="button" class="bg-swatch" data-color="#E8E6DE" style="width:26px;height:26px;border-radius:6px;background:#E8E6DE;border:2px solid var(--accent);cursor:pointer;padding:0;" title="Warm Sand"></button>
             <button type="button" class="bg-swatch" data-color="#D85A30" style="width:26px;height:26px;border-radius:6px;background:#D85A30;border:2px solid transparent;cursor:pointer;padding:0;" title="Burnt Orange"></button>
             <button type="button" class="bg-swatch" data-color="#E0B03C" style="width:26px;height:26px;border-radius:6px;background:#E0B03C;border:2px solid transparent;cursor:pointer;padding:0;" title="Golden Mustard"></button>
             <button type="button" class="bg-swatch" data-color="#4C9A6B" style="width:26px;height:26px;border-radius:6px;background:#4C9A6B;border:2px solid transparent;cursor:pointer;padding:0;" title="Sage Green"></button>
@@ -4733,12 +4739,31 @@ const catDropdownLabel = document.getElementById('catDropdownLabel');
 function populateCategoryDropdown() {
   const checkedBefore = new Set(getSelectedCategories());
   catBox.innerHTML = '';
-  const catSet = [...new Set(PRODUCTS.map(p => p.category))].sort();
+  // Categories are "Group | Subcategory" strings -- group them under a heading instead of
+  // showing ~15+ pipe-delimited lines flat, since that's what they actually are underneath.
+  const catSet = [...new Set(PRODUCTS.map(p => p.category))];
+  const groups = new Map();
   catSet.forEach(c => {
-    const id = 'cat-' + c.replace(/[^a-z0-9]+/gi, '-');
-    const label = document.createElement('label');
-    label.innerHTML = `<input type="checkbox" id="${id}" value="${c}" ${checkedBefore.has(c) ? 'checked' : ''}> ${c}`;
-    catBox.appendChild(label);
+    const parts = c.split('|').map(s => s.trim());
+    const group = parts.length > 1 ? parts[0] : '';
+    const sub = parts.length > 1 ? parts.slice(1).join(' | ') : parts[0];
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push({ full: c, sub });
+  });
+  [...groups.keys()].sort().forEach(group => {
+    if (group) {
+      const heading = document.createElement('div');
+      heading.className = 'cat-group-heading';
+      heading.textContent = group;
+      catBox.appendChild(heading);
+    }
+    groups.get(group).sort((a, b) => a.sub.localeCompare(b.sub)).forEach(({ full, sub }) => {
+      const id = 'cat-' + full.replace(/[^a-z0-9]+/gi, '-');
+      const label = document.createElement('label');
+      if (group) label.className = 'cat-sub-label';
+      label.innerHTML = `<input type="checkbox" id="${id}" value="${full}" ${checkedBefore.has(full) ? 'checked' : ''}> ${sub}`;
+      catBox.appendChild(label);
+    });
   });
   updateCatDropdownLabel();
 }
