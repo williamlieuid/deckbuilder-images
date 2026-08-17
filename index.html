@@ -360,7 +360,7 @@
         </div>
         <div class="field" id="logoField" style="max-width:220px;">
           <label>Upload Logo</label>
-          <input type="file" id="logoInput" accept="image/*" style="display:none;" />
+          <input type="file" id="logoInput" accept="image/*,.pdf,.ai,application/pdf,application/postscript,application/illustrator" style="display:none;" />
           <button type="button" class="secondary" id="logoChooseBtn" style="width:100%;">Choose File</button>
           <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
             <span id="logoFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No File Chosen</span>
@@ -462,6 +462,14 @@
 
 </div>
 
+<!-- Lets a rep upload a logo as PDF or AI (Adobe Illustrator) instead of only PNG/JPG -- renders
+     page 1 to a canvas client-side, no server round-trip. Most modern .ai files are PDF-compatible
+     under the hood (Illustrator embeds a real PDF layer unless that option was turned off at save
+     time), so the same renderer handles both formats; see the logoInput change handler below. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
 <script>
 // Bundled fallback snapshot — used until/unless SHEET_API_URL below loads live data successfully.
 let PRODUCTS = [
@@ -4805,10 +4813,52 @@ updateCurrencyFieldVisibility();
 
 document.getElementById('logoChooseBtn').addEventListener('click', () => document.getElementById('logoInput').click());
 
+// Renders page 1 of a PDF (or a PDF-compatible .ai file -- Illustrator embeds a real PDF layer by
+// default unless that option was turned off at save time, so this same path handles both) to a
+// PNG data URL via pdf.js. The canvas is never pre-filled with a background color, so any area the
+// PDF itself doesn't paint stays transparent -- a page with a genuinely transparent background
+// comes out transparent already; one with a painted white/solid background still gets flattened
+// onto it here same as any other file, but trimImageWhitespace (below) then strips that the same
+// way it already does for a flattened PNG/JPG upload.
+async function renderPdfPageToDataUrl(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const page = await pdf.getPage(1);
+  const targetLongEdge = 1400;
+  const baseViewport = page.getViewport({ scale: 1 });
+  const scale = targetLongEdge / Math.max(baseViewport.width, baseViewport.height);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  return canvas.toDataURL('image/png');
+}
+
 document.getElementById('logoInput').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
   document.getElementById('logoFileName').textContent = file.name;
+  const isPdfOrAi = /\.(pdf|ai)$/i.test(file.name) || file.type === 'application/pdf';
+
+  if (isPdfOrAi) {
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const rendered = await renderPdfPageToDataUrl(ev.target.result);
+        logoDataUrl = await trimImageWhitespace(rendered);
+        addToLogoHistory(logoDataUrl, file.name);
+        renderGrid(applySort(currentResults));
+      } catch (err) {
+        console.warn('Could not render PDF/AI logo file', err);
+        alert('Couldn\'t read "' + file.name + '" as a logo. AI files only work if they were saved with "PDF Compatible File" enabled (Illustrator\'s default) -- try re-exporting as PDF, PNG, or JPG instead.');
+        document.getElementById('logoFileName').textContent = 'No File Chosen';
+        e.target.value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = async (ev) => {
     logoDataUrl = await trimImageWhitespace(ev.target.result);
