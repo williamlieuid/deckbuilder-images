@@ -81,14 +81,14 @@
 
   .sidebar {
     width: 340px; flex: 0 0 340px; height: 100vh; position: sticky; top: 0; overflow-y: auto;
-    background: var(--surface-1); border-right: 0.5px solid var(--border); padding: 12px 18px 12px;
+    background: var(--surface-1); border-right: 0.5px solid var(--border); padding: 18px 18px 18px;
   }
   .sidebar .panel { background: none; border: none; padding: 0; margin-bottom: 0; }
   /* Sidebar-scoped compaction so the whole tool list fits without its own scrollbar --
      everything here overrides shared classes (field-row, field label, inputs, radio-group,
      button.secondary) that the top-bar layout also uses at full size, so this only shrinks
      things inside .sidebar, never the main results column. */
-  .sidebar .header-row { margin-bottom: 6px; }
+  .sidebar .header-row { margin-bottom: 12px; }
   .sidebar .brandmark .mark { width: 30px; height: 30px; border-radius: 9px; }
   .sidebar .brandmark .mark svg { width: 16px; height: 16px; }
   /* !important needed here: a dark-mode media-query rule targeting .pwrLogoDark elsewhere in this
@@ -98,7 +98,7 @@
      auto so the logo's real aspect ratio still holds instead of being stretched/squashed. */
   .sidebar .brandStack .pwrLogo, .sidebar .brandStack .pwrLogoDark { width: 79px !important; height: auto !important; }
   .sidebar .brandmark .wordmark { font-size: 14px; }
-  .sidebar .field-row { gap: 10px; margin-bottom: 4px; }
+  .sidebar .field-row { gap: 12px; margin-bottom: 8px; }
   .sidebar .field label { font-size: 10.5px; margin-bottom: 3px; }
   .sidebar input[type=text], .sidebar input[type=number], .sidebar select {
     height: 28px; font-size: 12px;
@@ -396,7 +396,7 @@
         </div>
       </div>
       <div id="advancedOptions" style="margin-bottom:14px; border:0.5px solid var(--border); border-radius:var(--radius); padding:0;">
-        <div style="padding:4px 10px; font-size:13px; font-weight:500; color:var(--text-primary);">Pricing, Currency &amp; Branding Options</div>
+        <div style="padding:8px 10px; font-size:13px; font-weight:500; color:var(--text-primary); border-bottom:0.5px solid var(--border);">Pricing, Currency &amp; Branding Options</div>
         <div style="padding:0 10px 10px;">
       <div class="field-row">
         <div class="field" style="max-width:220px; display:flex; gap:10px;">
@@ -415,6 +415,7 @@
             </div>
           </div>
         </div>
+        <div style="flex-basis:100%; width:100%; border-top:0.5px solid var(--border); margin:4px 0;"></div>
         <div class="field" id="logoField" style="max-width:220px;">
           <label>Upload Logo</label>
           <input type="file" id="logoInput" accept="image/*,.pdf,.ai,application/pdf,application/postscript,application/illustrator" style="display:none;" />
@@ -434,6 +435,7 @@
             <input type="color" id="colorizeAllColor" value="#1a1a1a" disabled style="width:22px; height:22px; padding:0; border:0.5px solid var(--border); border-radius:6px; cursor:pointer; opacity:0.4; flex-shrink:0;" title="Colorize color" />
           </div>
         </div>
+        <div style="flex-basis:100%; width:100%; border-top:0.5px solid var(--border); margin:4px 0;"></div>
         <div class="field" id="patternField" style="max-width:340px;">
           <label>Pattern</label>
           <input type="file" id="customPatternInput" accept="image/*" style="display:none;" />
@@ -459,6 +461,7 @@
             <input type="color" id="strokeColorInput" value="#ffffff" disabled style="width:22px; height:22px; padding:0; border:0.5px solid var(--border); border-radius:6px; cursor:pointer; opacity:0.4; flex-shrink:0;" title="Stroke color" />
           </div>
         </div>
+        <div style="flex-basis:100%; width:100%; border-top:0.5px solid var(--border); margin:4px 0;"></div>
         <div class="field" style="max-width:220px;">
           <label>Background Color</label>
           <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
