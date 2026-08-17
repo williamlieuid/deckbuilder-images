@@ -6301,7 +6301,7 @@ function regionControlsHtml(p) {
         <div style="display:flex; flex-wrap:wrap; gap:4px;">
           <button type="button" class="region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise">↻ Rotate</button>
           <label class="region-ctrl-swatch-wrap" title="${ov.colorize ? ('Colorized ' + ov.colorize + ' — click to clear') : 'Colorize logo (click to pick a color)'}">
-            <input type="color" class="colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#ff0000'}" style="${ov.colorize ? '' : 'opacity:0.35;'}" />Colorize
+            <input type="color" class="colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#1a1a1a'}" style="${ov.colorize ? '' : 'opacity:0.35;'}" />Colorize
           </label>
           <button type="button" class="region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="${ov.hidePattern ? 'opacity:0.55;' : ''}">▦ ${ov.hidePattern ? 'Pattern Hidden' : 'Hide Pattern'}</button>
           <button type="button" class="region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="${ov.hidden ? 'opacity:0.55;' : ''}">${ov.hidden ? '\u{1F6AB} Branding Hidden' : '\u{1F441} Hide Branding'}</button>
