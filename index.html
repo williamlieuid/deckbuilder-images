@@ -91,17 +91,21 @@
   input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
   .price-field-wrap {
-    flex: 0 0 auto; display: flex; align-items: center; height: 36px; padding: 0 10px;
+    position: relative; flex: 0 0 auto; height: 36px;
     border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
   }
-  /* Always visible now (was a hide-until-typed reveal) -- line-height matched to the input's own
-     so the $ and the digits share one text baseline instead of the $ sitting visibly lower, which
-     is what a bare span's default line-height vs. the input's own internal centering produced. */
+  /* Geometrically centered (top:50%/translateY(-50%)) against the wrapper's own box instead of
+     matching line-heights between a span and an input -- a browser vertically centers a native
+     input's text using its own internal metric, which doesn't reliably coincide with a plain
+     span's line-height box even when the numbers match, leaving the $ a visible px or two off.
+     Anchoring the $ to the wrapper's actual geometric center lines it up with wherever the
+     browser puts the input's own centered text, since that's the same box both are centered in. */
   .price-field-wrap .dollar-prefix {
-    color: var(--text-muted); font-size: 14px; line-height: 34px; flex: 0 0 auto; margin-right: 2px;
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); font-size: 14px; pointer-events: none;
   }
   .price-field-wrap input[type=number] {
-    flex: 0 0 auto; width: 5ch; height: 100%; line-height: 34px; border: none; padding: 0; background: transparent;
+    width: calc(5ch + 29px); height: 100%; border: none; padding: 0 10px 0 19px; background: transparent;
   }
   .price-field-wrap input[type=number]:focus { outline: none; }
   .suggestions-panel {
