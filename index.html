@@ -16,7 +16,7 @@
   } catch (e) {}
 })();
 </script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23D85A30'/%3E%3Cstop offset='1' stop-color='%23F2A65A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Crect x='8' y='11' width='16' height='3.2' rx='1.6' fill='%23fff' opacity='0.95'/%3E%3Crect x='8' y='18' width='10' height='3.2' rx='1.6' fill='%23fff' opacity='0.6'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23EC2027'/%3E%3Cstop offset='1' stop-color='%23F26169'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Crect x='8' y='11' width='16' height='3.2' rx='1.6' fill='%23fff' opacity='0.95'/%3E%3Crect x='8' y='18' width='10' height='3.2' rx='1.6' fill='%23fff' opacity='0.6'/%3E%3C/svg%3E" />
 <style>
   :root {
     --border: #E0DED5;
@@ -29,8 +29,8 @@
     --surface-2: #fff;
     --page-bg: #fff;
     --backdrop: #E8E6DE;
-    --accent: #D85A30;
-    --accent-2: #F2A65A;
+    --accent: #EC2027;
+    --accent-2: #F26169;
     --radius: 8px;
     color-scheme: light;
   }
@@ -53,7 +53,7 @@
          canvas-background choice, set as an inline style by setBackdrop()), so it needs to stay
          theme-independent or the visibly-selected swatch and the actually-rendered backdrop would
          disagree the moment dark mode is active but no swatch has been clicked yet. */
-      --accent: #E2764A;
+      --accent: #EC2027;
       color-scheme: dark;
     }
   }
@@ -67,7 +67,7 @@
     --surface-1: #211F1B;
     --surface-2: #2A2823;
     --page-bg: #17150F;
-    --accent: #E2764A;
+    --accent: #EC2027;
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -91,16 +91,17 @@
   input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
   .price-field-wrap {
-    flex: 1; display: flex; align-items: center; height: 36px; padding: 0 10px;
+    flex: 0 0 auto; display: flex; align-items: center; height: 36px; padding: 0 10px;
     border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
   }
+  /* Always visible now (was a hide-until-typed reveal) -- line-height matched to the input's own
+     so the $ and the digits share one text baseline instead of the $ sitting visibly lower, which
+     is what a bare span's default line-height vs. the input's own internal centering produced. */
   .price-field-wrap .dollar-prefix {
-    color: var(--text-muted); font-size: 14px; width: 0; overflow: hidden;
-    opacity: 0; transition: width 0.1s, opacity 0.1s;
+    color: var(--text-muted); font-size: 14px; line-height: 34px; flex: 0 0 auto; margin-right: 2px;
   }
-  .price-field-wrap .dollar-prefix.visible { width: 9px; opacity: 1; }
   .price-field-wrap input[type=number] {
-    flex: 1; height: 100%; border: none; padding: 0; background: transparent;
+    flex: 0 0 auto; width: 5ch; height: 100%; line-height: 34px; border: none; padding: 0; background: transparent;
   }
   .price-field-wrap input[type=number]:focus { outline: none; }
   .suggestions-panel {
@@ -168,8 +169,17 @@
   #deckBar { display: none; position: sticky; bottom: 0; z-index: 10; background: var(--page-bg); border-top: 0.5px solid var(--border); padding: 14px 24px; margin: 0 -24px; justify-content: space-between; align-items: center; }
   #deckBar p { font-size: 13px; color: var(--text-secondary); margin: 0; }
 
-  #deckView { display: none; }
-  .deck-page { width: 14in; min-height: 8.5in; margin: 0 auto 40px; padding: 0.5in 0.6in; background: white; border: 0.5px solid var(--border); }
+  /* A client-facing deck export must always render in fixed light/print colors, never the app's
+     current dark-mode UI theme -- the page itself is hardcoded white below, but descendants were
+     still reading the theme-following --text-* vars, so dark mode produced near-invisible light
+     text on that white page. Redeclaring the vars here shadows the :root dark-mode overrides for
+     everything inside #deckView without touching a single individual rule. */
+  #deckView {
+    display: none;
+    --text-primary: #1a1a1a; --text-secondary: #5F5E5A; --text-muted: #918F86;
+    --sku-gray: #C7C5BB; --border: #E0DED5;
+  }
+  .deck-page { width: 14in; min-height: 8.5in; margin: 0 auto 40px; padding: 0.5in 0.6in; background: white; border: 0.5px solid var(--border); color: var(--text-primary); }
   .deck-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--text-primary); padding-bottom: 10px; margin-bottom: 20px; }
   .deck-header h2 { font-size: 16px; margin: 0; }
   .deck-header p { font-size: 11px; color: var(--text-secondary); margin: 0; }
@@ -195,8 +205,8 @@
   .brandmark { display: flex; align-items: center; gap: 10px; }
   .brandmark .mark {
     width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; position: relative;
-    background: linear-gradient(135deg, var(--accent), #F2A65A);
-    box-shadow: 0 2px 6px rgba(216, 90, 48, 0.35);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 2px 6px rgba(236, 32, 39, 0.35);
   }
   .brandmark .mark svg { position: absolute; top: 6px; left: 6px; }
   .brandmark .wordmark { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
@@ -218,8 +228,20 @@
   .settingsTooltip::after { content: ''; position: absolute; bottom: 100%; right: 12px; border: 5px solid transparent; border-bottom-color: #1a1a1a; }
   .settingsIconLink:hover .settingsTooltip, .settingsIconLink:focus .settingsTooltip { opacity: 1; visibility: visible; }
 
-  .region-ctrl-btn { border: 1px solid var(--border); border-radius: 3px; width: 22px; height: 18px; flex-shrink: 0; }
-  .colorize-region-input { -webkit-appearance: none; appearance: none; }
+  /* Widened from icon-only 22x18 buttons to icon+text pills -- reps couldn't tell the icon-only
+     buttons apart without hovering, which never happens on a touchscreen. flex-wrap on the row
+     lets the pills drop to a second line on narrow cards instead of clipping. */
+  .region-ctrl-btn {
+    border: 1px solid var(--border); border-radius: 3px; height: 20px; padding: 0 6px;
+    display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; cursor: pointer;
+    background: var(--surface-2); color: var(--text-secondary); font-size: 9.5px; flex-shrink: 0;
+  }
+  .region-ctrl-swatch-wrap {
+    display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 3px;
+    height: 20px; padding: 0 6px; background: var(--surface-2); color: var(--text-secondary); font-size: 9.5px; flex-shrink: 0;
+    cursor: pointer;
+  }
+  .colorize-region-input { -webkit-appearance: none; appearance: none; width: 13px; height: 13px; padding: 0; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; flex-shrink: 0; }
   .colorize-region-input::-webkit-color-swatch-wrapper { padding: 0; }
   .colorize-region-input::-webkit-color-swatch { border: none; border-radius: 2px; }
   .colorize-region-input::-moz-color-swatch { border: none; border-radius: 2px; }
@@ -232,7 +254,8 @@
   @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
   @media (max-width: 560px) {
     .grid { grid-template-columns: 1fr; }
-    .region-ctrl-btn { width: 34px; height: 30px; }
+    .region-ctrl-btn, .region-ctrl-swatch-wrap { height: 30px; padding: 0 10px; font-size: 11px; }
+    .colorize-region-input { width: 20px; height: 20px; }
     .region-ctrl-row { gap: 8px !important; font-size: 11px !important; }
   }
 </style>
@@ -286,7 +309,7 @@
 
     <div class="panel">
       <div class="field-row">
-        <div class="field" style="position:relative; flex:1.6; min-width:220px;">
+        <div class="field" style="position:relative; flex:1.6; min-width:200px;">
           <label>Category</label>
           <button type="button" id="catDropdownBtn" class="secondary" style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">
             <span id="catDropdownLabel">All Categories</span>
@@ -294,12 +317,12 @@
           </button>
           <div id="fCategory" class="cat-dropdown-panel" style="display:none;"></div>
         </div>
-        <div class="field">
+        <div class="field" style="flex:0 0 auto;">
           <label>Price Range Per Unit</label>
           <div style="display:flex; gap:8px; align-items:center;">
             <div class="price-field-wrap">
               <span class="dollar-prefix" id="minDollar">$</span>
-              <input type="number" id="fBudgetMin" placeholder="Min" />
+              <input type="number" id="fBudgetMin" placeholder="Min" value="0" />
             </div>
             <span style="color:var(--text-muted);">–</span>
             <div class="price-field-wrap">
@@ -308,9 +331,12 @@
             </div>
           </div>
         </div>
-        <div class="field" style="flex:0.8; min-width:140px; position:relative;">
-          <label>Search (Name, Tags, Keywords)</label>
-          <input type="text" id="fSearch" placeholder="e.g. eco-friendly, tech, onboarding" autocomplete="off" />
+        <div class="field" style="flex:1; min-width:200px; position:relative;">
+          <label>Search (Name, Tags, Keywords, SKU)</label>
+          <div style="display:flex; gap:12px;">
+            <input type="text" id="fSearch" placeholder="e.g. eco-friendly, tech, 4231" autocomplete="off" style="flex:1; min-width:0;" />
+            <button type="button" class="secondary" id="resetBtn" title="Clear all filters, the uploaded logo, and pattern to start fresh" style="flex:0 0 auto; padding:0 14px;">Start Over</button>
+          </div>
           <div id="searchSuggestions" class="suggestions-panel" style="display:none;"></div>
         </div>
       </div>
@@ -359,6 +385,7 @@
             <span id="patternFileName" style="font-size:11px; color:var(--text-muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">No File Chosen</span>
             <button type="button" class="tiny-remove" id="removePatternBtn" title="Remove Pattern">✕</button>
           </div>
+          <div id="patternHistoryRow" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;"></div>
           <div style="margin-top:8px;">
             <label style="font-size:11px; color:var(--text-secondary);">Pattern Scale: <span id="patternScaleLabel">100%</span></label>
             <input type="range" id="patternScale" min="20" max="200" value="100" step="5" style="width:100%; margin-top:2px;" />
@@ -388,10 +415,6 @@
       </div>
         </div>
       </div>
-      <div style="display:flex; gap:10px;">
-        <button class="primary" id="searchBtn">Search Products</button>
-        <button class="secondary" id="resetBtn">Reset</button>
-      </div>
     </div>
 
     <div id="renderProgress" class="no-print" style="display:none; align-items:center; gap:10px; position:sticky; top:0; z-index:20; background:var(--page-bg); border-bottom:0.5px solid var(--border); padding:8px 0; margin-bottom:10px;">
@@ -417,11 +440,12 @@
   </div>
 
   <div id="deckBar" class="no-print">
-    <p id="deckCount">0 products selected</p>
+    <p id="deckCount">0 Products Selected</p>
     <div style="display:flex; gap:10px; align-items:center;">
       <input type="text" id="deckNameInput" placeholder="Deck Name (Optional)" style="height:34px; padding:0 10px; border:0.5px solid var(--border); border-radius:var(--radius); font-size:13px; width:220px;" />
-      <button class="secondary" id="backBtn">Back to Results</button>
-      <button class="primary" id="buildDeckBtn">Build Deck</button>
+      <button class="secondary" id="viewDeckBtn">View Deck</button>
+      <button class="secondary" id="exportImagesBarBtn">Export Deck as Images</button>
+      <button class="primary" id="exportPdfBarBtn">Export Deck as PDF</button>
     </div>
   </div>
 
@@ -429,8 +453,8 @@
     <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
       <button class="secondary" id="backToEditBtn">← Back to Edit Selection</button>
       <div style="display:flex; gap:10px;">
-        <button class="secondary" id="downloadJpgBtn">Download Deck as JPG</button>
-        <button class="primary" id="downloadBtn">Download / Print PDF</button>
+        <button class="secondary" id="downloadJpgBtn">Export Deck as Images</button>
+        <button class="primary" id="downloadBtn">Export Deck as PDF</button>
       </div>
     </div>
     <div id="pagesContainer"></div>
@@ -4299,6 +4323,17 @@ function applyRegionOverrides(regions, sku) {
 // the same canvas.branded-canvas[data-sku] convention) to redraw with the current override state,
 // right after a rotate/hide button click -- bypasses the render cache directly rather than
 // threading override state through brandingRecipeKey, since it only ever needs to affect one SKU.
+// Session-only per-product override: true = show the logo the normal way (full color, or
+// colorized if that's active) instead of the material's own etched/knockout look -- a preview of
+// what a full-color print would look like, not a real production option for these materials.
+// Only meaningful for black leather / wood / clear-acrylic products (drawBrandedCard's laser
+// treatments), toggled via the "Laser view" / "Full color" button on those cards specifically.
+let materialFullColorOverride = {};
+function toggleMaterialFullColor(sku) {
+  materialFullColorOverride[sku] = !materialFullColorOverride[sku];
+  invalidateAndRepaintSku(sku);
+}
+
 function invalidateAndRepaintSku(sku) {
   brandedRenderCache.delete(sku);
   document.querySelectorAll(`canvas.branded-canvas[data-sku="${sku}"]`).forEach(async (canvas) => {
@@ -4315,7 +4350,7 @@ let logoDataUrl = null;
 // localStorage only, keyed by trimmed data URL so a re-upload of the same file just promotes the
 // existing entry instead of duplicating it — never touches the sheet or any other tab's data.
 const LOGO_HISTORY_KEY = 'deckbuilder_logoHistory';
-const LOGO_HISTORY_MAX = 5;
+const LOGO_HISTORY_MAX = 10;
 function loadLogoHistory() {
   try { return JSON.parse(localStorage.getItem(LOGO_HISTORY_KEY) || '[]'); } catch (err) { return []; }
 }
@@ -4464,6 +4499,46 @@ let PATTERN_LIBRARY = [
 // is left in the repo, just never surfaced as a selectable swatch in the app.
 const PATTERN_LIBRARY_EXCLUDE = ['9020902.jpg'];
 
+// Custom-uploaded patterns, mirroring logoHistory exactly (same per-browser localStorage
+// mechanism, same 10-entry cap) -- kept separate from PATTERN_LIBRARY, which is the shared/pinned,
+// admin-managed set of swatches, not personal upload history.
+const PATTERN_HISTORY_KEY = 'deckbuilder_patternHistory';
+const PATTERN_HISTORY_MAX = 10;
+function loadPatternHistory() {
+  try { return JSON.parse(localStorage.getItem(PATTERN_HISTORY_KEY) || '[]'); } catch (err) { return []; }
+}
+let patternHistory = loadPatternHistory();
+function savePatternHistory() {
+  try { localStorage.setItem(PATTERN_HISTORY_KEY, JSON.stringify(patternHistory)); }
+  catch (err) { /* quota exceeded or storage unavailable -- history is a convenience, fine to skip persisting */ }
+}
+function addToPatternHistory(dataUrl, name) {
+  patternHistory = patternHistory.filter(entry => entry.dataUrl !== dataUrl);
+  patternHistory.unshift({ dataUrl, name });
+  patternHistory = patternHistory.slice(0, PATTERN_HISTORY_MAX);
+  savePatternHistory();
+  renderPatternHistory();
+}
+function renderPatternHistory() {
+  const row = document.getElementById('patternHistoryRow');
+  if (!row) return;
+  row.innerHTML = patternHistory.map((entry, i) => `
+    <button type="button" class="patternHistoryBtn" data-idx="${i}" title="${entry.name.replace(/"/g, '&quot;')}"
+      style="width:32px; height:32px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; padding:0;
+      background-image:url('${entry.dataUrl}'); background-size:cover; background-position:center;"></button>
+  `).join('');
+  row.querySelectorAll('.patternHistoryBtn').forEach(btn => btn.addEventListener('click', () => {
+    const entry = patternHistory[Number(btn.dataset.idx)];
+    selectedPattern = entry.dataUrl;
+    selectedPatternSolidColor = null;
+    document.getElementById('patternFileName').textContent = entry.name;
+    document.querySelectorAll('.pattern-swatch').forEach(b => b.style.borderColor = 'transparent');
+    addToPatternHistory(entry.dataUrl, entry.name);
+    renderGrid(applySort(currentResults));
+  }));
+}
+renderPatternHistory();
+
 function renderPatternSwatches() {
   const wrap = document.getElementById('patternSwatches');
   const noneBtn = wrap.querySelector('[data-pattern=""]');
@@ -4550,6 +4625,7 @@ document.getElementById('customPatternInput').addEventListener('change', (e) => 
     selectedPattern = await trimImageWhitespace(ev.target.result);
     selectedPatternSolidColor = null;
     document.querySelectorAll('.pattern-swatch').forEach(b => b.style.borderColor = 'transparent');
+    addToPatternHistory(selectedPattern, file.name);
     renderGrid(applySort(currentResults));
   };
   reader.readAsDataURL(file);
@@ -4585,7 +4661,7 @@ function updateCatDropdownLabel() {
   else catDropdownLabel.textContent = sel.length + ' categories selected';
 }
 
-catBox.addEventListener('change', updateCatDropdownLabel);
+catBox.addEventListener('change', () => { updateCatDropdownLabel(); applyFilters(); });
 
 catDropdownBtn.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -4630,7 +4706,7 @@ function updateSearchSuggestions() {
   suggestionsPanel.style.display = 'flex';
 }
 
-searchInput.addEventListener('input', updateSearchSuggestions);
+searchInput.addEventListener('input', () => { updateSearchSuggestions(); debouncedApplyFilters(); });
 searchInput.addEventListener('focus', updateSearchSuggestions);
 searchInput.addEventListener('blur', () => setTimeout(() => { suggestionsPanel.style.display = 'none'; }, 150));
 
@@ -4661,7 +4737,7 @@ searchInput.addEventListener('keydown', (e) => {
     const active = suggestionsPanel.querySelector('.suggestion-item.active');
     if (isOpen && active) searchInput.value = active.dataset.tag;
     suggestionsPanel.style.display = 'none';
-    document.getElementById('searchBtn').click();
+    applyFilters();
   } else if (e.key === 'Escape') {
     suggestionsPanel.style.display = 'none';
   }
@@ -4673,6 +4749,7 @@ suggestionsPanel.addEventListener('mousedown', (e) => {
   searchInput.value = item.dataset.tag;
   suggestionsPanel.style.display = 'none';
   searchInput.focus();
+  applyFilters();
 });
 
 function minField() { return document.getElementById('fBudgetMin'); }
@@ -4684,16 +4761,11 @@ function updateBudgetPlaceholders() {
 }
 updateBudgetPlaceholders();
 
-function updateDollarPrefix(field, dollarEl) {
-  const hasValue = field.value !== '';
-  dollarEl.classList.toggle('visible', hasValue);
-  field.classList.toggle('has-value', hasValue);
-}
+// The $ prefix is a permanently visible label now (was a hide-until-typed reveal) -- no per-
+// keystroke visibility toggling needed, just the existing filter/analytics wiring.
 [['fBudgetMin', 'minDollar'], ['fBudgetMax', 'maxDollar']].forEach(([inputId, dollarId]) => {
   const input = document.getElementById(inputId);
-  const dollarEl = document.getElementById(dollarId);
-  updateDollarPrefix(input, dollarEl);
-  input.addEventListener('input', () => updateDollarPrefix(input, dollarEl));
+  input.addEventListener('input', () => { debouncedApplyFilters(); logBudgetSearchIfSet(); });
 });
 
 minField().addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); maxField().focus(); } });
@@ -4716,12 +4788,10 @@ function refreshIfSearched() {
 document.querySelectorAll('input[name=currency]').forEach(r => {
   r.addEventListener('change', () => {
     // typed min/max were entered in the old currency — clear rather than silently misapply them
-    minField().value = '';
+    minField().value = '0';
     maxField().value = '';
-    updateDollarPrefix(minField(), document.getElementById('minDollar'));
-    updateDollarPrefix(maxField(), document.getElementById('maxDollar'));
     updateBudgetPlaceholders();
-    refreshIfSearched();
+    applyFilters();
   });
 });
 
@@ -4729,7 +4799,7 @@ function updateCurrencyFieldVisibility() {
   document.getElementById('currencyField').style.display = pricingOn() ? 'block' : 'none';
 }
 document.querySelectorAll('input[name=pricing]').forEach(r => {
-  r.addEventListener('change', () => { updateCurrencyFieldVisibility(); refreshIfSearched(); });
+  r.addEventListener('change', () => { updateCurrencyFieldVisibility(); applyFilters(); });
 });
 updateCurrencyFieldVisibility();
 
@@ -4860,7 +4930,11 @@ function fmtPrice(n) {
   return sym + parseFloat(n).toFixed(2);
 }
 
-document.getElementById('searchBtn').addEventListener('click', () => {
+// Runs live as filters change (category checkbox, budget field, search text, currency/pricing
+// toggle) -- there's no separate "Search Products" button anymore, so this is the one place all of
+// those triggers converge. Budget-search analytics are only logged from here when a rep actually
+// typed a budget value (via logBudgetSearchIfSet below), not on every incidental keystroke elsewhere.
+function applyFilters() {
   const cats = getSelectedCategories();
   let lo = minField().value !== '' ? parseFloat(minField().value) : null;
   let hi = maxField().value !== '' ? parseFloat(maxField().value) : null;
@@ -4869,14 +4943,17 @@ document.getElementById('searchBtn').addEventListener('click', () => {
 
   currentResults = PRODUCTS.filter(p => {
     if (cats.length && !cats.includes(p.category)) return false;
-    if (lo !== null || hi !== null) {
+    // Min defaults to 0 (see fBudgetMin's value="0") so every product's real price already clears
+    // it -- treat that default as "no minimum set" here too, or a product with zero price tiers
+    // would silently vanish from the default view just because $0 counts as an active filter.
+    if ((lo !== null && lo > 0) || hi !== null) {
       if (!p.tiers.length) return false;
       const price = basePrice(p);
       if (lo !== null && price < lo) return false;
       if (hi !== null && price > hi) return false;
     }
     if (search) {
-      const hay = (p.tags.join(' ') + ' ' + p.name + ' ' + p.description + ' ' + p.category).toLowerCase();
+      const hay = (p.sku + ' ' + p.tags.join(' ') + ' ' + p.name + ' ' + p.description + ' ' + p.category).toLowerCase();
       const words = search.split(/\s+/).filter(Boolean);
       const matches = words.some(w => hay.includes(w));
       if (!matches) return false;
@@ -4888,14 +4965,29 @@ document.getElementById('searchBtn').addEventListener('click', () => {
   document.getElementById('resultsHeader').style.display = 'flex';
   document.getElementById('resultsCount').textContent = currentResults.length + ' Product' + (currentResults.length===1?'':'s') + ' Found';
   renderGrid(applySort(currentResults));
+  return { lo, hi };
+}
 
-  if (lo !== null || hi !== null) {
+// Budget-search analytics used to only fire from the Search button's own click handler -- kept as
+// a separate opt-in call (not baked into every applyFilters() call) so switching category or
+// typing in the search box doesn't spam an analytics event every time, only genuine budget entry.
+const logBudgetSearchIfSet = debounce(() => {
+  const lo = minField().value !== '' ? parseFloat(minField().value) : null;
+  const hi = maxField().value !== '' ? parseFloat(maxField().value) : null;
+  if ((lo !== null && lo > 0) || hi !== null) {
     logAnalyticsEvents([{ eventType: 'budgetSearched', value: currency(), extra: JSON.stringify({ min: lo, max: hi }) }]);
   }
-});
+}, 600);
+
+const debouncedApplyFilters = debounce(applyFilters, 250);
 
 document.getElementById('selectAllBtn').addEventListener('click', () => {
-  currentResults.forEach(p => selected.add(p.sku));
+  const allSelected = currentResults.length > 0 && currentResults.every(p => selected.has(p.sku));
+  if (allSelected) {
+    currentResults.forEach(p => selected.delete(p.sku));
+  } else {
+    currentResults.forEach(p => selected.add(p.sku));
+  }
   renderGrid(applySort(currentResults));
 });
 
@@ -4903,19 +4995,26 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   catBox.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
   catBox.style.display = 'none';
   updateCatDropdownLabel();
-  minField().value = '';
+  minField().value = '0';
   maxField().value = '';
-  updateDollarPrefix(minField(), document.getElementById('minDollar'));
-  updateDollarPrefix(maxField(), document.getElementById('maxDollar'));
   document.getElementById('fSearch').value = '';
   document.getElementById('sortSelect').value = 'price-asc';
   selected.clear();
-  currentResults = [];
-  hasSearched = false;
-  document.getElementById('resultsHeader').style.display = 'none';
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('grid').innerHTML = '';
+
+  // Between-client cleanliness: a rep resetting the tool is very likely moving on to a different
+  // client's deck, so the previous client's logo (and its thumbnail sitting in history) shouldn't
+  // still be there staring back at them -- clears the active logo and the personal upload history,
+  // but leaves the shared/pinned logo library (LOGO_LIBRARY) alone since that's admin content, not
+  // "previously used" in this sense.
+  logoDataUrl = null;
+  document.getElementById('logoInput').value = '';
+  document.getElementById('logoFileName').textContent = 'No File Chosen';
+  logoHistory = [];
+  saveLogoHistory();
+  renderLogoHistory();
+
   updateDeckBar();
+  applyFilters();
 });
 
 function priceBox(p) {
@@ -5241,6 +5340,13 @@ function getColorizedLogoSource(logoImg, hexColor) {
 function getKnockoutLogoSource(logoImg) {
   return getColorizedLogoSource(logoImg, '#ffffff');
 }
+// Black leather's laser-etched look: a solid black knockout of the logo shape, same mechanism as
+// the white pattern-knockout above just with the color swapped -- there was previously no black-
+// leather-specific treatment at all in drawBrandedCard, so this is the first time this material
+// actually renders differently from a normal full-color logo.
+function getBlackKnockoutLogoSource(logoImg) {
+  return getColorizedLogoSource(logoImg, '#000000');
+}
 
 const WOOD_ENGRAVE_COLOR = '#786957';
 // Simulates a ~1mm laser-cut recess, lit from directly above: fills the logo's own silhouette
@@ -5364,7 +5470,7 @@ function getClearEtchedLogoSource(logoImg) {
 // perspective-warped through the region's own homography instead of flat-tiled, so a diagonal
 // product shot doesn't look like a flat decal; rect/mask stay flat-tiled since they don't carry
 // perspective info the way a hand-placed 4-corner quad does.
-function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply, woodProduct, clearProduct) {
+function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size, pattern, maskImageCache, logoMultiply, woodProduct, clearProduct, blackProduct, fullColorOverride) {
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
@@ -5383,9 +5489,17 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
   // its own logo already baked in, so pattern-only branding (no separate logo warp) is valid too.
   if (!regions || (!logoImg && !(pattern && pattern.img))) return;
 
+  // fullColorOverride skips straight past every material-specific treatment below -- a preview of
+  // "what would this look like in full color" for a material that would never actually ship that
+  // way, not a real production option (see toggleMaterialFullColor's own comment). Single combined
+  // flag (rather than three separate material booleans) threaded down into paintRegionContent,
+  // where it gates whether a per-region colorize override is allowed to touch the logo at all --
+  // a fixed physical-material simulation isn't a colorize target the way a normal logo is.
+  const materialLockedLook = !fullColorOverride && (blackProduct || woodProduct || clearProduct);
   const baseLogoSrc = !logoImg ? null
-    : woodProduct ? getWoodEngravedLogoSource(logoImg)
-    : clearProduct ? getClearEtchedLogoSource(logoImg)
+    : (blackProduct && !fullColorOverride) ? getBlackKnockoutLogoSource(logoImg)
+    : (woodProduct && !fullColorOverride) ? getWoodEngravedLogoSource(logoImg)
+    : (clearProduct && !fullColorOverride) ? getClearEtchedLogoSource(logoImg)
     : (pattern && pattern.knockout) ? getKnockoutLogoSource(logoImg)
     : logoImg;
   const skipShading = isDarkBase(baseImg);
@@ -5454,7 +5568,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
         scratch.width = size; scratch.height = size;
         const sctx = scratch.getContext('2d');
         const regionForAxis = axis !== null ? Object.assign({}, region, { logoAxis: axis }) : region;
-        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading, woodProduct, clearProduct);
+        paintRegionContent(sctx, quad, quadPct, regionForAxis, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, false, hasRectAnchor, logoMultiply, skipShading, materialLockedLook);
         sctx.globalCompositeOperation = 'destination-in';
         sctx.drawImage(islandClips ? islandClips[axisIdx] : maskCanvas, 0, 0);
         ctx.drawImage(scratch, 0, 0);
@@ -5487,7 +5601,7 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
     // pattern render correctly regardless of click order, without touching the clip/radii above.
     const warpQuadPct = normalizeQuadWinding(quadPct);
     const warpQuad = warpQuadPct.map(pctToCanvas);
-    paintRegionContent(ctx, warpQuad, warpQuadPct, region, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, kind === 'poly', hasRectAnchor, logoMultiply, skipShading, woodProduct, clearProduct);
+    paintRegionContent(ctx, warpQuad, warpQuadPct, region, pattern, baseLogoSrc, logoImg, baseImg, dx, dy, dw, dh, size, kind === 'poly', hasRectAnchor, logoMultiply, skipShading, materialLockedLook);
     ctx.restore();
   });
 }
@@ -5495,16 +5609,18 @@ function drawBrandedCard(canvas, baseImg, logoImg, regions, backdropColor, size,
 // Shared by all three region kinds: fills the pattern within whatever clip/target the caller
 // set up (flat-tiled, or perspective-warped through the region's own quad when perspectiveTile
 // is true), applies shading, then warps the logo on top.
-function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoSrc, rawLogoSrc, baseImg, dx, dy, dw, dh, size, perspectiveTile, hasRectAnchor, logoMultiply, skipShading, woodProduct, clearProduct) {
+function paintRegionContent(targetCtx, quad, quadPct, region, pattern, baseLogoSrc, rawLogoSrc, baseImg, dx, dy, dw, dh, size, perspectiveTile, hasRectAnchor, logoMultiply, skipShading, materialLockedLook) {
   // Per-region override of the card-wide logo source: __colorize (the "Colorize Logo" control)
   // always wins when set, regardless of pattern state -- it's a deliberate solid-color choice, not
   // tied to knockout-vs-pattern logic. Otherwise, __skipPattern (the "hide pattern" control) means
   // there's no pattern left under this one region to justify a plain white silhouette, so fall back
-  // to the logo's real colors instead of the card-wide knocked-out version. Wood-engraved and
-  // clear-etched logos aren't affected -- those are fixed physical-material simulations, not a
-  // knockout choice a rep can toggle per region.
+  // to the logo's real colors instead of the card-wide knocked-out version. Black-knockout, wood-
+  // engraved, and clear-etched logos aren't affected while materialLockedLook is true -- those are
+  // fixed physical-material simulations, not a knockout choice a rep can toggle per region (once
+  // the laser/full-color button switches a product OUT of its material look, materialLockedLook is
+  // false and colorize applies normally again, same as any other product).
   let effectiveLogoSrc = baseLogoSrc;
-  if (baseLogoSrc && !woodProduct && !clearProduct) {
+  if (baseLogoSrc && !materialLockedLook) {
     if (region.__colorize) effectiveLogoSrc = getColorizedLogoSource(rawLogoSrc, region.__colorize);
     else if (colorizeAll) effectiveLogoSrc = getColorizedLogoSource(rawLogoSrc, colorizeAllColor);
     else if (region.__skipPattern && pattern && pattern.knockout) effectiveLogoSrc = rawLogoSrc;
@@ -5981,7 +6097,7 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   // reused forever afterward, since none of the global settings need to change for that stale hit
   // to persist. A product's own region JSON (and now its override state) is the one thing that
   // can change data-side with zero global-setting interaction.
-  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions) + '' + JSON.stringify(regionOverrides[p.sku] || null);
+  const recipeKey = canvas.dataset.base + '' + brandingRecipeKey(backdrop) + '' + JSON.stringify(p.regions) + '' + JSON.stringify(regionOverrides[p.sku] || null) + '' + (materialFullColorOverride[p.sku] ? '1' : '0');
   const cached = brandedRenderCache.get(p.sku);
   if (cached && cached.recipeKey === recipeKey) {
     canvas.width = cached.canvas.width; canvas.height = cached.canvas.height;
@@ -6027,8 +6143,9 @@ async function paintOneBrandedCanvas(canvas, logoImg, backdrop, generation) {
   const maskImageCache = {};
   maskUrls.forEach((url, i) => { if (maskImgs[i]) maskImageCache[url] = maskImgs[i]; });
   const previewSize = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 350 : 700;
-  const effectiveLogoMultiply = (p.blackProduct || p.woodProduct || p.clearProduct) ? false : logoMultiply;
-  drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct);
+  const fullColorOverride = !!materialFullColorOverride[p.sku];
+  const effectiveLogoMultiply = ((p.blackProduct || p.woodProduct || p.clearProduct) && !fullColorOverride) ? false : logoMultiply;
+  drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, backdrop, previewSize, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct, !!p.blackProduct, fullColorOverride);
 
   const snapshot = document.createElement('canvas');
   snapshot.width = canvas.width; snapshot.height = canvas.height;
@@ -6068,7 +6185,7 @@ function showRetryBadge(canvas, logoImg, backdrop) {
   btn.className = 'retryBadge no-print';
   btn.title = 'Image failed to load — click to retry';
   btn.textContent = '↻';
-  btn.style.cssText = 'position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(216,90,48,0.92); color:#fff; font-size:15px; cursor:pointer; z-index:2;';
+  btn.style.cssText = 'position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(236,32,39,0.92); color:#fff; font-size:15px; cursor:pointer; z-index:2;';
   btn.addEventListener('click', async (e) => {
     e.stopPropagation();
     btn.disabled = true; btn.style.opacity = '0.5';
@@ -6143,9 +6260,13 @@ function imageBlock(p, includeControls = true) {
 
   if (hasRegionBranding) {
     const isTransparent = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim() === 'transparent';
+    const isMaterialLocked = !!(p.blackProduct || p.woodProduct || p.clearProduct);
+    const isFullColor = !!materialFullColorOverride[p.sku];
+    const materialLabel = p.blackProduct ? 'leather etching' : (p.woodProduct ? 'wood engraving' : 'etching');
     return `<div class="imgwrap">
       <canvas class="branded-canvas" data-sku="${p.sku}" data-base="${baseImg}" style="width:100%; height:100%; display:block;"></canvas>
     </div>
+    ${isMaterialLocked ? `<button type="button" class="secondary laser-toggle-btn no-print" data-sku="${p.sku}" title="${isFullColor ? 'Switch back to the ' + materialLabel + ' look' : 'Preview a full-color logo instead of the ' + materialLabel + ' look'}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isFullColor ? 'Full Color (click for ' + (p.blackProduct ? 'Etched' : 'Engraved') + ')' : (p.blackProduct ? 'Etched' : 'Engraved') + ' (click for Full Color)'}</button>` : ''}
     ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isTransparent ? 'Download Transparent Image' : 'Download Image'}</button>
     ${regionControlsHtml(p)}` : ''}`;
   }
@@ -6172,15 +6293,19 @@ function escapeHtml(str) {
 function regionControlsHtml(p) {
   const list = regionOverrideKeyList(p.regions);
   if (!list.length) return '';
-  return `<div class="region-controls no-print" style="display:flex; flex-direction:column; gap:2px; margin-top:4px;">
+  return `<div class="region-controls no-print" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
     ${list.map(r => {
       const ov = getRegionOverride(p.sku, r.key);
-      return `<div class="region-ctrl-row" style="display:flex; align-items:center; gap:4px; font-size:9.5px; color:var(--text-muted);">
-        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span>
-        <button type="button" class="tiny region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise" style="padding:0; font-size:11px; line-height:1; background:var(--surface-2);">↻</button>
-        <input type="color" class="tiny region-ctrl-btn colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#ff0000'}" title="${ov.colorize ? ('Colorized ' + ov.colorize + ' — click to clear') : 'Colorize logo (click to pick a color)'}" style="padding:0; cursor:pointer; ${ov.colorize ? '' : 'opacity:0.35;'}" />
-        <button type="button" class="tiny region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="padding:0; background-image:linear-gradient(to top right, transparent 44%, #e0332f 44%, #e0332f 56%, transparent 56%), repeating-conic-gradient(#999 0% 25%, #ddd 0% 50%); background-size:100% 100%, 6px 6px; ${ov.hidePattern ? 'opacity:0.4;' : ''}"></button>
-        <button type="button" class="tiny region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="padding:0; font-size:10px; line-height:1; background:var(--surface-2); ${ov.hidden ? 'opacity:0.5;' : ''}">${ov.hidden ? '\u{1F6AB}' : '\u{1F441}'}</button>
+      return `<div class="region-ctrl-row" style="display:flex; flex-direction:column; gap:4px;">
+        <span style="font-size:9.5px; font-weight:600; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span>
+        <div style="display:flex; flex-wrap:wrap; gap:4px;">
+          <button type="button" class="region-ctrl-btn rotate-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="Rotate 90° clockwise">↻ Rotate</button>
+          <label class="region-ctrl-swatch-wrap" title="${ov.colorize ? ('Colorized ' + ov.colorize + ' — click to clear') : 'Colorize logo (click to pick a color)'}">
+            <input type="color" class="colorize-region-input" data-sku="${p.sku}" data-region="${r.key}" value="${ov.colorize || '#ff0000'}" style="${ov.colorize ? '' : 'opacity:0.35;'}" />Colorize
+          </label>
+          <button type="button" class="region-ctrl-btn hide-pattern-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidePattern ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)'}" style="${ov.hidePattern ? 'opacity:0.55;' : ''}">▦ ${ov.hidePattern ? 'Pattern Hidden' : 'Hide Pattern'}</button>
+          <button type="button" class="region-ctrl-btn hide-region-btn" data-sku="${p.sku}" data-region="${r.key}" title="${ov.hidden ? 'Show this area' : 'Hide this area entirely'}" style="${ov.hidden ? 'opacity:0.55;' : ''}">${ov.hidden ? '\u{1F6AB} Branding Hidden' : '\u{1F441} Hide Branding'}</button>
+        </div>
       </div>`;
     }).join('')}
   </div>`;
@@ -6263,14 +6388,15 @@ async function exportProductImage(sku) {
     const canvas = document.createElement('canvas');
     const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
     const maskImageCache = await loadMaskImageCache(effectiveRegions, loadCrossOriginImage);
-    const effectiveLogoMultiply = (p.blackProduct || p.woodProduct || p.clearProduct) ? false : logoMultiply;
+    const fullColorOverride = !!materialFullColorOverride[p.sku];
+    const effectiveLogoMultiply = ((p.blackProduct || p.woodProduct || p.clearProduct) && !fullColorOverride) ? false : logoMultiply;
     // Exports always render onto opaque white regardless of the live preview's backdrop choice --
     // except "Transparent", which needs the export itself to actually carry an alpha channel, so
     // that one case alone follows the live --backdrop value through to both the canvas fill and
     // the output format (JPEG has no alpha at all).
     const liveBackdrop = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim();
     const isTransparent = liveBackdrop === 'transparent';
-    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, isTransparent ? 'transparent' : '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct);
+    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, isTransparent ? 'transparent' : '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct, !!p.blackProduct, fullColorOverride);
     const dataUrl = isTransparent ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92);
     const ext = isTransparent ? '.png' : '.jpg';
     triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + ext);
@@ -6285,6 +6411,17 @@ document.addEventListener('click', (e) => {
     exportProductImage(e.target.dataset.sku);
     return;
   }
+  if (e.target.classList.contains('laser-toggle-btn')) {
+    const sku = e.target.dataset.sku;
+    const p = PRODUCTS.find(x => x.sku === sku);
+    toggleMaterialFullColor(sku);
+    const isFullColor = !!materialFullColorOverride[sku];
+    const materialLabel = p && p.blackProduct ? 'leather etching' : (p && p.woodProduct ? 'wood engraving' : 'etching');
+    const naturalLabel = p && p.blackProduct ? 'Etched' : 'Engraved';
+    e.target.textContent = isFullColor ? ('Full Color (click for ' + naturalLabel + ')') : (naturalLabel + ' (click for Full Color)');
+    e.target.title = isFullColor ? ('Switch back to the ' + materialLabel + ' look') : ('Preview a full-color logo instead of the ' + materialLabel + ' look');
+    return;
+  }
   const sku = e.target.dataset.sku, regionKey = e.target.dataset.region;
   if (e.target.classList.contains('rotate-region-btn')) {
     const cur = getRegionOverride(sku, regionKey);
@@ -6294,16 +6431,17 @@ document.addEventListener('click', (e) => {
     const cur = getRegionOverride(sku, regionKey);
     const nowHidden = !cur.hidden;
     setRegionOverride(sku, regionKey, { hidden: nowHidden });
-    e.target.textContent = nowHidden ? '\u{1F6AB}' : '\u{1F441}';
+    e.target.textContent = nowHidden ? '\u{1F6AB} Branding Hidden' : '\u{1F441} Hide Branding';
     e.target.title = nowHidden ? 'Show this area' : 'Hide this area entirely';
-    e.target.style.opacity = nowHidden ? '0.5' : '';
+    e.target.style.opacity = nowHidden ? '0.55' : '';
     invalidateAndRepaintSku(sku);
   } else if (e.target.classList.contains('hide-pattern-region-btn')) {
     const cur = getRegionOverride(sku, regionKey);
     const nowHidden = !cur.hidePattern;
     setRegionOverride(sku, regionKey, { hidePattern: nowHidden });
+    e.target.textContent = '▦ ' + (nowHidden ? 'Pattern Hidden' : 'Hide Pattern');
     e.target.title = nowHidden ? 'Show pattern on this area' : 'Hide pattern on this area (logo stays)';
-    e.target.style.opacity = nowHidden ? '0.4' : '';
+    e.target.style.opacity = nowHidden ? '0.55' : '';
     invalidateAndRepaintSku(sku);
   } else if (e.target.classList.contains('colorize-region-input')) {
     // A native color <input> always opens its picker on click -- intercept only the "already
@@ -6314,7 +6452,7 @@ document.addEventListener('click', (e) => {
     if (cur.colorize) {
       e.preventDefault();
       setRegionOverride(sku, regionKey, { colorize: null });
-      e.target.title = 'Colorize logo (click to pick a color)';
+      e.target.parentElement.title = 'Colorize logo (click to pick a color)';
       e.target.style.opacity = '0.35';
       invalidateAndRepaintSku(sku);
     }
@@ -6326,7 +6464,7 @@ document.addEventListener('change', (e) => {
   const sku = e.target.dataset.sku, regionKey = e.target.dataset.region;
   const color = e.target.value;
   setRegionOverride(sku, regionKey, { colorize: color });
-  e.target.title = 'Colorized ' + color + ' — click to clear';
+  e.target.parentElement.title = 'Colorized ' + color + ' — click to clear';
   e.target.style.opacity = '';
   invalidateAndRepaintSku(sku);
 });
@@ -6380,20 +6518,33 @@ function updateDeckBar() {
   const bar = document.getElementById('deckBar');
   if (selected.size > 0) {
     bar.style.display = 'flex';
-    document.getElementById('deckCount').textContent = selected.size + ' product' + (selected.size===1?'':'s') + ' selected';
+    document.getElementById('deckCount').textContent = selected.size + ' Product' + (selected.size===1?'':'s') + ' Selected';
   } else {
     bar.style.display = 'none';
   }
+  const selectAllBtn = document.getElementById('selectAllBtn');
+  const allSelected = currentResults.length > 0 && currentResults.every(p => selected.has(p.sku));
+  selectAllBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
 }
 
-document.getElementById('buildDeckBtn').addEventListener('click', () => {
+// Builds the deck pages -- shared by all three deck-bar actions (View Deck, Export as Images,
+// Export as PDF) so there's one code path regardless of which one a rep clicks first; the
+// export-specific buttons just chain their own action on right after this. `navigate` controls
+// whether it also switches the screen into deck view: View Deck and Export as PDF need the deck
+// actually visible (PDF prints whatever's on screen via window.print()), but a JPG download reads
+// pixel data straight out of the (already-painted) canvases regardless of what's on screen, so
+// Export as Images passes navigate=false to build/paint everything invisibly and leave the rep
+// looking at the results grid the whole time -- no page switch for a plain download.
+async function buildDeckPages(navigate = true) {
   const chosen = applySort(PRODUCTS.filter(p => selected.has(p.sku)));
   lastBuiltDeck = chosen;
   deckName = document.getElementById('deckNameInput').value.trim();
-  document.querySelectorAll('.wrap > .no-print').forEach(el => el.style.display = 'none');
-  document.getElementById('deckBar').style.display = 'none';
-  document.getElementById('deckView').style.display = 'block';
-  document.getElementById('wrap').classList.add('deck-mode');
+  if (navigate) {
+    document.querySelectorAll('.wrap > .no-print').forEach(el => el.style.display = 'none');
+    document.getElementById('deckBar').style.display = 'none';
+    document.getElementById('deckView').style.display = 'block';
+    document.getElementById('wrap').classList.add('deck-mode');
+  }
 
   const pageContainer = document.getElementById('pagesContainer');
   const dateStr = new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
@@ -6420,7 +6571,7 @@ document.getElementById('buildDeckBtn').addEventListener('click', () => {
       </div>
     </div>
   `).join('');
-  paintBrandedCanvases(pageContainer);
+  await paintBrandedCanvases(pageContainer);
 
   // Analytics: one event per fact this build represents, batched into a single beacon. "Second
   // location" = the first extra region beyond a product's primary one (regionOverrideKeyList's
@@ -6439,7 +6590,11 @@ document.getElementById('buildDeckBtn').addEventListener('click', () => {
     analyticsEvents.push({ eventType: 'logoUsed', value: document.getElementById('logoFileName').textContent || 'unknown' });
   }
   logAnalyticsEvents(analyticsEvents);
-});
+}
+
+document.getElementById('viewDeckBtn').addEventListener('click', () => buildDeckPages());
+document.getElementById('exportImagesBarBtn').addEventListener('click', async () => { await buildDeckPages(false); downloadDeckAsJpg(); });
+document.getElementById('exportPdfBarBtn').addEventListener('click', async () => { await buildDeckPages(); window.print(); });
 
 document.getElementById('backToEditBtn').addEventListener('click', () => {
   document.querySelectorAll('.wrap > .no-print').forEach(el => el.style.display = '');
@@ -6771,10 +6926,10 @@ if (window.matchMedia) {
 }
 
 // Show every product immediately on page open (using the bundled snapshot) rather than leaving
-// the grid blank until a rep manually clicks Search -- an unfiltered click of the same button
-// they'd press anyway. refreshIfSearched() already re-renders once live data replaces the
-// snapshot, so this doesn't need its own separate re-render call.
-document.getElementById('searchBtn').click();
+// the grid blank until a rep types or checks something -- an unfiltered run of the same live
+// filtering every field change now triggers. refreshIfSearched() already re-renders once live data
+// replaces the snapshot, so this doesn't need its own separate re-render call.
+applyFilters();
 
 
 
