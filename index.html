@@ -94,14 +94,15 @@
     position: relative; flex: 0 0 auto; height: 36px;
     border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
   }
-  /* Geometrically centered (top:50%/translateY(-50%)) against the wrapper's own box instead of
-     matching line-heights between a span and an input -- a browser vertically centers a native
-     input's text using its own internal metric, which doesn't reliably coincide with a plain
-     span's line-height box even when the numbers match, leaving the $ a visible px or two off.
-     Anchoring the $ to the wrapper's actual geometric center lines it up with wherever the
-     browser puts the input's own centered text, since that's the same box both are centered in. */
+  /* Geometrically centered against the wrapper's own box instead of matching line-heights
+     between a span and an input, since a browser centers a native input's text using its own
+     internal metric that a plain span's line-height box won't reliably match. The extra -0.75px
+     corrects a second, smaller effect: translateY(-50%) centers the $ span's own line box, not
+     its visible ink, and a "$" glyph's ink sits slightly below its line box's own center relative
+     to a digit's -- measured directly by rasterizing the real input next to the $ and comparing
+     pixel rows, since eyeballing a screenshot wasn't reliable enough to catch a sub-1px offset. */
   .price-field-wrap .dollar-prefix {
-    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    position: absolute; left: 10px; top: calc(50% - 0.75px); transform: translateY(-50%);
     color: var(--text-muted); font-size: 14px; pointer-events: none;
   }
   .price-field-wrap input[type=number] {
