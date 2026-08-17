@@ -383,17 +383,18 @@
             <button type="button" class="tiny-remove" id="removeLogoBtn" title="Remove Logo">✕</button>
           </div>
           <div id="logoHistoryRow" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;"></div>
+          <a href="#" id="clearLogoHistoryLink" style="display:inline-block; font-size:10px; color:var(--text-muted); margin-top:4px; text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Clear Logo History</a>
           <label class="chk" style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); margin-top:10px; font-weight:400;">
             <input type="checkbox" id="colorizeAllChk" /> Colorize Logo
           </label>
-          <input type="color" id="colorizeAllColor" value="#D85A30" disabled style="width:100%; height:26px; padding:0; border:0.5px solid var(--border); border-radius:var(--radius); cursor:pointer; margin-top:6px; opacity:0.4;" title="Colorize color" />
+          <input type="color" id="colorizeAllColor" value="#1a1a1a" disabled style="width:100%; height:26px; padding:0; border:0.5px solid var(--border); border-radius:var(--radius); cursor:pointer; margin-top:6px; opacity:0.4;" title="Colorize color" />
         </div>
         <div class="field" id="patternField" style="max-width:340px;">
           <label>Pattern</label>
           <div id="patternSwatches" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
             <button type="button" class="pattern-swatch" data-pattern="" style="width:36px;height:36px;border-radius:6px;background:var(--surface-1);border:2px solid var(--accent);cursor:pointer;padding:0;font-size:9px;color:var(--text-muted);">None</button>
-            <button type="button" class="pattern-swatch" id="patternSolidBtn" style="width:36px;height:36px;border-radius:6px;background:#D85A30;border:2px solid transparent;cursor:pointer;padding:0;font-size:7.5px;line-height:1.15;color:#fff;font-weight:600;">Solid<br>Fill</button>
-            <input type="color" id="patternSolidColorInput" value="#D85A30" style="width:36px;height:36px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Solid Fill Color" />
+            <button type="button" class="pattern-swatch" id="patternSolidBtn" style="width:36px;height:36px;border-radius:6px;background:#1a1a1a;border:2px solid transparent;cursor:pointer;padding:0;font-size:7.5px;line-height:1.15;color:#fff;font-weight:600;">Solid<br>Fill</button>
+            <input type="color" id="patternSolidColorInput" value="#1a1a1a" style="width:36px;height:36px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Solid Fill Color" />
           </div>
           <input type="file" id="customPatternInput" accept="image/*" style="display:none;" />
           <button type="button" class="secondary" id="patternChooseBtn" style="width:100%; height:28px; font-size:11px; margin-top:6px;">Choose File</button>
@@ -402,6 +403,7 @@
             <button type="button" class="tiny-remove" id="removePatternBtn" title="Remove Pattern">✕</button>
           </div>
           <div id="patternHistoryRow" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;"></div>
+          <a href="#" id="clearPatternHistoryLink" style="display:inline-block; font-size:10px; color:var(--text-muted); margin-top:4px; text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Clear Pattern History</a>
           <div style="margin-top:8px;">
             <label style="font-size:11px; color:var(--text-secondary);">Pattern Scale: <span id="patternScaleLabel">100%</span></label>
             <input type="range" id="patternScale" min="20" max="200" value="100" step="5" style="width:100%; margin-top:2px;" />
@@ -4459,6 +4461,8 @@ function renderLogoHistory() {
     addToLogoHistory(entry.dataUrl, entry.name);
     renderGrid(applySort(currentResults));
   }));
+  const clearLink = document.getElementById('clearLogoHistoryLink');
+  if (clearLink) clearLink.style.display = logoHistory.length ? 'inline-block' : 'none';
 }
 let selected = new Set();
 let lastBuiltDeck = [];
@@ -4477,7 +4481,7 @@ let logoStrokeMode = 'none';
 // colorize override (the per-card color swatch) still wins over this for any one area a rep wants
 // to leave as an exception.
 let colorizeAll = false;
-let colorizeAllColor = '#D85A30';
+let colorizeAllColor = '#1a1a1a';
 // Fixed, no UI control (removed -- adjusting these live wasn't worth a full-grid repaint every
 // drag tick). 50 (not 0) puts a tile's own CENTER at the region's center, instead of a tile
 // BOUNDARY there -- hides a pattern's baked-in edge margin at the region's own edges instead of
@@ -4596,8 +4600,23 @@ function renderPatternHistory() {
     addToPatternHistory(entry.dataUrl, entry.name);
     renderGrid(applySort(currentResults));
   }));
+  const clearLink = document.getElementById('clearPatternHistoryLink');
+  if (clearLink) clearLink.style.display = patternHistory.length ? 'inline-block' : 'none';
 }
 renderPatternHistory();
+
+document.getElementById('clearLogoHistoryLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  logoHistory = [];
+  saveLogoHistory();
+  renderLogoHistory();
+});
+document.getElementById('clearPatternHistoryLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  patternHistory = [];
+  savePatternHistory();
+  renderPatternHistory();
+});
 
 function renderPatternSwatches() {
   const wrap = document.getElementById('patternSwatches');
@@ -5103,17 +5122,38 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('sortSelect').value = 'price-asc';
   selected.clear();
 
-  // Between-client cleanliness: a rep resetting the tool is very likely moving on to a different
-  // client's deck, so the previous client's logo (and its thumbnail sitting in history) shouldn't
-  // still be there staring back at them -- clears the active logo and the personal upload history,
-  // but leaves the shared/pinned logo library (LOGO_LIBRARY) alone since that's admin content, not
-  // "previously used" in this sense.
+  // Clears the ACTIVE logo (not the upload history -- that's left alone deliberately; a rep might
+  // Start Over mid-session and still want yesterday's logos one click away. History has its own
+  // explicit "Clear Logo History" / "Clear Pattern History" links for when it's actually wanted).
   logoDataUrl = null;
   document.getElementById('logoInput').value = '';
   document.getElementById('logoFileName').textContent = 'No File Chosen';
-  logoHistory = [];
-  saveLogoHistory();
-  renderLogoHistory();
+
+  // Same "reset the active choice, not the history" treatment for every other branding option a
+  // rep might have set for the previous client -- the active pattern, the knockout/stroke/colorize
+  // toggles, pattern scale, background color, and any per-region/per-product tweaks (rotate, hide,
+  // colorize, laser/full-color material override).
+  document.getElementById('removePatternBtn').click();
+
+  patternKnockout = true;
+  patternKnockoutChk.checked = true;
+  logoStrokeMode = 'none';
+  strokeWhiteChk.checked = false;
+  strokeBlackChk.checked = false;
+
+  colorizeAll = false;
+  document.getElementById('colorizeAllChk').checked = false;
+  colorizeAllColorInput.disabled = true;
+  colorizeAllColorInput.style.opacity = '0.4';
+
+  patternScale = 100;
+  document.getElementById('patternScale').value = 100;
+  document.getElementById('patternScaleLabel').textContent = '100%';
+
+  setBackdrop('#E8E6DE');
+
+  regionOverrides = {};
+  materialFullColorOverride = {};
 
   updateDeckBar();
   applyFilters();
