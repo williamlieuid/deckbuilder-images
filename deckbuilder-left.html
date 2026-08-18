@@ -5548,15 +5548,12 @@ function getColorizedLogoSource(logoImg, hexColor) {
 function getKnockoutLogoSource(logoImg) {
   return getColorizedLogoSource(logoImg, '#ffffff');
 }
-// Black leather's laser-etched look: a solid knockout of the logo shape, same mechanism as the
-// white pattern-knockout above just with the color swapped -- there was previously no black-
+// Black leather's laser-etched look: a solid black knockout of the logo shape, same mechanism as
+// the white pattern-knockout above just with the color swapped -- there was previously no black-
 // leather-specific treatment at all in drawBrandedCard, so this is the first time this material
-// actually renders differently from a normal full-color logo. Uses a light grey rather than pure
-// black -- a real laser etch on black leather burns a lighter mark into the surface, so black-on-
-// black would actually read as invisible instead of etched.
-const BLACK_ETCH_COLOR = '#999999';
+// actually renders differently from a normal full-color logo.
 function getBlackKnockoutLogoSource(logoImg) {
-  return getColorizedLogoSource(logoImg, BLACK_ETCH_COLOR);
+  return getColorizedLogoSource(logoImg, '#000000');
 }
 
 const WOOD_ENGRAVE_COLOR = '#786957';
