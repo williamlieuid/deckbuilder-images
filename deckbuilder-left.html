@@ -388,18 +388,15 @@
         </div>
         <div class="field" style="flex:1; min-width:200px; position:relative;">
           <label>Search (Name, Tags, Keywords, SKU)</label>
-          <div style="display:flex; gap:12px;">
-            <input type="text" id="fSearch" placeholder="e.g. eco-friendly, tech, 4231" autocomplete="off" style="flex:1; min-width:0;" />
-            <button type="button" class="secondary" id="resetBtn" title="Clear all filters, the uploaded logo, and pattern to start fresh" style="flex:0 0 auto; padding:0 14px;">Start Over</button>
-          </div>
+          <input type="text" id="fSearch" placeholder="e.g. eco-friendly, tech, 4231" autocomplete="off" style="width:100%;" />
           <div id="searchSuggestions" class="suggestions-panel" style="display:none;"></div>
         </div>
       </div>
       <div id="advancedOptions" style="margin-bottom:14px; border:0.5px solid var(--border); border-radius:var(--radius); padding:0;">
-        <div style="padding:8px 10px; font-size:13px; font-weight:500; color:var(--text-primary); border-bottom:0.5px solid var(--border);">Pricing, Currency &amp; Branding Options</div>
+        <div style="padding:8px 10px; font-size:13px; font-weight:500; color:var(--text-primary); border-bottom:0.5px solid var(--border);">Pricing &amp; Branding Options</div>
         <div style="padding:0 10px 10px;">
       <div class="field-row">
-        <div class="field" style="max-width:220px; display:flex; gap:10px;">
+        <div class="field" style="max-width:220px; display:flex; gap:28px;">
           <div style="flex:1; min-width:0;">
             <label>Add Pricing</label>
             <div class="radio-group">
@@ -428,8 +425,8 @@
             <button type="button" id="removeLogoBtn" title="Remove Logo">✕</button>
           </div>
           <a href="#" id="clearLogoHistoryLink" style="display:inline-block; font-size:10px; color:var(--text-muted); margin-top:3px; text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Clear Logo History</a>
-          <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
-            <label class="chk" style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-secondary); font-weight:400; flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:6px; margin-top:5px;">
+            <label class="chk" style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-secondary); font-weight:400;">
               <input type="checkbox" id="colorizeAllChk" /> Colorize Logo
             </label>
             <input type="color" id="colorizeAllColor" value="#1a1a1a" disabled style="width:22px; height:22px; padding:0; border:0.5px solid var(--border); border-radius:6px; cursor:pointer; opacity:0.4; flex-shrink:0;" title="Colorize color" />
@@ -451,14 +448,14 @@
           </div>
           <div id="patternHistoryRow" style="display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;"></div>
           <a href="#" id="clearPatternHistoryLink" style="display:inline-block; font-size:10px; color:var(--text-muted); margin-top:3px; text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Clear Pattern History</a>
-          <label class="chk" style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-secondary); font-weight:400; margin-top:5px;">
-            <input type="checkbox" id="patternKnockoutChk" checked /> Knockout Logo
-          </label>
-          <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-            <label class="chk" style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-secondary); font-weight:400; flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:10px; margin-top:5px; flex-wrap:wrap;">
+            <label class="chk" style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-secondary); font-weight:400;">
+              <input type="checkbox" id="patternKnockoutChk" checked /> Knockout Logo
+            </label>
+            <label class="chk" style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-secondary); font-weight:400;">
               <input type="checkbox" id="strokeChk" /> Stroke
             </label>
-            <input type="color" id="strokeColorInput" value="#ffffff" disabled style="width:22px; height:22px; padding:0; border:0.5px solid var(--border); border-radius:6px; cursor:pointer; opacity:0.4; flex-shrink:0;" title="Stroke color" />
+            <input type="color" id="strokeColorInput" value="#ffffff" disabled style="width:20px; height:20px; padding:0; border:0.5px solid var(--border); border-radius:6px; cursor:pointer; opacity:0.4; flex-shrink:0;" title="Stroke color" />
           </div>
         </div>
         <div style="flex-basis:100%; width:100%; border-top:0.5px solid var(--border); margin:4px 0;"></div>
@@ -466,16 +463,10 @@
           <label>Background Color</label>
           <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
             <button type="button" class="bg-swatch" data-color="#1A1A1A" style="width:26px;height:26px;border-radius:6px;background:#333232;border:2px solid transparent;cursor:pointer;padding:0;" title="Charcoal Black"></button>
-            <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;" title="Soft White"></button>
+            <button type="button" class="bg-swatch" data-color="#6B6660" style="width:26px;height:26px;border-radius:6px;background:#6B6660;border:2px solid transparent;cursor:pointer;padding:0;" title="Warm Graphite"></button>
+            <button type="button" class="bg-swatch" data-color="#A39B8E" style="width:26px;height:26px;border-radius:6px;background:#A39B8E;border:2px solid transparent;cursor:pointer;padding:0;" title="Stone"></button>
             <button type="button" class="bg-swatch" data-color="#E8E6DE" style="width:26px;height:26px;border-radius:6px;background:#E8E6DE;border:2px solid var(--accent);cursor:pointer;padding:0;" title="Warm Sand"></button>
-            <button type="button" class="bg-swatch" data-color="#D85A30" style="width:26px;height:26px;border-radius:6px;background:#D85A30;border:2px solid transparent;cursor:pointer;padding:0;" title="Burnt Orange"></button>
-            <button type="button" class="bg-swatch" data-color="#E0B03C" style="width:26px;height:26px;border-radius:6px;background:#E0B03C;border:2px solid transparent;cursor:pointer;padding:0;" title="Golden Mustard"></button>
-            <button type="button" class="bg-swatch" data-color="#4C9A6B" style="width:26px;height:26px;border-radius:6px;background:#4C9A6B;border:2px solid transparent;cursor:pointer;padding:0;" title="Sage Green"></button>
-            <button type="button" class="bg-swatch" data-color="#2F6F6A" style="width:26px;height:26px;border-radius:6px;background:#2F6F6A;border:2px solid transparent;cursor:pointer;padding:0;" title="Deep Teal"></button>
-            <button type="button" class="bg-swatch" data-color="#3E5DC7" style="width:26px;height:26px;border-radius:6px;background:#3E5DC7;border:2px solid transparent;cursor:pointer;padding:0;" title="Cobalt Blue"></button>
-            <button type="button" class="bg-swatch" data-color="#6D4FC4" style="width:26px;height:26px;border-radius:6px;background:#6D4FC4;border:2px solid transparent;cursor:pointer;padding:0;" title="Ultraviolet"></button>
-            <button type="button" class="bg-swatch" data-color="#C15A9E" style="width:26px;height:26px;border-radius:6px;background:#C15A9E;border:2px solid transparent;cursor:pointer;padding:0;" title="Magenta Orchid"></button>
-            <button type="button" class="bg-swatch" data-color="#D9455F" style="width:26px;height:26px;border-radius:6px;background:#D9455F;border:2px solid transparent;cursor:pointer;padding:0;" title="Coral Red"></button>
+            <button type="button" class="bg-swatch" data-color="#F7F7F5" style="width:26px;height:26px;border-radius:6px;background:#F7F7F5;border:2px solid transparent;cursor:pointer;padding:0;" title="Soft White"></button>
             <button type="button" class="bg-swatch" id="transparentBgSwatch" data-color="transparent" style="width:26px;height:26px;border-radius:6px;background-image:repeating-conic-gradient(#bbb 0% 25%, #eee 0% 50%);background-size:8px 8px;border:2px solid transparent;cursor:pointer;padding:0;" title="Transparent — downloads save as a transparent PNG"></button>
             <input type="color" id="customBgColor" value="#E8E6DE" style="width:26px;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;" title="Custom Color" />
           </div>
@@ -483,6 +474,7 @@
       </div>
         </div>
       </div>
+      <button type="button" class="secondary" id="resetBtn" title="Clear all filters, the uploaded logo, and pattern to start fresh" style="width:100%; margin-top:10px;">Reset</button>
     </div>
     </div><!-- /sidebar -->
     <div class="main">
