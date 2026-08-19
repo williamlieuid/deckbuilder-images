@@ -4780,7 +4780,7 @@ function updateCatDropdownLabel() {
   else catDropdownLabel.textContent = sel.length + ' categories selected';
 }
 
-catBox.addEventListener('change', () => { updateCatDropdownLabel(); applyFilters(); });
+catBox.addEventListener('change', () => { updateCatDropdownLabel(); applyFilters(); logCategoryFilterIfSet(); });
 
 catDropdownBtn.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -4825,7 +4825,7 @@ function updateSearchSuggestions() {
   suggestionsPanel.style.display = 'flex';
 }
 
-searchInput.addEventListener('input', () => { updateSearchSuggestions(); debouncedApplyFilters(); });
+searchInput.addEventListener('input', () => { updateSearchSuggestions(); debouncedApplyFilters(); logSearchIfTyped(); });
 searchInput.addEventListener('focus', updateSearchSuggestions);
 searchInput.addEventListener('blur', () => setTimeout(() => { suggestionsPanel.style.display = 'none'; }, 150));
 
@@ -5137,6 +5137,26 @@ const logBudgetSearchIfSet = debounce(() => {
   const hi = maxField().value !== '' ? parseFloat(maxField().value) : null;
   if ((lo !== null && lo > 0) || hi !== null) {
     logAnalyticsEvents([{ eventType: 'budgetSearched', value: currency(), extra: JSON.stringify({ min: lo, max: hi }) }]);
+  }
+}, 600);
+
+// Same debounce-on-idle pattern as logBudgetSearchIfSet above. 600ms is longer than
+// debouncedApplyFilters' 250ms specifically so currentResults has already been refreshed by the
+// time this reads it -- gives an accurate resultCount instead of a stale one from the previous
+// keystroke.
+const logSearchIfTyped = debounce(() => {
+  const q = document.getElementById('fSearch').value.trim();
+  if (q) {
+    logAnalyticsEvents([{ eventType: 'searchPerformed', value: q, extra: JSON.stringify({ resultCount: currentResults.length }) }]);
+  }
+}, 600);
+
+// Category-filter analytics, same opt-in-on-idle shape as the two above -- fires once per settled
+// selection, not per checkbox click.
+const logCategoryFilterIfSet = debounce(() => {
+  const cats = getSelectedCategories();
+  if (cats.length) {
+    logAnalyticsEvents([{ eventType: 'categoryFiltered', value: cats.join('|') }]);
   }
 }, 600);
 
