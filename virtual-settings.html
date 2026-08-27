@@ -157,12 +157,6 @@
 
   <div class="fieldRow">
     <div class="field">
-      <label>Subtitle <span style="color:#D8433B;">*</span></label>
-      <input type="text" id="productTaglineInput" placeholder="e.g. Carpenter Infinity Pencil (white)" />
-    </div>
-  </div>
-  <div class="fieldRow">
-    <div class="field">
       <label>Category</label>
       <div id="topCategoryCheckboxes" class="empty-note">Loading existing categories…</div>
       <div style="display:flex; gap:6px; margin-top:6px;">
@@ -182,10 +176,6 @@
       <label>Search Tags (comma-separated)</label>
       <input type="text" data-header="Tags (comma-separated)" placeholder="eco-friendly, tech, onboarding" />
     </div>
-  </div>
-  <div class="field">
-    <label>Description <span id="descWordCount" style="font-weight:400; color:var(--text-muted);">0 / 50 words</span></label>
-    <textarea id="descTextarea" data-header="Description" placeholder="What it is, what makes it worth recommending…" autocomplete="off"></textarea>
   </div>
   <div class="stickyActionsBar">
   <div class="modalActions">
@@ -525,22 +515,6 @@ canvas.addEventListener('mousemove', (e) => {
   renderCurrent();
 });
 window.addEventListener('mouseup', () => { dragHandle = null; });
-
-// ---------- Description word counter ----------
-(function() {
-  const ta = document.getElementById('descTextarea');
-  const counter = document.getElementById('descWordCount');
-  const LIMIT = 50;
-  function countWords(s) { return s.trim() === '' ? 0 : s.trim().split(/\s+/).length; }
-  function updateCounter() {
-    const count = countWords(ta.value);
-    counter.textContent = count + ' / ' + LIMIT + ' words';
-    counter.style.color = count > LIMIT ? '#c0392b' : 'var(--text-muted)';
-    ta.style.borderColor = count > LIMIT ? '#c0392b' : '';
-  }
-  ta.value = ''; // clear any browser-restored value on load
-  ta.addEventListener('input', updateCounter);
-})();
 
 // ---------- SKU ----------
 // Every real product number in this catalog is a plain 4-digit number -- stripping anything else
@@ -893,12 +867,9 @@ document.getElementById('clearProductChk').addEventListener('change', (e) => {
 // "Portable Charge with Flip-up Connector") -- these two fields are kept apart in the form for
 // clarity, then joined into that exact "Name: Tagline" shape the sheet column expects.
 function syncProductNameField() {
-  const name = document.getElementById('productNameInput').value.trim();
-  const tagline = document.getElementById('productTaglineInput').value.trim();
-  productMeta.fields['Product Name'] = tagline ? (name + ': ' + tagline) : name;
+  productMeta.fields['Product Name'] = document.getElementById('productNameInput').value.trim();
 }
 document.getElementById('productNameInput').addEventListener('input', () => { syncProductNameField(); updateFileNamePreviews(); });
-document.getElementById('productTaglineInput').addEventListener('input', syncProductNameField);
 document.getElementById('productColorInput').addEventListener('input', updateFileNamePreviews);
 
 function setSubmitStatus(msg, kind) {
@@ -1325,7 +1296,6 @@ function resetForm() {
   document.getElementById('photoStatus').textContent = 'No file chosen';
   document.getElementById('maskStatus').textContent = 'No file chosen';
   document.getElementById('productNameInput').value = '';
-  document.getElementById('productTaglineInput').value = '';
   document.getElementById('productColorInput').value = '';
   document.getElementById('skuCollisionWarning').style.display = 'none';
   document.getElementById('maskSizeWarning').style.display = 'none';
@@ -1352,7 +1322,6 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
   if (!sku) { updateSkuInputValidity(); setSubmitStatus('Please enter a product number.', 'error'); return; }
   if (sku.length < 4) { setSubmitStatus('Product number should be 4 digits.', 'error'); return; }
   if (!productName) { setSubmitStatus('Please enter a product name.', 'error'); return; }
-  if (!document.getElementById('productTaglineInput').value.trim()) { setSubmitStatus('Please enter a subtitle.', 'error'); return; }
   if (!currentImage) { setSubmitStatus('Please choose a blank product image first.', 'error'); return; }
   // A mask file is the only way this simplified tool can define NEW logo placement, so it's
   // required when adding a virtual. Editing an existing one is different: a virtual whose branding
@@ -1566,9 +1535,7 @@ async function loadProductForEdit(sku) {
 
     document.getElementById('skuInput').value = sanitizeSkuValue(p.sku);
     updateSkuInputValidity();
-    const nameParts = String(p.name || '').split(':');
-    document.getElementById('productNameInput').value = nameParts[0].trim();
-    document.getElementById('productTaglineInput').value = nameParts.slice(1).join(':').trim();
+    document.getElementById('productNameInput').value = String(p.name || '').trim();
     syncProductNameField();
 
     const catParts = String(p.category || '').split('|').map(s => s.trim()).filter(Boolean);
@@ -1577,10 +1544,6 @@ async function loadProductForEdit(sku) {
     const tagsInput = document.querySelector('[data-header="Tags (comma-separated)"]');
     tagsInput.value = (p.tags || []).join(', ');
     productMeta.fields['Tags (comma-separated)'] = tagsInput.value;
-
-    document.getElementById('descTextarea').value = p.description || '';
-    productMeta.fields['Description'] = p.description || '';
-    document.getElementById('descTextarea').dispatchEvent(new Event('input'));
 
     document.getElementById('blackProductChk').checked = !!p.blackProduct;
     document.getElementById('woodProductChk').checked = !!p.woodProduct;
