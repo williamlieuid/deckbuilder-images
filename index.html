@@ -533,6 +533,10 @@
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
+<!-- Generates the real "Export as PDF" file client-side (see downloadDeckAsPdf) so the deck
+     downloads as an actual .pdf with no browser print dialog, no print header/footer, and no
+     manual "remove headers and footers" step for the rep. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // Bundled fallback snapshot — used until/unless SHEET_API_URL below loads live data successfully.
 let PRODUCTS = [
@@ -6520,8 +6524,12 @@ function imageBlock(p, includeControls = true) {
     ${isPatternScaleAdjustable ? patternScaleControlHtml(p) : ''}` : ''}`;
   }
 
+  // crossorigin="anonymous" only for remote URLs (a local/relative path must not get it, or
+  // Chrome rejects the load as unsafe -- same rule as the other remote-image loads in this file)
+  // so canvas exports (JPG/PDF) of an unbranded card's plain photo don't taint the export canvas.
+  const crossOriginAttr = /^https?:\/\//i.test(baseImg) ? ' crossorigin="anonymous"' : '';
   return `<div class="imgwrap">
-    <img class="base" src="${baseImg}" />
+    <img class="base" src="${baseImg}"${crossOriginAttr} />
   </div>
   ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">Download Image</button>` : ''}`;
 }
@@ -6605,12 +6613,11 @@ function triggerDownload(dataUrl, filename) {
   document.body.removeChild(a);
 }
 
-// Filename-safe, sortable local timestamp -- e.g. "2026-08-07_1432" -- so repeated exports/
-// downloads don't silently overwrite each other and stay in a sensible order in Downloads.
-function fileTimestamp() {
-  const d = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+// Short random filename suffix (no date/time in it) so repeated exports/downloads don't
+// silently overwrite each other or trigger a browser "replace file?" prompt.
+function uniqueFileSuffix() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID().slice(0, 6);
+  return Math.random().toString(36).slice(2, 8);
 }
 
 function loadCrossOriginImage(url) {
@@ -6644,7 +6651,7 @@ async function exportProductImage(sku) {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + '.jpg');
+      triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + uniqueFileSuffix() + '.jpg');
     } catch (err) {
       alert('This image can\'t be exported directly due to the source site\'s cross-origin security settings. Opening the original image in a new tab instead — right-click (or long-press) it there to save it manually.');
       window.open(baseUrl, '_blank');
@@ -6680,7 +6687,7 @@ async function exportProductImage(sku) {
     drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, isTransparent ? 'transparent' : '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct, !!p.blackProduct, fullColorOverride);
     const dataUrl = isTransparent ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92);
     const ext = isTransparent ? '.png' : '.jpg';
-    triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + fileTimestamp() + ext);
+    triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + uniqueFileSuffix() + ext);
   } catch (err) {
     alert('This image can\'t be exported directly due to the source site\'s cross-origin security settings. Opening the original image in a new tab instead — right-click (or long-press) it there to save it manually.');
     window.open(baseUrl, '_blank');
@@ -6852,9 +6859,9 @@ function updateDeckBar() {
 // Builds the deck pages -- shared by all three deck-bar actions (View Deck, Export as Images,
 // Export as PDF) so there's one code path regardless of which one a rep clicks first; the
 // export-specific buttons just chain their own action on right after this. `navigate` controls
-// whether it also switches the screen into deck view: View Deck and Export as PDF need the deck
-// actually visible (PDF prints whatever's on screen via window.print()), but a JPG download reads
-// pixel data straight out of the (already-painted) canvases regardless of what's on screen, so
+// whether it also switches the screen into deck view: View Deck and Export as PDF leave the rep
+// looking at the built deck afterward, but a JPG download reads pixel data straight out of the
+// (already-painted) canvases regardless of what's on screen, so
 // Export as Images passes navigate=false to build/paint everything invisibly and leave the rep
 // looking at the results grid the whole time -- no page switch for a plain download.
 async function buildDeckPages(navigate = true) {
@@ -6916,7 +6923,7 @@ async function buildDeckPages(navigate = true) {
 
 document.getElementById('viewDeckBtn').addEventListener('click', () => buildDeckPages());
 document.getElementById('exportImagesBarBtn').addEventListener('click', async () => { await buildDeckPages(false); downloadDeckAsJpg(); });
-document.getElementById('exportPdfBarBtn').addEventListener('click', async () => { await buildDeckPages(); window.print(); });
+document.getElementById('exportPdfBarBtn').addEventListener('click', async () => { await buildDeckPages(); await downloadDeckAsPdf(); });
 
 document.getElementById('backToEditBtn').addEventListener('click', () => {
   document.querySelectorAll('.wrap > .no-print').forEach(el => el.style.display = '');
@@ -6925,7 +6932,7 @@ document.getElementById('backToEditBtn').addEventListener('click', () => {
   updateDeckBar();
 });
 
-document.getElementById('downloadBtn').addEventListener('click', () => window.print());
+document.getElementById('downloadBtn').addEventListener('click', () => downloadDeckAsPdf());
 
 // Canvas can't be captured via SVG foreignObject/XMLSerializer, so each deck page is
 // manually re-composited onto a fresh canvas (images via drawImage, text via fillText
@@ -6948,10 +6955,11 @@ function wrapCanvasText(ctx, text, maxWidth, maxLines) {
   return lines.slice(0, maxLines);
 }
 
-async function downloadDeckAsJpg() {
-  const pages = document.querySelectorAll('#pagesContainer .deck-page');
-  if (!pages.length) { alert('Build a deck first.'); return; }
-  const scale = 2;
+// Shared by JPG export and PDF export so there's one rendering path for a deck page's pixels.
+// Canvas can't be captured via SVG foreignObject/XMLSerializer, so each deck page is manually
+// re-composited onto a fresh canvas (images via drawImage, text via fillText with manual
+// word-wrap) rather than serializing the live DOM -- see the comment above wrapCanvasText.
+function renderDeckPageCanvas(pageEl, scale) {
   const pxPerIn = 96 * scale;
   const pageW = 14 * pxPerIn, pageH = 8.5 * pxPerIn;
   const marginX = 0.6 * pxPerIn, marginY = 0.5 * pxPerIn;
@@ -6961,8 +6969,7 @@ async function downloadDeckAsJpg() {
   const sans = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
   const backdrop = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim() || '#E8E6DE';
 
-  for (let pi = 0; pi < pages.length; pi++) {
-    const pageEl = pages[pi];
+  {
     const canvas = document.createElement('canvas');
     canvas.width = pageW; canvas.height = pageH;
     const ctx = canvas.getContext('2d');
@@ -7102,14 +7109,46 @@ async function downloadDeckAsJpg() {
       }
     });
 
+    return canvas;
+  }
+}
+
+async function downloadDeckAsJpg() {
+  const pages = document.querySelectorAll('#pagesContainer .deck-page');
+  if (!pages.length) { alert('Build a deck first.'); return; }
+  const namePart = deckName ? '-' + slugify(deckName) + '-deck' : '-deck';
+  const suffix = uniqueFileSuffix();
+  for (let pi = 0; pi < pages.length; pi++) {
+    const canvas = renderDeckPageCanvas(pages[pi], 2);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     const pageSuffix = pages.length > 1 ? '-page' + (pi + 1) : '';
-    const namePart = deckName ? '-' + slugify(deckName) : '-deck';
-    triggerDownload(dataUrl, 'deckbuilder' + namePart + pageSuffix + '-' + fileTimestamp() + '.jpg');
+    triggerDownload(dataUrl, 'deckbuilder' + namePart + pageSuffix + '-' + suffix + '.jpg');
   }
 }
 
 document.getElementById('downloadJpgBtn').addEventListener('click', () => downloadDeckAsJpg());
+
+// Real client-generated PDF (jsPDF), replacing window.print(). This means: no browser print
+// dialog, no print header/footer (date/title/URL/page-number) for the rep to remember to turn
+// off, and a native browser "Save As" download (or straight-to-Downloads, depending on the
+// user's own browser download setting) instead of the OS print-to-PDF flow. Reuses the same
+// per-page canvas renderer as the JPG export so the two stay visually identical.
+async function downloadDeckAsPdf() {
+  const pages = document.querySelectorAll('#pagesContainer .deck-page');
+  if (!pages.length) { alert('Build a deck first.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'in', format: [14, 8.5] });
+  for (let pi = 0; pi < pages.length; pi++) {
+    const canvas = renderDeckPageCanvas(pages[pi], 2);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    if (pi > 0) doc.addPage([14, 8.5], 'landscape');
+    doc.addImage(dataUrl, 'JPEG', 0, 0, 14, 8.5);
+  }
+  // uniqueFileSuffix() makes each export's filename unique so repeated exports never collide
+  // and trigger a browser "replace file?" prompt.
+  const namePart = deckName ? '-' + slugify(deckName) + '-deck' : '-deck';
+  doc.save('deckbuilder' + namePart + '-' + uniqueFileSuffix() + '.pdf');
+}
 
 // --- Live product data (optional) ---
 // Two sources, tried in order, each falling further back if the one before it fails:
