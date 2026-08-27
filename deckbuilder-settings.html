@@ -205,6 +205,19 @@
     </div>
   </div>
 
+  <div class="field">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+      <label>Pricing</label>
+      <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">Price Code
+        <!-- Discount-code letter shown beside the quantity on the card (e.g. "100 units C") --
+             lets the distributor work out their own cost from the end-user price. Most products
+             are C; see the "Addon/Setup Price Code" field below for the addon/setup equivalent.
+             One free-text letter per product, not per tier -- same code applies to every tier. -->
+        <input type="text" maxlength="3" style="width:44px; text-transform:uppercase;" data-header="Price Code" data-default="C" />
+      </label>
+    </div>
+  </div>
+
   <div class="tierGrid">
     <div class="tierCol">
       <h4>Tier 1</h4>
@@ -230,7 +243,14 @@
   </div>
 
   <div class="field">
-    <label>Add-ons (optional)</label>
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+      <label>Add-ons (optional)</label>
+      <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">Addon/Setup Price Code
+        <!-- Same discount-code idea as "Price Code" above, but for the Setup Fee and every
+             add-on price on the card (e.g. "+$5/unit G") -- most Setups and Services are G. -->
+        <input type="text" maxlength="3" style="width:44px; text-transform:uppercase;" data-header="Addon Price Code" data-default="G" />
+      </label>
+    </div>
     <div id="addonCheckboxes" class="empty-note">Loading existing add-ons…</div>
     <div style="display:flex; gap:6px; margin-top:6px;">
       <input type="text" id="newAddonNameInput" placeholder="Add-on name…" style="flex:2;" />
@@ -1853,6 +1873,10 @@ async function loadProductForEdit(sku) {
     productMeta.fields['Lead Time (days)'] = p.leadTime || '';
     document.querySelector('[data-header="Setup Fee (USD)"]').value = p.setupFee || '';
     productMeta.fields['Setup Fee (USD)'] = p.setupFee || '';
+    document.querySelector('[data-header="Price Code"]').value = p.priceCode || '';
+    productMeta.fields['Price Code'] = p.priceCode || '';
+    document.querySelector('[data-header="Addon Price Code"]').value = p.addonPriceCode || '';
+    productMeta.fields['Addon Price Code'] = p.addonPriceCode || '';
 
     for (let n = 1; n <= 3; n++) {
       const t = (p.tiers || [])[n - 1];
