@@ -5264,8 +5264,8 @@ function priceBox(p) {
   const last = p.tiers.length - 1;
   const cells = p.tiers.map((t, i) => `
     <td style="text-align:${i===0?'left':i===last?'right':'center'};">
-      <p class="qty">${t.qty} units</p>
-      <p class="pr">${fmtPrice(currency() === 'CAD' ? t.priceCAD : t.priceUS)}${priceCodeHtml}</p>
+      <p class="qty">${t.qty} units${priceCodeHtml}</p>
+      <p class="pr">${fmtPrice(currency() === 'CAD' ? t.priceCAD : t.priceUS)}</p>
     </td>`).join('');
   return `
     <table class="price-table"><tr>${cells}</tr></table>
