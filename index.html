@@ -6859,11 +6859,10 @@ function updateDeckBar() {
 // Builds the deck pages -- shared by all three deck-bar actions (View Deck, Export as Images,
 // Export as PDF) so there's one code path regardless of which one a rep clicks first; the
 // export-specific buttons just chain their own action on right after this. `navigate` controls
-// whether it also switches the screen into deck view: View Deck and Export as PDF leave the rep
-// looking at the built deck afterward, but a JPG download reads pixel data straight out of the
-// (already-painted) canvases regardless of what's on screen, so
-// Export as Images passes navigate=false to build/paint everything invisibly and leave the rep
-// looking at the results grid the whole time -- no page switch for a plain download.
+// whether it also switches the screen into deck view: only View Deck does, since both export
+// buttons trigger their own download/save dialog directly and read pixel data straight out of
+// the (already-painted) canvases regardless of what's on screen -- navigate=false builds/paints
+// everything invisibly and leaves the rep looking at the results grid the whole time.
 async function buildDeckPages(navigate = true) {
   const chosen = applySort(PRODUCTS.filter(p => selected.has(p.sku)));
   lastBuiltDeck = chosen;
@@ -6876,7 +6875,6 @@ async function buildDeckPages(navigate = true) {
   }
 
   const pageContainer = document.getElementById('pagesContainer');
-  const dateStr = new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
 
   // chunk into groups of 3 (Legal landscape), one .deck-page per group
   const chunks = [];
@@ -6886,7 +6884,6 @@ async function buildDeckPages(navigate = true) {
     <div class="deck-page">
       <div class="deck-header">
         <h2>${deckName ? deckName.replace(/</g, '&lt;') : 'Product Recommendations'}</h2>
-        <p>${dateStr}</p>
       </div>
       <div class="deck-grid">
         ${chunk.map(p => `
@@ -6923,7 +6920,7 @@ async function buildDeckPages(navigate = true) {
 
 document.getElementById('viewDeckBtn').addEventListener('click', () => buildDeckPages());
 document.getElementById('exportImagesBarBtn').addEventListener('click', async () => { await buildDeckPages(false); downloadDeckAsJpg(); });
-document.getElementById('exportPdfBarBtn').addEventListener('click', async () => { await buildDeckPages(); await downloadDeckAsPdf(); });
+document.getElementById('exportPdfBarBtn').addEventListener('click', async () => { await buildDeckPages(false); await downloadDeckAsPdf(); });
 
 document.getElementById('backToEditBtn').addEventListener('click', () => {
   document.querySelectorAll('.wrap > .no-print').forEach(el => el.style.display = '');
@@ -6981,16 +6978,10 @@ function renderDeckPageCanvas(pageEl, scale) {
     let y = marginY;
 
     const titleText = pageEl.querySelector('.deck-header h2')?.textContent || '';
-    const dateText = pageEl.querySelector('.deck-header p')?.textContent || '';
     ctx.fillStyle = '#1a1a1a';
     ctx.font = '600 ' + (16 * scale) + 'px ' + sans;
     ctx.textAlign = 'left';
     ctx.fillText(titleText, x, y + 14 * scale);
-    ctx.fillStyle = '#5F5E5A';
-    ctx.font = (11 * scale) + 'px ' + sans;
-    ctx.textAlign = 'right';
-    ctx.fillText(dateText, x + contentW, y + 14 * scale);
-    ctx.textAlign = 'left';
 
     const headerBottom = y + 14 * scale + 10 * scale;
     ctx.strokeStyle = '#1a1a1a';
