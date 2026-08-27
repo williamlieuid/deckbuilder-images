@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Virtual Builder Settings by PWR+</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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" />
+<style>
+  :root {
+    --border: #E0DED5; --text-primary: #1a1a1a; --text-secondary: #5F5E5A; --text-muted: #918F86;
+    --surface-1: #F7F6F2; --accent: #EC2027; --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; margin: 0; color: var(--text-primary); background: #fff; }
+  .page { max-width: 620px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.hint { font-size: 12px; color: var(--text-secondary); margin: 0 0 20px; line-height: 1.5; }
+  button { font-family: inherit; cursor: pointer; }
+  button.primary { height: 34px; padding: 0 14px; border: none; border-radius: var(--radius); background: var(--accent); color: #fff; font-size: 12px; font-weight: 500; }
+  button.primary:hover { opacity: 0.9; }
+  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { height: 30px; padding: 0 10px; border: 0.5px solid #B4B2A9; border-radius: var(--radius); background: #fff; color: var(--text-primary); font-size: 12px; }
+  button.tiny { height: 24px; padding: 0 8px; font-size: 11px; border: 0.5px solid #B4B2A9; border-radius: 6px; background: #fff; }
+  .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); margin: 24px 0 8px; padding-top: 16px; border-top: 0.5px solid var(--border); }
+  .section-title:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+  .empty-note { font-size: 11px; color: var(--text-muted); }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; padding: 6px 8px; border: 0.5px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 44px; }
+  .fieldRow { display: flex; gap: 10px; }
+  .fieldRow .field { flex: 1; }
+  #topCategoryCheckboxes, #subCategoryCheckboxes { display: flex; flex-wrap: wrap; gap: 2px 14px; max-height: 110px; overflow-y: auto; border: 0.5px solid var(--border); border-radius: 6px; padding: 8px; }
+  label.chk { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; cursor: pointer; white-space: nowrap; }
+  .modalActions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 0.5px solid var(--border); }
+  #submitStatus { font-size: 11px; flex: 1; }
+  #submitStatus.error { color: #D8433B; }
+  #submitStatus.ok { color: #2E8B57; }
+  #canvasWrap { position: relative; border: 0.5px solid var(--border); background: repeating-conic-gradient(#a8a8a8 0% 25%, #c4c4c4 0% 50%) 50% / 20px 20px; margin: 10px 0; display: inline-block; }
+  canvas { display: block; cursor: crosshair; max-width: 100%; }
+  .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  .uploadRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .uploadRow .status { font-size: 11px; color: var(--text-muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #skuInput.invalid { border-color: #D8433B; }
+  .tabs { display: flex; gap: 24px; margin-bottom: 24px; border-bottom: 0.5px solid var(--border); }
+  .tabBtn { background: none; border: none; padding: 0 0 10px; font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabBtn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .suggestion-item { padding: 8px 10px; font-size: 12px; cursor: pointer; border-radius: 4px; }
+  .suggestion-item:hover, .suggestion-item.active { background: var(--surface-1); }
+  .suggestion-item .sfx-sku { color: var(--text-muted); font-size: 11px; margin-right: 6px; }
+  .page { display: none; }
+  #settingsLockScreen { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; padding: 20px; text-align: center; }
+  #settingsLockScreen .lockTitle { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  #settingsLockScreen .lockNote { font-size: 12px; color: var(--text-secondary); max-width: 260px; line-height: 1.5; }
+  #settingsLockScreen .lockRow { display: flex; gap: 8px; }
+  #settingsPasswordInput { width: 160px; height: 34px; padding: 0 10px; border: 0.5px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; }
+  #settingsUnlockBtn { height: 34px; }
+  #settingsPasswordError { font-size: 11px; color: #D8433B; min-height: 14px; }
+  .stickyActionsBar { position: sticky; bottom: 0; background: #fff; padding-bottom: 14px; z-index: 10; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: none; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; flex: 0 0 auto; }
+</style>
+</head>
+<body>
+
+<div id="settingsLockScreen">
+  <div class="lockTitle">Deck Builder Settings</div>
+  <div class="lockNote">This area is for admin use only — adding/editing products and patterns. Enter the password to continue.</div>
+  <div class="lockRow">
+    <input type="password" id="settingsPasswordInput" placeholder="Password" autocomplete="off" />
+    <button type="button" class="primary" id="settingsUnlockBtn">Unlock</button>
+  </div>
+  <div id="settingsPasswordError"></div>
+</div>
+
+<div class="page">
+
+  <div class="tabs">
+    <button type="button" class="tabBtn active" id="tabBtnProduct" data-tab="product">Add a Virtual</button>
+    <button type="button" class="tabBtn" id="tabBtnEdit" data-tab="edit">Edit a Virtual</button>
+    <button type="button" class="tabBtn" id="tabBtnPattern" data-tab="pattern">Add a Pattern</button>
+    <button type="button" class="tabBtn" id="tabBtnLogo" data-tab="logo">Add a Logo</button>
+    <button type="button" class="tabBtn" id="tabBtnAnalytics" data-tab="analytics">Analytics</button>
+  </div>
+
+  <div class="tabPanel" id="tabPanelProduct">
+
+  <h1 id="productFormHeading">Add a Virtual</h1>
+  <p class="hint">One virtual mockup at a time, top to bottom. Nothing is saved until you click the button at the end. No pricing here -- Virtuals are branding-only mockups, not sellable priced products.</p>
+
+  <div class="fieldRow">
+    <div class="field" style="max-width:140px;">
+      <label>Virtual Number <span style="color:#D8433B;">*</span></label>
+      <input type="text" id="skuInput" inputmode="numeric" maxlength="4" placeholder="e.g. 4231" required />
+    </div>
+    <div class="field">
+      <label>Product Name <span style="color:#D8433B;">*</span></label>
+      <input type="text" id="productNameInput" placeholder="e.g. Chisel" />
+    </div>
+    <div class="field" style="max-width:150px;">
+      <label>Color (optional)</label>
+      <input type="text" id="productColorInput" placeholder="e.g. Black" />
+    </div>
+  </div>
+  <p class="empty-note" id="skuCollisionWarning" style="display:none; color:#D8433B; margin:-6px 0 12px;"></p>
+
+  <div class="section-title">Product Photo &amp; Logo Placement</div>
+  <p class="empty-note" style="margin-bottom:8px;">Fill in the Virtual Number, Name, and Color (if used) above first — your uploaded files below will be automatically renamed to match, so they're easy to find later.</p>
+
+  <div class="uploadRow">
+    <button type="button" class="secondary" id="choosePhotoBtn">Choose Blank Product Image</button>
+    <span style="color:#D8433B; font-size:13px;">*</span>
+    <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+    <span class="status" id="photoStatus">No file chosen</span>
+  </div>
+  <p class="empty-note" style="margin:2px 0 10px;">Tip: a plain photo of the product with no logo or branding on it — just the item by itself.</p>
+
+  <div class="uploadRow">
+    <button type="button" class="secondary" id="chooseMaskBtn">Choose Mask Image</button>
+    <span style="color:#D8433B; font-size:13px;">*</span>
+    <input type="file" id="maskInput" accept="image/*" style="display:none;" />
+    <span class="status" id="maskStatus">No file chosen</span>
+  </div>
+  <p class="empty-note">Tip: a file the same size as the photo above, with the branding area masked out in any solid color — everything else in the file left transparent. It's placed over the whole photo automatically.</p>
+  <p class="empty-note" id="maskSizeWarning" style="display:none; color:#D8433B;"></p>
+
+  <div id="canvasWrap" style="display:none;">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="row" id="rotateRow" style="display:none;">
+    <span style="font-size:11px; color:var(--text-secondary);">Rotate logo</span>
+    <button type="button" class="tiny" id="rotateCCWBtn">90° ↺ Left</button>
+    <button type="button" class="tiny" id="rotateCWBtn">90° ↻ Right</button>
+  </div>
+  <p class="empty-note" id="axisHint" style="display:none; line-height:1.7;">
+    Drag the dots on the photo to position and shape the logo:<br>
+    <strong style="color:#8A4FD8;">Purple dot</strong> — where the logo will be.<br>
+    <strong style="color:#3B6FD4;">Blue dot</strong> — pull towards the right extent of the branding area.<br>
+    <strong style="color:#D8843B;">Orange dot</strong> — pull towards the bottom extent of the branding area.<br>
+    If the logo lands sideways, use the <strong>Rotate Logo</strong> button above instead of fighting the dots.
+  </p>
+
+  <div class="section-title">Product Details</div>
+
+  <div class="field">
+    <label>Material</label>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <label class="chk"><input type="checkbox" id="blackProductChk" /> Black Leather Product</label>
+      <label class="chk"><input type="checkbox" id="woodProductChk" /> Wood Product</label>
+      <label class="chk"><input type="checkbox" id="clearProductChk" /> Clear / Acrylic Product</label>
+    </div>
+    <p class="empty-note" style="margin-top:4px;">Leave unchecked for a normal full-color logo. Black Leather: logo shows as a flat, solid color. Wood: logo shows as if engraved into the wood. Clear / Acrylic: logo shows as a light grey etched look, like laser-etching on clear acrylic (e.g. ClearCharge).</p>
+  </div>
+
+  <div class="fieldRow">
+    <div class="field">
+      <label>Subtitle <span style="color:#D8433B;">*</span></label>
+      <input type="text" id="productTaglineInput" placeholder="e.g. Carpenter Infinity Pencil (white)" />
+    </div>
+  </div>
+  <div class="fieldRow">
+    <div class="field">
+      <label>Category</label>
+      <div id="topCategoryCheckboxes" class="empty-note">Loading existing categories…</div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <input type="text" id="newTopCategoryInput" placeholder="Add a new top-level category…" style="flex:1;" />
+        <button type="button" class="tiny" id="addTopCategoryBtn" style="flex:0 0 auto;">Add</button>
+      </div>
+      <div id="subCategoryWrap" style="margin-top:10px; display:none;">
+        <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Subcategory (optional)</label>
+        <div id="subCategoryCheckboxes"></div>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <input type="text" id="newSubCategoryInput" placeholder="Add a new subcategory…" style="flex:1;" />
+          <button type="button" class="tiny" id="addSubCategoryBtn" style="flex:0 0 auto;">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Search Tags (comma-separated)</label>
+      <input type="text" data-header="Tags (comma-separated)" placeholder="eco-friendly, tech, onboarding" />
+    </div>
+  </div>
+  <div class="field">
+    <label>Description <span id="descWordCount" style="font-weight:400; color:var(--text-muted);">0 / 50 words</span></label>
+    <textarea id="descTextarea" data-header="Description" placeholder="What it is, what makes it worth recommending…" autocomplete="off"></textarea>
+  </div>
+  <div class="stickyActionsBar">
+  <div class="modalActions">
+    <span id="submitSpinner" class="spinner"></span>
+    <span id="submitStatus"></span>
+    <button type="button" class="primary" id="submitProductBtn">Add Virtual</button>
+  </div>
+
+  <div style="text-align:right; margin-top:10px; display:flex; justify-content:flex-end; gap:16px;">
+    <a href="#" id="cancelEditLink" style="display:none; color:var(--text-secondary); text-decoration:underline; font-size:11px;">Cancel editing</a>
+    <a href="#" id="removeProductLink" style="display:none; color:#D8433B; text-decoration:underline; font-size:11px;">Remove this virtual</a>
+  </div>
+  </div>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelEdit" style="display:none;">
+
+  <h1>Edit a Virtual</h1>
+  <p class="hint">Find a virtual already in the system to change any of its details, photo, or logo placement.</p>
+
+  <div class="field" style="position:relative;">
+    <label>Search by Virtual Number or Name</label>
+    <input type="text" id="editSearchInput" placeholder="e.g. 4231 or Chisel" autocomplete="off" />
+    <div id="editSearchSuggestions" class="suggestions-panel" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:20; background:#fff; border:0.5px solid var(--border); border-radius:6px; margin-top:4px; max-height:240px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
+  </div>
+  <p class="empty-note" id="editSearchStatus"></p>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelPattern" style="display:none;">
+
+  <h1>Add a Pattern</h1>
+  <p class="hint">Not tied to any product — uploads straight into the shared pattern library, live on the site immediately.</p>
+
+  <button type="button" class="secondary" id="uploadPatternBtn">Upload new pattern…</button>
+  <input type="file" id="uploadPatternInput" accept="image/*" style="display:none;" />
+  <p class="empty-note" id="uploadPatternStatus" style="margin-top:8px;"></p>
+
+  <div class="section-title">Existing Patterns</div>
+  <div id="existingPatternsGrid" style="display:flex; flex-wrap:wrap; gap:14px;">
+    <span class="empty-note">Loading…</span>
+  </div>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelLogo" style="display:none;">
+
+  <h1>Add a Logo</h1>
+  <p class="hint">Not tied to any product — uploads straight into the shared, pinned logo library. Shows up as a small thumbnail next to Upload Logo on the main tool and the distributor tool, on any device, no upload needed by whoever's using it.</p>
+
+  <button type="button" class="secondary" id="uploadLogoLibraryBtn">Upload new logo…</button>
+  <input type="file" id="uploadLogoLibraryInput" accept="image/*" style="display:none;" />
+  <p class="empty-note" id="uploadLogoLibraryStatus" style="margin-top:8px;"></p>
+
+  <div class="section-title">Existing Logos</div>
+  <div id="existingLogosGrid" style="display:flex; flex-wrap:wrap; gap:14px;">
+    <span class="empty-note">Loading…</span>
+  </div>
+
+  </div>
+
+  <div class="tabPanel" id="tabPanelAnalytics" style="display:none;">
+
+  <h1>Analytics</h1>
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+    <button type="button" class="secondary" id="refreshAnalyticsBtn">Refresh</button>
+    <select id="analyticsRangeSelect" style="height:30px; padding:0 8px; border:0.5px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; color:var(--text-primary); background:#fff;">
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="all">All time</option>
+    </select>
+  </div>
+  <p class="empty-note" id="analyticsStatus"></p>
+
+  <div id="analyticsContent" style="display:none;">
+
+    <div class="section-title">Decks built per day</div>
+    <div id="analyticsDailyChart" style="display:flex; align-items:flex-end; gap:2px; height:80px; margin-bottom:4px;"></div>
+    <p class="empty-note" id="analyticsDailyEmpty" style="display:none;">No decks built in this range.</p>
+
+    <div class="section-title">Most decked products</div>
+    <div id="analyticsDeckedChart"></div>
+
+    <div class="section-title">Logos used</div>
+    <div id="analyticsLogosChart"></div>
+
+    <div class="section-title">Pattern usage</div>
+    <p id="analyticsPatternSummary" style="font-size:13px; margin:0 0 8px;"></p>
+    <div id="analyticsPatternChart"></div>
+
+    <div class="section-title">Second branding location usage</div>
+    <p id="analyticsSecondLocationSummary" style="font-size:13px; margin:0;"></p>
+
+    <div class="section-title">Typical budgets</div>
+    <p id="analyticsBudgetSummary" style="font-size:13px; margin:0;"></p>
+
+    <div class="section-title">Top searches</div>
+    <div id="analyticsSearchChart"></div>
+
+    <div class="section-title">Searches with no results</div>
+    <div id="analyticsNoResultChart"></div>
+
+    <div class="section-title">Category filters used</div>
+    <div id="analyticsCategoryChart"></div>
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<script>
+// ---------- Password gate ----------
+// Not real security (this is a static page, view-source shows the password) -- same threat model
+// as SUBMIT_SECRET elsewhere in this app: a deterrent against a rep stumbling in here by accident,
+// not protection against someone who actually wants in. Remembered per-browser via localStorage so
+// a legitimate admin only has to enter it once, not on every visit.
+const SETTINGS_PASSWORD = '3949';
+const SETTINGS_UNLOCK_KEY = 'deckbuilder_settings_unlocked';
+function unlockSettingsPage() {
+  document.getElementById('settingsLockScreen').style.display = 'none';
+  document.querySelector('.page').style.display = 'block';
+  document.getElementById('skuInput').focus();
+}
+if (localStorage.getItem(SETTINGS_UNLOCK_KEY) === 'true') {
+  unlockSettingsPage();
+}
+document.getElementById('settingsUnlockBtn').addEventListener('click', () => {
+  const input = document.getElementById('settingsPasswordInput');
+  if (input.value === SETTINGS_PASSWORD) {
+    localStorage.setItem(SETTINGS_UNLOCK_KEY, 'true');
+    unlockSettingsPage();
+  } else {
+    document.getElementById('settingsPasswordError').textContent = 'Incorrect password.';
+    input.value = '';
+    input.focus();
+  }
+});
+document.getElementById('settingsPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('settingsUnlockBtn').click();
+});
+
+const MAX_CANVAS = 640;
+
+// The whole tool works on exactly one product at a time -- no queue array, no session save/load,
+// no next/previous. currentImage is null until a photo is chosen, then holds everything about
+// that one photo (mirrors one images[] entry from the full masking-tool.html, just not kept in an
+// array): { filename, dataUrl, img, naturalW, naturalH, mask }.
+let currentImage = null;
+let dragHandle = null;
+let maskImageDataUrl = null; // kept separately from mask.layers[0]._previewDataUrl only for upload-time reuse clarity
+let editingExistingSku = null; // set when a product was loaded via the Edit a Product tab, cleared on submit/reset
+
+function current() { return currentImage; }
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function scaleFor(im) { return Math.min(MAX_CANVAS / im.naturalW, MAX_CANVAS / im.naturalH, 1); }
+function toPct(px, py, im) { const s = scaleFor(im); return { x: (px / (im.naturalW * s)) * 100, y: (py / (im.naturalH * s)) * 100 }; }
+function toCanvasPx(pctX, pctY, im) { const s = scaleFor(im); return { x: (pctX / 100) * im.naturalW * s, y: (pctY / 100) * im.naturalH * s }; }
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+function fileToDataUrl(file) {
+  return new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(file); });
+}
+function loadImage(src) {
+  return new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = src; });
+}
+
+// Finds each distinct opaque island in a mask image using BFS connected components.
+// Returns an array of { cx, cy, box:{x,y,w,h} } in percent, sorted largest-first.
+// Regions smaller than 0.2% of total pixels are treated as noise and dropped.
+function detectMaskRegions(img) {
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const cctx = c.getContext('2d');
+  cctx.drawImage(img, 0, 0);
+  let data;
+  try { data = cctx.getImageData(0, 0, w, h).data; } catch (err) { return null; }
+  const visited = new Uint8Array(w * h);
+  const regions = [];
+  for (let startY = 0; startY < h; startY++) {
+    for (let startX = 0; startX < w; startX++) {
+      const idx = startY * w + startX;
+      if (visited[idx] || data[idx * 4 + 3] < 10) continue;
+      const queue = [idx];
+      visited[idx] = 1;
+      let minX = startX, maxX = startX, minY = startY, maxY = startY, count = 0, qi = 0;
+      while (qi < queue.length) {
+        const cur = queue[qi++];
+        const cy = Math.floor(cur / w), cx = cur % w;
+        count++;
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        if (cx > 0 && !visited[cur - 1] && data[(cur - 1) * 4 + 3] >= 10) { visited[cur - 1] = 1; queue.push(cur - 1); }
+        if (cx < w - 1 && !visited[cur + 1] && data[(cur + 1) * 4 + 3] >= 10) { visited[cur + 1] = 1; queue.push(cur + 1); }
+        if (cy > 0 && !visited[cur - w] && data[(cur - w) * 4 + 3] >= 10) { visited[cur - w] = 1; queue.push(cur - w); }
+        if (cy < h - 1 && !visited[cur + w] && data[(cur + w) * 4 + 3] >= 10) { visited[cur + w] = 1; queue.push(cur + w); }
+      }
+      if (count >= w * h * 0.002) {
+        regions.push({
+          count,
+          box: { x: (minX / w) * 100, y: (minY / h) * 100, w: ((maxX - minX + 1) / w) * 100, h: ((maxY - minY + 1) / h) * 100 },
+          cx: ((minX + maxX) / 2 / w) * 100,
+          cy: ((minY + maxY) / 2 / h) * 100
+        });
+      }
+    }
+  }
+  return regions.sort((a, b) => b.count - a.count);
+}
+
+// Mask is always exactly one full-canvas (x:0,y:0,w:100,h:100) image-type layer here -- no
+// composite add/subtract stack, no rect/ellipse/4-corner primitives, no per-shape resize/rotate
+// (a precisely-authored mask file needs none of that -- the shape/holes live in its own alpha
+// channel). That's the entire simplification versus the full masking-tool.html.
+function defaultLogoAxis() {
+  return { center: { x: 50, y: 50 }, xEnd: { x: 100, y: 50 }, yEnd: { x: 50, y: 100 } };
+}
+
+function drawAllAxes(mask, im) {
+  const axes = mask.axesList && mask.axesList.length ? mask.axesList : (mask.logoAxis ? [mask.logoAxis] : [defaultLogoAxis()]);
+  const multi = axes.length > 1;
+  axes.forEach((axis, i) => {
+    const c = toCanvasPx(axis.center.x, axis.center.y, im);
+    const xe = toCanvasPx(axis.xEnd.x, axis.xEnd.y, im);
+    const ye = toCanvasPx(axis.yEnd.x, axis.yEnd.y, im);
+    ctx.save();
+    ctx.strokeStyle = '#8A4FD8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(xe.x, xe.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(ye.x, ye.y); ctx.stroke();
+    const dot = (p, color) => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    };
+    dot(c, '#8A4FD8'); dot(xe, '#3B6FD4'); dot(ye, '#D8843B');
+    if (multi) {
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), c.x, c.y);
+    }
+    ctx.restore();
+  });
+}
+
+// Composite preview: draws the mask image into its full-canvas placement, tinted, so the user
+// sees the actual masked result rather than just an outline.
+function drawMaskCompositePreview(im) {
+  const layer = im.mask.layers[0];
+  if (!(layer._previewImg instanceof HTMLImageElement)) return; // not loaded yet -- skip silently
+  const mc = document.createElement('canvas');
+  mc.width = canvas.width; mc.height = canvas.height;
+  const mctx = mc.getContext('2d');
+  mctx.drawImage(layer._previewImg, 0, 0, mc.width, mc.height);
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = '#8A4FD8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.drawImage(mc, 0, 0);
+  ctx.restore();
+}
+
+function renderCurrent() {
+  const im = current();
+  document.getElementById('rotateRow').style.display = im && im.mask ? 'flex' : 'none';
+  document.getElementById('axisHint').style.display = im && im.mask ? 'block' : 'none';
+  if (!im) { document.getElementById('canvasWrap').style.display = 'none'; return; }
+  document.getElementById('canvasWrap').style.display = 'inline-block';
+
+  const s = scaleFor(im);
+  canvas.width = im.naturalW * s;
+  canvas.height = im.naturalH * s;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(im.img, 0, 0, canvas.width, canvas.height);
+
+  if (im.mask) {
+    drawMaskCompositePreview(im);
+    drawAllAxes(im.mask, im);
+  }
+}
+
+function canvasPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / r.width, scaleY = canvas.height / r.height; // canvas can be CSS-scaled down on narrow screens
+  return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+}
+
+// Searches all region axes for a hit; returns { shape, regionIdx } or null.
+function hitHandle(pt) {
+  const im = current(); if (!im || !im.mask) return null;
+  const axes = im.mask.axesList && im.mask.axesList.length ? im.mask.axesList : (im.mask.logoAxis ? [im.mask.logoAxis] : []);
+  for (let i = 0; i < axes.length; i++) {
+    const axis = axes[i];
+    const xe = toCanvasPx(axis.xEnd.x, axis.xEnd.y, im);
+    const ye = toCanvasPx(axis.yEnd.x, axis.yEnd.y, im);
+    const c = toCanvasPx(axis.center.x, axis.center.y, im);
+    if (dist(pt, xe) < 9) return { shape: 'logo-axis-x', regionIdx: i };
+    if (dist(pt, ye) < 9) return { shape: 'logo-axis-y', regionIdx: i };
+    if (dist(pt, c) < 9) return { shape: 'logo-axis-center', regionIdx: i };
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const handle = hitHandle(canvasPoint(e));
+  if (handle) dragHandle = handle;
+});
+canvas.addEventListener('mousemove', (e) => {
+  const im = current(); if (!im || !im.mask) return;
+  const pt = canvasPoint(e);
+  if (!dragHandle) {
+    canvas.style.cursor = hitHandle(pt) ? 'move' : 'default';
+    return;
+  }
+  const pct = toPct(pt.x, pt.y, im);
+  pct.x = Math.max(0, Math.min(100, pct.x)); pct.y = Math.max(0, Math.min(100, pct.y));
+  const axes = im.mask.axesList || (im.mask.logoAxis ? [im.mask.logoAxis] : [defaultLogoAxis()]);
+  if (!im.mask.axesList) im.mask.axesList = axes;
+  const axis = axes[dragHandle.regionIdx] || axes[0];
+  if (dragHandle.shape === 'logo-axis-center') {
+    const shiftX = pct.x - axis.center.x, shiftY = pct.y - axis.center.y;
+    axis.center = { x: pct.x, y: pct.y };
+    axis.xEnd = { x: axis.xEnd.x + shiftX, y: axis.xEnd.y + shiftY };
+    axis.yEnd = { x: axis.yEnd.x + shiftX, y: axis.yEnd.y + shiftY };
+  } else {
+    const endKey = dragHandle.shape === 'logo-axis-x' ? 'xEnd' : 'yEnd';
+    axis[endKey] = { x: pct.x, y: pct.y };
+  }
+  renderCurrent();
+});
+window.addEventListener('mouseup', () => { dragHandle = null; });
+
+// ---------- Description word counter ----------
+(function() {
+  const ta = document.getElementById('descTextarea');
+  const counter = document.getElementById('descWordCount');
+  const LIMIT = 50;
+  function countWords(s) { return s.trim() === '' ? 0 : s.trim().split(/\s+/).length; }
+  function updateCounter() {
+    const count = countWords(ta.value);
+    counter.textContent = count + ' / ' + LIMIT + ' words';
+    counter.style.color = count > LIMIT ? '#c0392b' : 'var(--text-muted)';
+    ta.style.borderColor = count > LIMIT ? '#c0392b' : '';
+  }
+  ta.value = ''; // clear any browser-restored value on load
+  ta.addEventListener('input', updateCounter);
+})();
+
+// ---------- SKU ----------
+// Every real product number in this catalog is a plain 4-digit number -- stripping anything else
+// as the rep types (rather than validating after the fact) means there's never a bad character to
+// notice and go back and fix.
+function sanitizeSkuValue(raw) {
+  return String(raw || '').replace(/[^0-9]/g, '').slice(0, 4);
+}
+function updateSkuInputValidity() {
+  const input = document.getElementById('skuInput');
+  const clean = sanitizeSkuValue(input.value);
+  if (clean !== input.value) input.value = clean;
+  input.classList.toggle('invalid', !clean);
+}
+// Catches the single most damaging mistake possible in this tool: typing an existing product's
+// number by accident while trying to ADD a new one. Add Product silently updates a matching SKU
+// instead of creating a new row (that's the whole point when genuinely editing), so a typo here
+// would overwrite a real, unrelated product with no error of any kind -- this surfaces it before
+// that can happen. Only checked while NOT already in an intentional edit (editingExistingSku unset).
+function checkSkuCollision() {
+  const warning = document.getElementById('skuCollisionWarning');
+  if (editingExistingSku) { warning.style.display = 'none'; return null; }
+  const sku = document.getElementById('skuInput').value.trim();
+  if (sku.length !== 4) { warning.style.display = 'none'; return null; }
+  const existing = allProductsForEdit.find(p => String(p.sku) === sku);
+  if (existing) {
+    warning.textContent = `⚠ Virtual #${sku} already exists: "${existing.name}". Saving will overwrite it, not create a new virtual.`;
+    warning.style.display = 'block';
+    return existing;
+  }
+  warning.style.display = 'none';
+  return null;
+}
+
+document.getElementById('skuInput').addEventListener('input', () => { updateSkuInputValidity(); updateFileNamePreviews(); checkSkuCollision(); });
+updateSkuInputValidity();
+
+// ---------- photo + mask image pickers ----------
+document.getElementById('choosePhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const dataUrl = await fileToDataUrl(file);
+  const img = await loadImage(dataUrl);
+  currentImage = { filename: file.name, dataUrl, img, naturalW: img.naturalWidth, naturalH: img.naturalHeight, mask: currentImage ? currentImage.mask : null };
+  document.getElementById('photoStatus').textContent = file.name;
+  // Convenience only, never required -- if your own photo happens to be named "SKU-name.ext"
+  // (e.g. "4081-nova.png"), the leading number auto-fills SKU so you don't have to type it twice.
+  // Doesn't touch an already-filled SKU field, and does nothing at all if the filename doesn't
+  // start with digits -- you can always just type the SKU in yourself regardless.
+  const skuInput = document.getElementById('skuInput');
+  const skuMatch = file.name.match(/^\d+/);
+  if (skuMatch && !skuInput.value.trim()) {
+    skuInput.value = sanitizeSkuValue(skuMatch[0]);
+    updateSkuInputValidity();
+  }
+  updateFileNamePreviews();
+  // A mask carried over from before this new photo was chosen -- re-check proportions against it,
+  // same as when the mask itself is chosen, since replacing just the photo can just as easily
+  // introduce a mismatch as replacing just the mask can.
+  if (currentImage.mask && currentImage.mask.layers[0]._previewImg instanceof HTMLImageElement) {
+    checkMaskAspectRatio(currentImage.mask.layers[0]._previewImg);
+  }
+  renderCurrent();
+});
+
+document.getElementById('chooseMaskBtn').addEventListener('click', () => {
+  if (!currentImage) { alert('Choose a product photo first.'); return; }
+  document.getElementById('maskInput').click();
+});
+document.getElementById('maskInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file || !currentImage) return;
+  const dataUrl = await fileToDataUrl(file);
+  const img = await loadImage(dataUrl);
+  maskImageDataUrl = dataUrl;
+  const layer = { shape: 'image', op: 'add', x: 0, y: 0, w: 100, h: 100, rotation: 0, imageUrl: '', _previewImg: img, _previewDataUrl: dataUrl };
+  // Auto-detect distinct opaque islands via BFS; seed one axis per region.
+  const detectedRegions = detectMaskRegions(img);
+  let axesList;
+  if (detectedRegions && detectedRegions.length > 0) {
+    axesList = detectedRegions.map(r => ({
+      center: { x: r.cx, y: r.cy },
+      xEnd: { x: r.cx + r.box.w / 2, y: r.cy },
+      yEnd: { x: r.cx, y: r.cy + r.box.h / 2 }
+    }));
+  } else {
+    axesList = [defaultLogoAxis()];
+  }
+  currentImage.mask = { layers: [layer], rotateCCW: false, rotateCW: false, centerOffset: null, widthIn: null, logoAxis: axesList[0], axesList };
+  document.getElementById('maskStatus').textContent = file.name;
+  updateFileNamePreviews();
+  checkMaskAspectRatio(img);
+  renderCurrent();
+});
+
+// The mask gets stretched to cover the photo's own full frame at render time, so it only lines up
+// correctly if the two share the same PROPORTIONS -- exact pixel size doesn't matter (a lower-
+// resolution mask is fine), but a different aspect ratio means the mask silently warps once it's
+// on the actual product card, which is easy to not notice until a real client-facing card looks
+// subtly wrong. Checked here (right after choosing the mask) rather than only at submit time, so
+// it's caught while the mismatched file is still fresh in mind.
+function checkMaskAspectRatio(maskImg) {
+  const warning = document.getElementById('maskSizeWarning');
+  if (!currentImage || !maskImg.naturalWidth || !maskImg.naturalHeight) { warning.style.display = 'none'; return; }
+  const photoRatio = currentImage.naturalW / currentImage.naturalH;
+  const maskRatio = maskImg.naturalWidth / maskImg.naturalHeight;
+  const diff = Math.abs(photoRatio - maskRatio) / photoRatio;
+  if (diff > 0.02) {
+    warning.textContent = `⚠ This mask's proportions (${maskImg.naturalWidth}×${maskImg.naturalHeight}) don't match the photo's (${currentImage.naturalW}×${currentImage.naturalH}) -- the branding area may look stretched or shifted on the real card. Best to re-crop the mask to match the photo's shape.`;
+    warning.style.display = 'block';
+  } else {
+    warning.style.display = 'none';
+  }
+}
+
+document.getElementById('rotateCCWBtn').addEventListener('click', () => {
+  if (!currentImage || !currentImage.mask) return;
+  currentImage.mask.rotateCCW = !currentImage.mask.rotateCCW;
+  if (currentImage.mask.rotateCCW) currentImage.mask.rotateCW = false;
+  renderCurrent();
+});
+document.getElementById('rotateCWBtn').addEventListener('click', () => {
+  if (!currentImage || !currentImage.mask) return;
+  currentImage.mask.rotateCW = !currentImage.mask.rotateCW;
+  if (currentImage.mask.rotateCW) currentImage.mask.rotateCCW = false;
+  renderCurrent();
+});
+
+// ---------- virtual details + submit-to-sheet ----------
+// Same Worker as the real Products tool, but every read/write here targets the separate Virtuals
+// sheet tab (submitVirtual/deleteVirtual actions, ?type=virtuals reads) -- see cloudflare-worker.js.
+const SCRIPT_API_URL = 'https://deck-builder-api.deckbuilder.workers.dev';
+const SUBMIT_SECRET = '3949camelot';
+// Same static-snapshot fallback pattern as the real tool, but virtuals.json instead of
+// products.json -- used when SCRIPT_API_URL itself is down.
+const PRODUCTS_SNAPSHOT_URL = 'https://williamlieuid.github.io/deckbuilder-images/virtuals.json';
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Timed out after ' + ms + 'ms')), ms);
+    promise.then(v => { clearTimeout(timer); resolve(v); }, err => { clearTimeout(timer); reject(err); });
+  });
+}
+
+function slugify(str) {
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
+}
+
+// Shared by the live filename preview and the real upload at submit time, so the two can never
+// drift apart. Color is optional -- only folded in when the rep actually used that field (e.g. a
+// product sold in multiple colors, where each photo needs its own distinct filename).
+function computeFileSlug() {
+  const sku = document.getElementById('skuInput').value.trim();
+  const name = document.getElementById('productNameInput').value.trim();
+  const color = document.getElementById('productColorInput').value.trim();
+  if (!sku || !name) return null;
+  return sku + '-' + slugify(name) + (color ? '-' + slugify(color) : '');
+}
+
+// Live preview of the actual filename an uploaded photo/logo-area file will be renamed to once
+// Product Number and Product Name (and Color, if used) are filled in -- the real rename happens
+// at submit time (see submitProductBtn's handler), this just shows it ahead of time so it's
+// obvious the naming convention is being followed, not a mystery that happens invisibly on save.
+// Only applies to a file actually pending upload (a real data: URI from a freshly-chosen local
+// file) -- a product loaded via Edit a Product carries its EXISTING file's URL instead, which
+// stays exactly as-is unless the rep picks a new file, so showing a "renamed" preview for it
+// would be misleading (nothing is actually being renamed on the server in that case).
+function updateFileNamePreviews() {
+  const slug = computeFileSlug();
+  if (!slug) return;
+  if (currentImage && currentImage.filename && currentImage.dataUrl && currentImage.dataUrl.indexOf('data:') === 0) {
+    const ext = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
+    document.getElementById('photoStatus').textContent = slug + ext + ' (renamed for you)';
+  }
+  if (currentImage && currentImage.mask && maskImageDataUrl && maskImageDataUrl.indexOf('data:') === 0) {
+    const ext = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
+    document.getElementById('maskStatus').textContent = slug + '-mask' + ext + ' (renamed for you)';
+  }
+}
+
+// One product at a time, so this is a single flat object -- not a SKU-keyed dict like the full
+// tool's productMeta -- but the same fields/data-header shape otherwise.
+let productMeta = { fields: {}, blankUploadedFor: null, blankUploadedUrl: null, maskUploadedFor: null, maskUploadedUrl: null };
+
+let knownTopCategories = [];
+let knownSubCategoriesByTop = {};
+let catalogFetchStarted = false;
+let catalogFetchError = null;
+
+// Tries the live sheet first, falling back to the same GitHub products.json snapshot
+// deckbuilder-production.html reads by default now -- the live Apps Script /exec URL bound to a
+// Sheet fails outright often enough (a Drive-level "unable to open the file" error) that this
+// modal's category/add-on lists otherwise went blank on page load any time that happened, even
+// though the same data is one request away in the fallback. 8s timeout because a stuck request
+// here doesn't always fail fast -- it can hang 30+ seconds instead, which would block the
+// fallback from ever kicking in.
+async function fetchProductsWithFallback() {
+  if (SCRIPT_API_URL && SCRIPT_API_URL.indexOf('PASTE_YOUR') !== 0) {
+    try {
+      const res = await withTimeout(fetch(SCRIPT_API_URL + '?type=virtuals&t=' + Date.now()), 8000);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const products = await res.json();
+      if (Array.isArray(products)) return products;
+    } catch (err) { /* fall through to snapshot below */ }
+  }
+  const res = await withTimeout(fetch(PRODUCTS_SNAPSHOT_URL + '?t=' + Date.now(), { cache: 'no-store' }), 8000);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const products = await res.json();
+  if (!Array.isArray(products)) throw new Error('Response was not a product list.');
+  return products;
+}
+
+async function fetchCatalogIfNeeded() {
+  if (catalogFetchStarted) return;
+  catalogFetchStarted = true;
+  catalogFetchError = null;
+  try {
+    const products = await fetchProductsWithFallback();
+    const topSet = new Set(), subByTop = {};
+    products.forEach(p => {
+      const parts = String(p.category || '').split('|').map(s => s.trim()).filter(Boolean);
+      if (!parts.length) return;
+      topSet.add(parts[0]);
+      if (parts[1]) (subByTop[parts[0]] || (subByTop[parts[0]] = new Set())).add(parts[1]);
+    });
+    knownTopCategories = [...topSet].sort();
+    knownSubCategoriesByTop = {};
+    Object.keys(subByTop).forEach(top => { knownSubCategoriesByTop[top] = [...subByTop[top]].sort(); });
+    if (!knownTopCategories.length) catalogFetchError = 'Connected fine, but got 0 categories back -- is the Virtuals sheet actually empty, or every row missing a Category value?';
+  } catch (err) {
+    catalogFetchError = err.message;
+    console.warn('Could not load the product catalog (categories/add-ons) from the sheet:', err);
+  }
+}
+
+function renderSingleSelectTier(wrapId, options, selected, onSelect) {
+  const wrap = document.getElementById(wrapId);
+  wrap.innerHTML = options.map(opt => `
+    <label class="chk"><input type="checkbox" class="catChk" value="${opt.replace(/"/g, '&quot;')}" ${opt === selected ? 'checked' : ''} /> ${opt}</label>
+  `).join('');
+  wrap.querySelectorAll('.catChk').forEach(cb => cb.addEventListener('change', (e) => {
+    if (e.target.checked) wrap.querySelectorAll('.catChk').forEach(other => { if (other !== e.target) other.checked = false; });
+    onSelect(e.target.checked ? e.target.value : '');
+  }));
+}
+
+function currentCategoryParts() {
+  const parts = String(productMeta.fields['Category'] || '').split('|').map(s => s.trim()).filter(Boolean);
+  return { top: parts[0] || '', sub: parts[1] || '' };
+}
+function setCategoryParts(top, sub) {
+  productMeta.fields['Category'] = sub ? (top + ' | ' + sub) : top;
+}
+
+function renderCategoryCheckboxes() {
+  const { top, sub } = currentCategoryParts();
+  if (catalogFetchError && !knownTopCategories.length) {
+    const wrap = document.getElementById('topCategoryCheckboxes');
+    wrap.innerHTML = `<span class="empty-note" style="color:#D8433B;">Couldn't load categories: ${catalogFetchError.replace(/</g, '&lt;')} <a href="#" id="retryCatalogLink">Retry</a></span>`;
+    document.getElementById('subCategoryWrap').style.display = 'none';
+    const retry = document.getElementById('retryCatalogLink');
+    if (retry) retry.addEventListener('click', async (e) => {
+      e.preventDefault();
+      catalogFetchStarted = false;
+      wrap.innerHTML = '<span class="empty-note">Loading…</span>';
+      await fetchCatalogIfNeeded();
+      renderCategoryCheckboxes();
+    });
+    return;
+  }
+  const topOptions = top && !knownTopCategories.includes(top) ? [top].concat(knownTopCategories) : knownTopCategories;
+  if (!topOptions.length) {
+    document.getElementById('topCategoryCheckboxes').innerHTML = '<span class="empty-note">No categories found yet -- add one below.</span>';
+    document.getElementById('subCategoryWrap').style.display = 'none';
+    return;
+  }
+  renderSingleSelectTier('topCategoryCheckboxes', topOptions, top, (newTop) => {
+    setCategoryParts(newTop, '');
+    renderCategoryCheckboxes();
+  });
+  const subWrap = document.getElementById('subCategoryWrap');
+  if (!top) { subWrap.style.display = 'none'; return; }
+  subWrap.style.display = 'block';
+  const subsForTop = knownSubCategoriesByTop[top] || [];
+  const subOptions = sub && !subsForTop.includes(sub) ? [sub].concat(subsForTop) : subsForTop;
+  if (!subOptions.length) {
+    document.getElementById('subCategoryCheckboxes').innerHTML = '<span class="empty-note">None yet for this category.</span>';
+  } else {
+    renderSingleSelectTier('subCategoryCheckboxes', subOptions, sub, (newSub) => setCategoryParts(top, newSub));
+  }
+}
+
+document.getElementById('addTopCategoryBtn').addEventListener('click', () => {
+  const input = document.getElementById('newTopCategoryInput');
+  const val = input.value.trim();
+  if (!val) return;
+  if (!knownTopCategories.includes(val)) knownTopCategories.push(val);
+  setCategoryParts(val, '');
+  input.value = '';
+  renderCategoryCheckboxes();
+});
+document.getElementById('newTopCategoryInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTopCategoryBtn').click(); } });
+
+document.getElementById('addSubCategoryBtn').addEventListener('click', () => {
+  const input = document.getElementById('newSubCategoryInput');
+  const val = input.value.trim();
+  const { top } = currentCategoryParts();
+  if (!val || !top) return;
+  if (!knownSubCategoriesByTop[top]) knownSubCategoriesByTop[top] = [];
+  if (!knownSubCategoriesByTop[top].includes(val)) knownSubCategoriesByTop[top].push(val);
+  setCategoryParts(top, val);
+  input.value = '';
+  renderCategoryCheckboxes();
+});
+document.getElementById('newSubCategoryInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubCategoryBtn').click(); } });
+
+// Apply data-defaults immediately so an untouched default still gets submitted -- same reasoning
+// as the full tool's product-details modal (no pricing/tier/add-on fields here to default, though).
+document.querySelectorAll('[data-header]').forEach(el => {
+  if (el.dataset.default) { el.value = el.dataset.default; productMeta.fields[el.dataset.header] = el.dataset.default; }
+});
+document.querySelectorAll('[data-header]').forEach(el => {
+  el.addEventListener('input', (e) => { productMeta.fields[e.target.dataset.header] = e.target.value; });
+});
+
+// Material checkboxes -- submitted as their own Y/N columns (same shape as every other Y/N field
+// in the sheet), read by cloudflare-worker.js's mapRowToProduct into blackProduct/woodProduct/
+// clearProduct booleans, which deckbuilder-production.html's drawBrandedCard uses to swap in a
+// flat logo (black), a tinted recessed-engraving logo (wood), or a light-grey etched-acrylic logo
+// (clear) instead of the normal render. Default all three to 'N' up front (same reasoning as the
+// Lead Time/Setup Fee data-defaults above) so an untouched submission still writes an explicit
+// value rather than leaving the column blank.
+productMeta.fields['Black Product (Y/N)'] = 'N';
+productMeta.fields['Wood Product (Y/N)'] = 'N';
+productMeta.fields['Clear Product (Y/N)'] = 'N';
+document.getElementById('blackProductChk').addEventListener('change', (e) => {
+  productMeta.fields['Black Product (Y/N)'] = e.target.checked ? 'Y' : 'N';
+});
+document.getElementById('woodProductChk').addEventListener('change', (e) => {
+  productMeta.fields['Wood Product (Y/N)'] = e.target.checked ? 'Y' : 'N';
+});
+document.getElementById('clearProductChk').addEventListener('change', (e) => {
+  productMeta.fields['Clear Product (Y/N)'] = e.target.checked ? 'Y' : 'N';
+});
+
+// deckbuilder-production.html's own formatName() already splits "Product Name" on its first
+// colon to style a brand/eyebrow line separately from the main headline (e.g. "PowerSnap:" above
+// "Portable Charge with Flip-up Connector") -- these two fields are kept apart in the form for
+// clarity, then joined into that exact "Name: Tagline" shape the sheet column expects.
+function syncProductNameField() {
+  const name = document.getElementById('productNameInput').value.trim();
+  const tagline = document.getElementById('productTaglineInput').value.trim();
+  productMeta.fields['Product Name'] = tagline ? (name + ': ' + tagline) : name;
+}
+document.getElementById('productNameInput').addEventListener('input', () => { syncProductNameField(); updateFileNamePreviews(); });
+document.getElementById('productTaglineInput').addEventListener('input', syncProductNameField);
+document.getElementById('productColorInput').addEventListener('input', updateFileNamePreviews);
+
+function setSubmitStatus(msg, kind) {
+  const el = document.getElementById('submitStatus');
+  el.textContent = msg;
+  el.className = kind || '';
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ---------- Analytics ----------
+// Reads the raw event log deckbuilder-production.html's logAnalyticsEvent calls write to (see
+// cloudflare-worker.js's getAnalyticsEvents action) and aggregates it entirely client-side --
+// the Worker stays a thin, dumb log, no rollup logic lives server-side.
+let analyticsSkuToName = {};
+async function loadAnalyticsSkuNames() {
+  try {
+    const products = await fetchProductsWithFallback();
+    analyticsSkuToName = {};
+    products.forEach(p => { analyticsSkuToName[p.sku] = p.name; });
+  } catch (err) { /* falls back to showing the bare SKU if this fails -- not worth blocking analytics over */ }
+}
+
+function analyticsProductLabel(sku) {
+  const name = analyticsSkuToName[sku];
+  return name ? ('#' + sku + ' — ' + name) : ('#' + sku);
+}
+
+function analyticsRenderBarChart(el, counts, labelFn, emptyMsg) {
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (!entries.length) { el.innerHTML = `<p class="empty-note" style="margin:0 0 8px;">${emptyMsg}</p>`; return; }
+  const max = entries[0][1];
+  el.innerHTML = entries.map(([key, count]) => `
+    <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
+      <div style="flex:0 0 40%; font-size:12px; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(labelFn(key))}">${escapeHtml(labelFn(key))}</div>
+      <div style="flex:1; background:var(--surface-1); border-radius:4px; overflow:hidden; height:14px;">
+        <div style="width:${Math.max(2, Math.round(100 * count / max))}%; height:100%; background:var(--accent); border-radius:4px;"></div>
+      </div>
+      <div style="flex:0 0 auto; font-size:12px; color:var(--text-secondary); min-width:28px; text-align:right;">${count}×</div>
+    </div>
+  `).join('');
+}
+
+// deckedEvents' timestamps come straight from the Worker's raw event log (ISO strings, UTC) --
+// bucketing by their first 10 chars (YYYY-MM-DD) groups by UTC calendar day, not the viewer's
+// local day. Good enough for a trend chart; not meant to be a precise per-timezone count.
+function analyticsRenderDailyChart(el, emptyEl, deckedEvents, rangeDays) {
+  if (!deckedEvents.length) { el.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  const dayCounts = {};
+  deckedEvents.forEach(e => {
+    const day = (e.timestamp || '').slice(0, 10);
+    if (day) dayCounts[day] = (dayCounts[day] || 0) + 1;
+  });
+  const today = new Date();
+  let days = rangeDays;
+  if (!days) {
+    // "All time" -- span from the earliest decked day to today, capped at 90 bars so the chart
+    // stays readable instead of rendering hundreds of hairline bars.
+    const sortedDays = Object.keys(dayCounts).sort();
+    const span = sortedDays.length ? Math.ceil((today - new Date(sortedDays[0])) / 86400000) + 1 : 1;
+    days = Math.min(span, 90);
+  }
+  const buckets = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    buckets.push({ key, count: dayCounts[key] || 0 });
+  }
+  const max = Math.max(1, ...buckets.map(b => b.count));
+  el.innerHTML = buckets.map(b => `
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%;" title="${b.key}: ${b.count} deck${b.count === 1 ? '' : 's'}">
+      <div style="width:100%; max-width:10px; background:var(--accent); opacity:${b.count ? 1 : 0.15}; height:${Math.max(2, Math.round(78 * b.count / max))}px; border-radius:2px 2px 0 0;"></div>
+    </div>
+  `).join('');
+}
+
+function median(nums) {
+  if (!nums.length) return null;
+  const sorted = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// Raw events are fetched once per Refresh click and cached here; switching the date-range select
+// just re-filters and re-renders from this cache instead of re-fetching the whole sheet.
+let analyticsRawEvents = [];
+
+function renderAnalyticsForRange() {
+  const rangeVal = document.getElementById('analyticsRangeSelect').value;
+  const rangeDays = rangeVal === 'all' ? null : parseInt(rangeVal, 10);
+  const cutoff = rangeDays ? new Date(Date.now() - rangeDays * 86400000) : null;
+  const events = analyticsRawEvents.filter(e => !cutoff || (e.timestamp && new Date(e.timestamp) >= cutoff));
+
+  const deckedCounts = {}, patternedCounts = {}, logoCounts = {};
+  const searchCounts = {}, noResultSearchCounts = {}, categoryCounts = {};
+  let deckedTotal = 0, secondLocationTotal = 0;
+  const budgetMins = [], budgetMaxes = [];
+  const deckedEvents = [];
+
+  events.forEach(e => {
+    if (e.eventType === 'decked') { deckedCounts[e.value] = (deckedCounts[e.value] || 0) + 1; deckedTotal++; deckedEvents.push(e); }
+    else if (e.eventType === 'patterned') { patternedCounts[e.value] = (patternedCounts[e.value] || 0) + 1; }
+    else if (e.eventType === 'secondLocationUsed') { secondLocationTotal++; }
+    else if (e.eventType === 'logoUsed') { logoCounts[e.value] = (logoCounts[e.value] || 0) + 1; }
+    else if (e.eventType === 'budgetSearched') {
+      try {
+        const parsed = JSON.parse(e.extra || '{}');
+        if (parsed.min !== null && parsed.min !== undefined) budgetMins.push(Number(parsed.min));
+        if (parsed.max !== null && parsed.max !== undefined) budgetMaxes.push(Number(parsed.max));
+      } catch (err) { /* skip a malformed row rather than fail the whole tab */ }
+    }
+    else if (e.eventType === 'searchPerformed') {
+      searchCounts[e.value] = (searchCounts[e.value] || 0) + 1;
+      try {
+        const parsed = JSON.parse(e.extra || '{}');
+        if (parsed.resultCount === 0) noResultSearchCounts[e.value] = (noResultSearchCounts[e.value] || 0) + 1;
+      } catch (err) { /* skip a malformed row rather than fail the whole tab */ }
+    }
+    else if (e.eventType === 'categoryFiltered') {
+      String(e.value || '').split('|').filter(Boolean).forEach(cat => { categoryCounts[cat] = (categoryCounts[cat] || 0) + 1; });
+    }
+  });
+
+  analyticsRenderDailyChart(document.getElementById('analyticsDailyChart'), document.getElementById('analyticsDailyEmpty'), deckedEvents, rangeDays);
+
+  analyticsRenderBarChart(document.getElementById('analyticsDeckedChart'), deckedCounts, analyticsProductLabel, 'No decks built yet.');
+  analyticsRenderBarChart(document.getElementById('analyticsLogosChart'), logoCounts, k => k, 'No logos used in a built deck yet.');
+  analyticsRenderBarChart(document.getElementById('analyticsPatternChart'), patternedCounts, analyticsProductLabel, 'No patterned products yet.');
+  analyticsRenderBarChart(document.getElementById('analyticsSearchChart'), searchCounts, k => k, 'No searches yet.');
+  analyticsRenderBarChart(document.getElementById('analyticsNoResultChart'), noResultSearchCounts, k => k, 'No zero-result searches — nice.');
+  analyticsRenderBarChart(document.getElementById('analyticsCategoryChart'), categoryCounts, k => k, 'No category filters used yet.');
+
+  const patternedTotal = Object.values(patternedCounts).reduce((a, b) => a + b, 0);
+  document.getElementById('analyticsPatternSummary').textContent = deckedTotal
+    ? `${patternedTotal} of ${deckedTotal} decked product instances (${Math.round(100 * patternedTotal / deckedTotal)}%) had a pattern applied.`
+    : 'No decks built yet.';
+
+  document.getElementById('analyticsSecondLocationSummary').textContent = deckedTotal
+    ? `${secondLocationTotal} of ${deckedTotal} decked product instances (${Math.round(100 * secondLocationTotal / deckedTotal)}%) had a second branding location in use. This includes every decked product, not just ones with a second location available, so the real rate among eligible products is higher.`
+    : 'No decks built yet.';
+
+  const budgetEl = document.getElementById('analyticsBudgetSummary');
+  if (!budgetMins.length && !budgetMaxes.length) {
+    budgetEl.textContent = 'No budget-filtered searches yet.';
+  } else {
+    const parts = [];
+    if (budgetMins.length) parts.push(`Min — median ${fmtBudgetNum(median(budgetMins))}, average ${fmtBudgetNum(avg(budgetMins))}`);
+    if (budgetMaxes.length) parts.push(`Max — median ${fmtBudgetNum(median(budgetMaxes))}, average ${fmtBudgetNum(avg(budgetMaxes))}`);
+    budgetEl.textContent = `${Math.max(budgetMins.length, budgetMaxes.length)} budget-filtered searches. ${parts.join('. ')}.`;
+  }
+}
+
+async function loadAnalytics() {
+  const statusEl = document.getElementById('analyticsStatus');
+  const contentEl = document.getElementById('analyticsContent');
+  statusEl.textContent = 'Loading…';
+  statusEl.style.color = '';
+  contentEl.style.display = 'none';
+  try {
+    const [res] = await Promise.all([
+      postToScript({ action: 'getAnalyticsEvents' }),
+      loadAnalyticsSkuNames()
+    ]);
+    if (!res.ok) throw new Error(res.error);
+    analyticsRawEvents = res.events || [];
+    renderAnalyticsForRange();
+    statusEl.textContent = '';
+    contentEl.style.display = 'block';
+  } catch (err) {
+    statusEl.textContent = "Couldn't load analytics: " + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+}
+function avg(nums) { return nums.reduce((a, b) => a + b, 0) / nums.length; }
+function fmtBudgetNum(n) { return n === null ? '—' : ('$' + n.toFixed(2)); }
+document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
+document.getElementById('analyticsRangeSelect').addEventListener('change', () => {
+  if (analyticsRawEvents.length) renderAnalyticsForRange();
+});
+document.getElementById('tabBtnAnalytics').addEventListener('click', () => {
+  if (!document.getElementById('analyticsContent').dataset.loadedOnce) {
+    document.getElementById('analyticsContent').dataset.loadedOnce = '1';
+    loadAnalytics();
+  }
+});
+
+async function postToScript(payload) {
+  const res = await fetch(SCRIPT_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ secret: SUBMIT_SECRET }, payload))
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function uploadIfNeeded(kind, dataUrl, filename) {
+  const forKey = kind + 'UploadedFor', urlKey = kind + 'UploadedUrl';
+  if (productMeta[forKey] === dataUrl && productMeta[urlKey]) return productMeta[urlKey];
+  const res = await postToScript({ action: 'uploadImage', filename, contentBase64: dataUrl.split(',')[1] });
+  if (!res.ok) throw new Error(`Upload failed (${kind}): ${res.error}`);
+  productMeta[forKey] = dataUrl;
+  productMeta[urlKey] = res.url;
+  return res.url;
+}
+
+document.getElementById('uploadPatternBtn').addEventListener('click', () => document.getElementById('uploadPatternInput').click());
+document.getElementById('uploadPatternInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const statusEl = document.getElementById('uploadPatternStatus');
+  statusEl.textContent = 'Uploading ' + file.name + '…';
+  statusEl.style.color = '';
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const res = await postToScript({ action: 'uploadImage', filename: 'patterns/' + file.name, contentBase64: dataUrl.split(',')[1] });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Uploaded -- live on the site now (may take a minute to show up in the swatch list).';
+    loadExistingPatterns();
+  } catch (err) {
+    statusEl.textContent = 'Failed: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+});
+
+// ---------- existing patterns: view + remove ----------
+// Same GitHub folder-listing endpoint deckbuilder-production.html's own pattern swatches read
+// from (a plain, anonymous GET against the public repo -- no secret needed for this part, only
+// the actual delete below needs SUBMIT_SECRET). Read-only, so it's safe to fire eagerly on page
+// load rather than waiting for the Pattern tab to actually be opened.
+const PATTERN_REPO = 'williamlieuid/deckbuilder-images';
+const PATTERN_BRANCH = 'main';
+
+async function loadExistingPatterns() {
+  const grid = document.getElementById('existingPatternsGrid');
+  grid.innerHTML = '<span class="empty-note">Loading…</span>';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${PATTERN_REPO}/contents/patterns?ref=${PATTERN_BRANCH}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error('Unexpected response shape');
+    const imageExt = /\.(jpe?g|png|webp|gif)$/i;
+    const images = files.filter(f => f.type === 'file' && imageExt.test(f.name));
+    if (!images.length) { grid.innerHTML = '<span class="empty-note">No patterns uploaded yet.</span>'; return; }
+    grid.innerHTML = images.map(f => {
+      const url = `https://cdn.jsdelivr.net/gh/${PATTERN_REPO}@${PATTERN_BRANCH}/patterns/${f.name}`;
+      const safeName = f.name.replace(/"/g, '&quot;');
+      return `<div style="position:relative; width:76px;">
+        <div style="width:76px; height:76px; border-radius:6px; background-image:url('${url}'); background-size:cover; background-position:center; border:0.5px solid var(--border);"></div>
+        <button type="button" class="removePatternTileBtn" data-name="${safeName}" title="Remove this pattern" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; padding:0; border-radius:50%; border:1.5px solid #fff; background:#D8433B; color:#fff; font-size:11px; line-height:1; cursor:pointer;">✕</button>
+        <div style="font-size:9px; color:var(--text-muted); margin-top:4px; word-break:break-all; text-align:center;" title="${safeName}">${f.name}</div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.removePatternTileBtn').forEach(btn => btn.addEventListener('click', () => removeExistingPattern(btn.dataset.name)));
+  } catch (err) {
+    grid.innerHTML = `<span class="empty-note" style="color:#D8433B;">Couldn't load existing patterns: ${String(err.message || err).replace(/</g, '&lt;')} <a href="#" id="retryPatternsLink">Retry</a></span>`;
+    const retry = document.getElementById('retryPatternsLink');
+    if (retry) retry.addEventListener('click', (e) => { e.preventDefault(); loadExistingPatterns(); });
+  }
+}
+
+async function removeExistingPattern(name) {
+  const ok = confirm(`Remove pattern "${name}"?\n\nThis deletes it from the live pattern library immediately. Any product a rep has already branded with this exact pattern will lose it. This can't be undone.`);
+  if (!ok) return;
+  const statusEl = document.getElementById('uploadPatternStatus');
+  statusEl.textContent = 'Removing ' + name + '…';
+  statusEl.style.color = '';
+  try {
+    const res = await postToScript({ action: 'deleteImage', filename: 'patterns/' + name });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Removed ' + name + '.';
+    loadExistingPatterns();
+  } catch (err) {
+    statusEl.textContent = 'Failed to remove: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+}
+loadExistingPatterns();
+
+document.getElementById('uploadLogoLibraryBtn').addEventListener('click', () => document.getElementById('uploadLogoLibraryInput').click());
+document.getElementById('uploadLogoLibraryInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const statusEl = document.getElementById('uploadLogoLibraryStatus');
+  statusEl.textContent = 'Uploading ' + file.name + '…';
+  statusEl.style.color = '';
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const res = await postToScript({ action: 'uploadImage', filename: 'logos/' + file.name, contentBase64: dataUrl.split(',')[1] });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Uploaded -- live on the site now (may take a minute to show up as a pinned thumbnail).';
+    loadExistingLogos();
+  } catch (err) {
+    statusEl.textContent = 'Failed: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+});
+
+// ---------- existing pinned logos: view + remove ----------
+// Same GitHub folder-listing endpoint deckbuilder-production.html's/deckbuilder-client.html's own
+// pinned-logo thumbnails read from (a plain, anonymous GET against the public repo -- no secret
+// needed for this part, only the actual delete below needs SUBMIT_SECRET). Read-only, so it's safe
+// to fire eagerly on page load rather than waiting for the Logo tab to actually be opened.
+async function loadExistingLogos() {
+  const grid = document.getElementById('existingLogosGrid');
+  grid.innerHTML = '<span class="empty-note">Loading…</span>';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${PATTERN_REPO}/contents/logos?ref=${PATTERN_BRANCH}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error('Unexpected response shape');
+    const imageExt = /\.(jpe?g|png|webp|gif)$/i;
+    const images = files.filter(f => f.type === 'file' && imageExt.test(f.name));
+    if (!images.length) { grid.innerHTML = '<span class="empty-note">No logos uploaded yet.</span>'; return; }
+    grid.innerHTML = images.map(f => {
+      const url = `https://cdn.jsdelivr.net/gh/${PATTERN_REPO}@${PATTERN_BRANCH}/logos/${f.name}`;
+      const safeName = f.name.replace(/"/g, '&quot;');
+      return `<div style="position:relative; width:76px;">
+        <div style="width:76px; height:76px; border-radius:6px; background:#fff center/contain no-repeat url('${url}'); border:0.5px solid var(--border);"></div>
+        <button type="button" class="removeLogoTileBtn" data-name="${safeName}" title="Remove this logo" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; padding:0; border-radius:50%; border:1.5px solid #fff; background:#D8433B; color:#fff; font-size:11px; line-height:1; cursor:pointer;">✕</button>
+        <div style="font-size:9px; color:var(--text-muted); margin-top:4px; word-break:break-all; text-align:center;" title="${safeName}">${f.name}</div>
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.removeLogoTileBtn').forEach(btn => btn.addEventListener('click', () => removeExistingLogo(btn.dataset.name)));
+  } catch (err) {
+    grid.innerHTML = `<span class="empty-note" style="color:#D8433B;">Couldn't load existing logos: ${String(err.message || err).replace(/</g, '&lt;')} <a href="#" id="retryLogosLink">Retry</a></span>`;
+    const retry = document.getElementById('retryLogosLink');
+    if (retry) retry.addEventListener('click', (e) => { e.preventDefault(); loadExistingLogos(); });
+  }
+}
+
+async function removeExistingLogo(name) {
+  const ok = confirm(`Remove logo "${name}"?\n\nThis deletes it from the shared, pinned logo library immediately -- it will no longer show up as a thumbnail for anyone, on any device. This can't be undone.`);
+  if (!ok) return;
+  const statusEl = document.getElementById('uploadLogoLibraryStatus');
+  statusEl.textContent = 'Removing ' + name + '…';
+  statusEl.style.color = '';
+  try {
+    const res = await postToScript({ action: 'deleteImage', filename: 'logos/' + name });
+    if (!res.ok) throw new Error(res.error);
+    statusEl.textContent = 'Removed ' + name + '.';
+    loadExistingLogos();
+  } catch (err) {
+    statusEl.textContent = 'Failed to remove: ' + err.message;
+    statusEl.style.color = '#D8433B';
+  }
+}
+loadExistingLogos();
+
+// round2 + the exact Mask JSON shape deckbuilder-production.html's regions.mask expects (matches
+// the full masking-tool.html's maskForSheet/layerToExport/exportLogoAxis exactly).
+function round2(n) { return Math.round(n * 100) / 100; }
+function maskForSheet(mask) {
+  const axes = mask.axesList && mask.axesList.length ? mask.axesList : (mask.logoAxis ? [mask.logoAxis] : []);
+  const serializeAxis = a => ({ center: { x: round2(a.center.x), y: round2(a.center.y) }, xEnd: { x: round2(a.xEnd.x), y: round2(a.xEnd.y) }, yEnd: { x: round2(a.yEnd.x), y: round2(a.yEnd.y) } });
+  const result = {
+    layers: mask.layers.map(l => ({ shape: 'image', op: l.op, x: round2(l.x), y: round2(l.y), w: round2(l.w), h: round2(l.h), rotation: round2(l.rotation || 0), imageUrl: l.imageUrl || '' })),
+    rotateCCW: !!mask.rotateCCW,
+    rotateCW: !!mask.rotateCW,
+    centerOffset: null,
+    widthIn: mask.widthIn || null,
+    logoAxis: axes[0] ? serializeAxis(axes[0]) : null
+  };
+  if (axes.length > 1) result.extraLogoAxes = axes.slice(1).map(serializeAxis);
+  return result;
+}
+
+// Clears every field back to a blank form, ready for the next product -- used automatically after
+// a successful Add Product (see below), so a rep never has to manually reset between products.
+// Deliberately does NOT touch #submitStatus -- the success message that triggered this call stays
+// on screen until the rep starts typing the next product.
+function updateSubmitButtonLabel() {
+  document.getElementById('submitProductBtn').textContent = editingExistingSku ? 'Update Virtual' : 'Add Virtual';
+  document.getElementById('removeProductLink').style.display = editingExistingSku ? 'inline' : 'none';
+  document.getElementById('cancelEditLink').style.display = editingExistingSku ? 'inline' : 'none';
+}
+
+document.getElementById('cancelEditLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  resetForm();
+  setSubmitStatus('Cancelled. Nothing was changed.', 'ok');
+});
+
+document.getElementById('removeProductLink').addEventListener('click', async (e) => {
+  e.preventDefault();
+  if (!editingExistingSku) return;
+  const name = document.getElementById('productNameInput').value.trim() || editingExistingSku;
+  const ok = confirm(`Remove "${name}" (#${editingExistingSku}) completely?\n\nThis deletes the virtual from the sheet entirely -- not just this session. It will no longer show up anywhere, for anyone. This cannot be undone.`);
+  if (!ok) return;
+  const link = document.getElementById('removeProductLink');
+  link.style.pointerEvents = 'none';
+  link.style.opacity = '0.5';
+  document.getElementById('submitSpinner').style.display = 'inline-block';
+  setSubmitStatus('Removing…');
+  try {
+    const res = await postToScript({ action: 'deleteVirtual', sku: editingExistingSku });
+    if (!res.ok) throw new Error(res.error);
+    const removedLabel = '"' + name + '" (#' + editingExistingSku + ')';
+    resetForm();
+    setSubmitStatus('✓ Removed ' + removedLabel + (res.snapshotWarning ? '. ' + res.snapshotWarning : '.'), res.snapshotWarning ? 'error' : 'ok');
+  } catch (err) {
+    setSubmitStatus('Could not remove that virtual: ' + err.message, 'error');
+  } finally {
+    link.style.pointerEvents = '';
+    link.style.opacity = '';
+    document.getElementById('submitSpinner').style.display = 'none';
+  }
+});
+
+function resetForm() {
+  currentImage = null;
+  maskImageDataUrl = null;
+  editingExistingSku = null;
+  updateSubmitButtonLabel();
+  productMeta = { fields: {}, blankUploadedFor: null, blankUploadedUrl: null, maskUploadedFor: null, maskUploadedUrl: null };
+  document.getElementById('skuInput').value = '';
+  updateSkuInputValidity();
+  document.getElementById('photoStatus').textContent = 'No file chosen';
+  document.getElementById('maskStatus').textContent = 'No file chosen';
+  document.getElementById('productNameInput').value = '';
+  document.getElementById('productTaglineInput').value = '';
+  document.getElementById('productColorInput').value = '';
+  document.getElementById('skuCollisionWarning').style.display = 'none';
+  document.getElementById('maskSizeWarning').style.display = 'none';
+  document.querySelectorAll('[data-header]').forEach(el => {
+    el.value = el.dataset.default || '';
+    if (el.dataset.default) productMeta.fields[el.dataset.header] = el.dataset.default; // else the default would show visually but be silently omitted at submit, which only reads productMeta.fields
+  });
+  document.querySelectorAll('.catChk').forEach(el => { el.checked = false; });
+  document.getElementById('blackProductChk').checked = false;
+  document.getElementById('woodProductChk').checked = false;
+  document.getElementById('clearProductChk').checked = false;
+  productMeta.fields['Black Product (Y/N)'] = 'N';
+  productMeta.fields['Wood Product (Y/N)'] = 'N';
+  productMeta.fields['Clear Product (Y/N)'] = 'N';
+  renderCurrent();
+  renderCategoryCheckboxes();
+  document.getElementById('skuInput').focus();
+}
+
+// A tier with a quantity but no USD price (or the reverse) produces a half-filled, meaningless
+document.getElementById('submitProductBtn').addEventListener('click', async () => {
+  const sku = document.getElementById('skuInput').value.trim();
+  const productName = document.getElementById('productNameInput').value.trim();
+  if (!sku) { updateSkuInputValidity(); setSubmitStatus('Please enter a product number.', 'error'); return; }
+  if (sku.length < 4) { setSubmitStatus('Product number should be 4 digits.', 'error'); return; }
+  if (!productName) { setSubmitStatus('Please enter a product name.', 'error'); return; }
+  if (!document.getElementById('productTaglineInput').value.trim()) { setSubmitStatus('Please enter a subtitle.', 'error'); return; }
+  if (!currentImage) { setSubmitStatus('Please choose a blank product image first.', 'error'); return; }
+  // A mask file is the only way this simplified tool can define NEW logo placement, so it's
+  // required when adding a virtual. Editing an existing one is different: a virtual whose branding
+  // was drawn with the full masking tool (rect/poly, not a mask file) never has one to begin with,
+  // and per the guide, other details on one like that should still be editable here even
+  // though its logo placement can't be -- requiring a mask unconditionally blocked that entirely.
+  if (!currentImage.mask && !editingExistingSku) { setSubmitStatus('Please choose a mask image first.', 'error'); return; }
+  if (!editingExistingSku) {
+    const existing = checkSkuCollision();
+    if (existing) {
+      const proceed = confirm(`Virtual #${sku} already exists: "${existing.name}".\n\nContinuing will overwrite it, not create a new virtual. Continue anyway?`);
+      if (!proceed) { setSubmitStatus('Cancelled — double check the Virtual Number.', 'error'); return; }
+    }
+  }
+
+  const submitBtn = document.getElementById('submitProductBtn');
+  submitBtn.disabled = true;
+  document.getElementById('submitSpinner').style.display = 'inline-block';
+  try {
+    const fileSlug = computeFileSlug();
+    const photoExt = (currentImage.filename.match(/\.[a-z0-9]+$/i) || ['.png'])[0];
+    const maskExt = photoExt; // mask upload filename just needs to be distinct from the photo's
+
+    setSubmitStatus('Uploading blank product image…');
+    const blankUrl = await uploadIfNeeded('blank', currentImage.dataUrl, fileSlug + photoExt);
+
+    // Skipped entirely for a rect/poly product being edited (see the validation above) -- there's
+    // no mask to upload and no Mask JSON to write, so those columns are simply left out of the
+    // fields payload below rather than sent as blank/null and overwriting whatever's already there.
+    if (currentImage.mask) {
+      setSubmitStatus('Uploading mask image…');
+      const maskUrl = await uploadIfNeeded('mask', maskImageDataUrl, fileSlug + '-mask' + maskExt);
+      currentImage.mask.layers[0].imageUrl = maskUrl;
+    }
+
+    setSubmitStatus('Saving…');
+    const fields = Object.assign({}, productMeta.fields);
+    fields['SKU'] = sku;
+    fields['Blank Image URL'] = blankUrl;
+    if (!fields['Master Image URL']) fields['Master Image URL'] = blankUrl; // see deckbuilder-production.html's imageBlock fallback
+    if (currentImage.mask) {
+      fields['Mask Eligible (Y/N)'] = 'Y';
+      fields['Mask JSON'] = JSON.stringify(maskForSheet(currentImage.mask));
+    }
+
+    const res = await postToScript({ action: 'submitVirtual', fields });
+    if (!res.ok) throw new Error(res.error);
+    if ((res.unmatchedFields && res.unmatchedFields.length) || res.snapshotWarning) {
+      let msg = (res.created ? 'Saved as a new virtual, but something needs attention: ' : 'Updated, but something needs attention: ');
+      if (res.unmatchedFields && res.unmatchedFields.length) msg += `these fields didn't match the Virtuals sheet and were skipped: ${res.unmatchedFields.join(', ')}. `;
+      if (res.snapshotWarning) msg += res.snapshotWarning;
+      setSubmitStatus(msg, 'error');
+    } else {
+      const successMsg = (res.created ? '✓ Virtual added! ' : '✓ Virtual updated! ') + '"' + productName + '" (#' + sku + ') is saved. Ready for the next one.';
+      resetForm();
+      setSubmitStatus(successMsg, 'ok');
+    }
+  } catch (err) {
+    setSubmitStatus('Something went wrong: ' + err.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+    document.getElementById('submitSpinner').style.display = 'none';
+  }
+});
+
+// ---------- tabs ----------
+const TAB_PANEL_IDS = { product: 'tabPanelProduct', edit: 'tabPanelEdit', pattern: 'tabPanelPattern', logo: 'tabPanelLogo', analytics: 'tabPanelAnalytics' };
+function switchToTab(tabKey) {
+  document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
+  document.querySelectorAll('.tabPanel').forEach(p => p.style.display = 'none');
+  document.getElementById(TAB_PANEL_IDS[tabKey]).style.display = 'block';
+}
+document.querySelectorAll('.tabBtn').forEach(btn => btn.addEventListener('click', () => switchToTab(btn.dataset.tab)));
+
+// ---------- Edit a Virtual: search + load ----------
+// Reuses fetchProductsWithFallback (the same live-sheet-with-snapshot-fallback loader the
+// category/add-on lists already use) but keeps its own full copy of the list, since search needs
+// every product's full record (photo URLs, mask JSON, pricing...), not just the category/add-on
+// summaries fetchCatalogIfNeeded() distills out of it.
+let allProductsForEdit = [];
+let editProductsFetchStarted = false;
+async function fetchAllProductsForEdit() {
+  if (editProductsFetchStarted) return;
+  editProductsFetchStarted = true;
+  try {
+    allProductsForEdit = await fetchProductsWithFallback();
+  } catch (err) {
+    setEditSearchStatus("Couldn't load the product list: " + err.message, true);
+  }
+}
+function setEditSearchStatus(msg, isError) {
+  const el = document.getElementById('editSearchStatus');
+  el.textContent = msg;
+  el.style.color = isError ? '#D8433B' : '';
+}
+
+// Same crossOrigin-only-for-remote-URLs guard used throughout deckbuilder-production.html --
+// needed here because a loaded product's photo/logo-area files live on the jsDelivr CDN, a
+// different origin than this page, and the canvas preview needs to read their pixels.
+function loadCrossOriginImageEl(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (/^https?:\/\//i.test(url)) img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Could not load ' + url));
+    img.src = url;
+  });
+}
+
+const editSearchInput = document.getElementById('editSearchInput');
+const editSearchSuggestions = document.getElementById('editSearchSuggestions');
+function renderEditSuggestions(list) {
+  if (!list.length) { editSearchSuggestions.style.display = 'none'; editSearchSuggestions.innerHTML = ''; return; }
+  editSearchSuggestions.innerHTML = list.slice(0, 12).map(p => `
+    <div class="suggestion-item" data-sku="${String(p.sku).replace(/"/g, '&quot;')}"><span class="sfx-sku">#${p.sku}</span>${String(p.name || '(unnamed)').replace(/</g, '&lt;')}</div>
+  `).join('');
+  editSearchSuggestions.style.display = 'block';
+  editSearchSuggestions.querySelectorAll('.suggestion-item').forEach(el => {
+    // mousedown (not click) so this fires before the input's own blur handler hides the panel first.
+    el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      editSearchSuggestions.style.display = 'none';
+      editSearchInput.value = '';
+      loadProductForEdit(el.dataset.sku);
+    });
+  });
+}
+editSearchInput.addEventListener('input', async () => {
+  await fetchAllProductsForEdit();
+  const q = editSearchInput.value.trim().toLowerCase();
+  if (!q) { renderEditSuggestions([]); return; }
+  const matches = allProductsForEdit.filter(p =>
+    String(p.sku).toLowerCase().startsWith(q) || String(p.name || '').toLowerCase().includes(q)
+  );
+  renderEditSuggestions(matches);
+});
+editSearchInput.addEventListener('focus', () => { if (editSearchInput.value.trim()) editSearchInput.dispatchEvent(new Event('input')); });
+editSearchInput.addEventListener('blur', () => setTimeout(() => { editSearchSuggestions.style.display = 'none'; }, 150));
+
+// Arrow-key navigation through the visible suggestions, matching deckbuilder-production.html's
+// search box -- Down/Up move a highlighted "active" item (wrapping at each end), Enter loads the
+// active suggestion, Escape closes the panel without picking anything.
+editSearchInput.addEventListener('keydown', (e) => {
+  const isOpen = editSearchSuggestions.style.display !== 'none';
+  const items = [...editSearchSuggestions.querySelectorAll('.suggestion-item')];
+  if (e.key === 'ArrowDown' && isOpen && items.length) {
+    e.preventDefault();
+    const cur = items.findIndex(el => el.classList.contains('active'));
+    items.forEach(el => el.classList.remove('active'));
+    const next = items[((cur + 1) % items.length + items.length) % items.length];
+    next.classList.add('active');
+    next.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp' && isOpen && items.length) {
+    e.preventDefault();
+    const cur = items.findIndex(el => el.classList.contains('active'));
+    items.forEach(el => el.classList.remove('active'));
+    const prev = items[((cur - 1) % items.length + items.length) % items.length];
+    prev.classList.add('active');
+    prev.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' && isOpen) {
+    const active = editSearchSuggestions.querySelector('.suggestion-item.active');
+    if (active) {
+      e.preventDefault();
+      editSearchSuggestions.style.display = 'none';
+      editSearchInput.value = '';
+      loadProductForEdit(active.dataset.sku);
+    }
+  } else if (e.key === 'Escape') {
+    editSearchSuggestions.style.display = 'none';
+  }
+});
+
+// Populates the entire Add a Product form (fields, material, pricing, add-ons, photo, and logo
+// area with all its position/angle handles) from an existing live product record, then switches
+// to that tab so the rep can change anything and save -- since Add Product already updates a
+// matching SKU instead of duplicating it, no separate "save edit" path is needed.
+async function loadProductForEdit(sku) {
+  const p = allProductsForEdit.find(x => String(x.sku) === String(sku));
+  if (!p) { setEditSearchStatus('Could not find that product.', true); return; }
+  setEditSearchStatus('Loading "' + (p.name || sku) + '"…');
+  try {
+    const photoUrl = p.blankImage || p.masterImage;
+    if (!photoUrl) throw new Error("This product has no photo on file yet, so there's nothing to load here.");
+    const img = await loadCrossOriginImageEl(photoUrl);
+    currentImage = { filename: photoUrl.split('/').pop().split('?')[0], dataUrl: photoUrl, img, naturalW: img.naturalWidth, naturalH: img.naturalHeight, mask: null };
+    productMeta.blankUploadedFor = photoUrl;
+    productMeta.blankUploadedUrl = photoUrl;
+
+    let shapeWarning = '';
+    if (p.regions && p.regions.mask && p.regions.mask.layers && p.regions.mask.layers[0]) {
+      const maskUrl = p.regions.mask.layers[0].imageUrl || '';
+      let previewImg = null;
+      if (maskUrl) { try { previewImg = await loadCrossOriginImageEl(maskUrl); } catch (e) { /* preview is a nice-to-have, not required to keep editing everything else */ } }
+      const axesList = [p.regions.mask.logoAxis].concat(p.regions.mask.extraLogoAxes || []).filter(Boolean);
+      currentImage.mask = {
+        layers: [{ shape: 'image', op: 'add', x: 0, y: 0, w: 100, h: 100, rotation: 0, imageUrl: maskUrl, _previewImg: previewImg, _previewDataUrl: maskUrl }],
+        rotateCCW: !!p.regions.mask.rotateCCW,
+        rotateCW: !!p.regions.mask.rotateCW,
+        centerOffset: null,
+        widthIn: p.regions.mask.widthIn || null,
+        logoAxis: axesList[0] || defaultLogoAxis(),
+        axesList: axesList.length ? axesList : [defaultLogoAxis()]
+      };
+      maskImageDataUrl = maskUrl || null;
+      if (maskUrl) { productMeta.maskUploadedFor = maskUrl; productMeta.maskUploadedUrl = maskUrl; }
+    } else if (p.regions && (p.regions.rect || p.regions.poly)) {
+      shapeWarning = " Note: this product's logo area was drawn with the full masking tool (not a simple logo-area file), so it can't be shown or edited here -- everything else below is still safe to change and save.";
+    } else {
+      shapeWarning = ' Note: this product has no logo area set up yet -- upload one below.';
+    }
+
+    document.getElementById('skuInput').value = sanitizeSkuValue(p.sku);
+    updateSkuInputValidity();
+    const nameParts = String(p.name || '').split(':');
+    document.getElementById('productNameInput').value = nameParts[0].trim();
+    document.getElementById('productTaglineInput').value = nameParts.slice(1).join(':').trim();
+    syncProductNameField();
+
+    const catParts = String(p.category || '').split('|').map(s => s.trim()).filter(Boolean);
+    setCategoryParts(catParts[0] || '', catParts[1] || '');
+
+    const tagsInput = document.querySelector('[data-header="Tags (comma-separated)"]');
+    tagsInput.value = (p.tags || []).join(', ');
+    productMeta.fields['Tags (comma-separated)'] = tagsInput.value;
+
+    document.getElementById('descTextarea').value = p.description || '';
+    productMeta.fields['Description'] = p.description || '';
+    document.getElementById('descTextarea').dispatchEvent(new Event('input'));
+
+    document.getElementById('blackProductChk').checked = !!p.blackProduct;
+    document.getElementById('woodProductChk').checked = !!p.woodProduct;
+    document.getElementById('clearProductChk').checked = !!p.clearProduct;
+    productMeta.fields['Black Product (Y/N)'] = p.blackProduct ? 'Y' : 'N';
+    productMeta.fields['Wood Product (Y/N)'] = p.woodProduct ? 'Y' : 'N';
+    productMeta.fields['Clear Product (Y/N)'] = p.clearProduct ? 'Y' : 'N';
+
+    document.getElementById('photoStatus').textContent = currentImage.filename + ' (already on file)';
+    document.getElementById('maskStatus').textContent = currentImage.mask ? (maskImageDataUrl || '').split('/').pop().split('?')[0] + ' (already on file)' : 'No file chosen';
+
+    editingExistingSku = p.sku;
+    updateSubmitButtonLabel();
+    renderCurrent();
+    renderCategoryCheckboxes();
+    updateFileNamePreviews();
+
+    switchToTab('product');
+    setSubmitStatus('Editing "' + (p.name || p.sku) + '" (#' + p.sku + ').' + shapeWarning + ' Make your changes, then click Update Virtual to save.', shapeWarning ? 'error' : 'ok');
+    setEditSearchStatus('');
+  } catch (err) {
+    setEditSearchStatus('Could not load that virtual: ' + err.message, true);
+  }
+}
+
+// Categories only depend on the live sheet, not on any per-virtual state, so they can load
+// immediately on page load rather than waiting for a modal to open (there's no modal here).
+fetchCatalogIfNeeded().then(() => { renderCategoryCheckboxes(); });
+// Also loaded eagerly (not just when Edit a Product's search box is first touched) so the SKU-
+// collision check works immediately, the moment a rep types a Product Number on a fresh page load.
+fetchAllProductsForEdit();
+renderCurrent();
+
+// ---------- Unsaved-work warning ----------
+// A rep who's mid-way through a product (chosen a photo, typed a name...) and accidentally closes
+// the tab, hits back, or navigates away loses everything typed with zero warning otherwise -- this
+// is deliberately a loose/cheap check (a few key fields), not exhaustive, since the cost of a false
+// positive (an extra "leave site?" prompt on an essentially-empty form) is low but the cost of a
+// false negative (silently losing real work) is exactly the thing this exists to prevent.
+function formHasUnsavedWork() {
+  return !!(currentImage || document.getElementById('skuInput').value.trim() || document.getElementById('productNameInput').value.trim());
+}
+window.addEventListener('beforeunload', (e) => {
+  if (!formHasUnsavedWork()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+</script>
+</body>
+</html>
