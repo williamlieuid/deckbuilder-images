@@ -126,6 +126,26 @@
   <p class="empty-note">Tip: a file the same size as the photo above, with the branding area masked out in any solid color — everything else in the file left transparent. It's placed over the whole photo automatically.</p>
   <p class="empty-note" id="maskSizeWarning" style="display:none; color:#D8433B;"></p>
 
+  <div class="uploadRow" style="margin-top:6px;">
+    <button type="button" class="secondary" id="choosePsdBtn">Or Extract From a PSD…</button>
+    <input type="file" id="psdInput" accept=".psd,.pdf,application/octet-stream" style="display:none;" />
+    <span class="status" id="psdStatus"></span>
+  </div>
+  <p class="empty-note">Tip: works with a mockup template PSD that has several color/packaging "scene" groups (like a distributor's virtual mockup file) — pick one scene, confirm which layers are the branding areas, and it fills in the photo + mask above for you. Repeat per scene for separate virtuals (e.g. brown vs. black, standard vs. sleeve).</p>
+
+  <div id="psdPanel" style="display:none; border:0.5px solid var(--border); border-radius:var(--radius); padding:12px; margin-top:8px;">
+    <div class="field" id="psdSceneField">
+      <label>Scene (top-level group in the PSD)</label>
+      <select id="psdSceneSelect"></select>
+    </div>
+    <p class="empty-note" style="margin:6px 0;">Check every layer that's a branding/logo area for this scene (pre-checked where auto-detected — multiply-blend or has its own layer mask). Uncheck anything that isn't really a branding spot.</p>
+    <div id="psdLayerList" style="display:flex; flex-wrap:wrap; gap:8px; max-height:320px; overflow-y:auto; border:0.5px solid var(--border); border-radius:6px; padding:8px;"></div>
+    <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+      <button type="button" class="primary" id="psdUseSceneBtn">Use This Scene</button>
+      <span class="status" id="psdUseStatus"></span>
+    </div>
+  </div>
+
   <div id="canvasWrap" style="display:none;">
     <canvas id="canvas"></canvas>
   </div>
@@ -290,6 +310,9 @@
 
 </div>
 
+<!-- PSD layer extraction for "Or Extract From a PSD..." -- pure client-side parser, same CDN-script
+     pattern as jsPDF/pdf.js in the other tools. Browserify UMD build, exposes window.agPsd. -->
+<script src="https://cdn.jsdelivr.net/npm/ag-psd@31/dist/bundle.js"></script>
 <script>
 // ---------- Password gate ----------
 // Not real security (this is a static page, view-source shows the password) -- same threat model
@@ -553,21 +576,18 @@ document.getElementById('skuInput').addEventListener('input', () => { updateSkuI
 updateSkuInputValidity();
 
 // ---------- photo + mask image pickers ----------
-document.getElementById('choosePhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
-document.getElementById('photoInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  const dataUrl = await fileToDataUrl(file);
+// Shared by the manual file picker and the PSD extraction flow below, so a scene extracted from a
+// PSD goes through the exact same state-setting logic as a rep manually choosing a photo file.
+async function applyPhotoDataUrl(dataUrl, filename) {
   const img = await loadImage(dataUrl);
-  currentImage = { filename: file.name, dataUrl, img, naturalW: img.naturalWidth, naturalH: img.naturalHeight, mask: currentImage ? currentImage.mask : null };
-  document.getElementById('photoStatus').textContent = file.name;
+  currentImage = { filename, dataUrl, img, naturalW: img.naturalWidth, naturalH: img.naturalHeight, mask: currentImage ? currentImage.mask : null };
+  document.getElementById('photoStatus').textContent = filename;
   // Convenience only, never required -- if your own photo happens to be named "SKU-name.ext"
   // (e.g. "4081-nova.png"), the leading number auto-fills SKU so you don't have to type it twice.
   // Doesn't touch an already-filled SKU field, and does nothing at all if the filename doesn't
   // start with digits -- you can always just type the SKU in yourself regardless.
   const skuInput = document.getElementById('skuInput');
-  const skuMatch = file.name.match(/^\d+/);
+  const skuMatch = filename.match(/^\d+/);
   if (skuMatch && !skuInput.value.trim()) {
     skuInput.value = sanitizeSkuValue(skuMatch[0]);
     updateSkuInputValidity();
@@ -580,17 +600,10 @@ document.getElementById('photoInput').addEventListener('change', async (e) => {
     checkMaskAspectRatio(currentImage.mask.layers[0]._previewImg);
   }
   renderCurrent();
-});
+}
 
-document.getElementById('chooseMaskBtn').addEventListener('click', () => {
-  if (!currentImage) { alert('Choose a product photo first.'); return; }
-  document.getElementById('maskInput').click();
-});
-document.getElementById('maskInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file || !currentImage) return;
-  const dataUrl = await fileToDataUrl(file);
+// Same sharing reasoning as applyPhotoDataUrl above.
+async function applyMaskDataUrl(dataUrl, filename) {
   const img = await loadImage(dataUrl);
   maskImageDataUrl = dataUrl;
   const layer = { shape: 'image', op: 'add', x: 0, y: 0, w: 100, h: 100, rotation: 0, imageUrl: '', _previewImg: img, _previewDataUrl: dataUrl };
@@ -607,10 +620,187 @@ document.getElementById('maskInput').addEventListener('change', async (e) => {
     axesList = [defaultLogoAxis()];
   }
   currentImage.mask = { layers: [layer], rotateCCW: false, rotateCW: false, centerOffset: null, widthIn: null, logoAxis: axesList[0], axesList };
-  document.getElementById('maskStatus').textContent = file.name;
+  document.getElementById('maskStatus').textContent = filename;
   updateFileNamePreviews();
   checkMaskAspectRatio(img);
   renderCurrent();
+}
+
+document.getElementById('choosePhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const dataUrl = await fileToDataUrl(file);
+  await applyPhotoDataUrl(dataUrl, file.name);
+});
+
+document.getElementById('chooseMaskBtn').addEventListener('click', () => {
+  if (!currentImage) { alert('Choose a product photo first.'); return; }
+  document.getElementById('maskInput').click();
+});
+document.getElementById('maskInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file || !currentImage) return;
+  const dataUrl = await fileToDataUrl(file);
+  await applyMaskDataUrl(dataUrl, file.name);
+});
+
+// ---------- "Or Extract From a PSD..." ----------
+// Distributor mockup templates (like the PowerSnap/Beacon/Pulse ones this was built against) are
+// one PSD containing several alternate "scene" groups (color finish, standard box vs. custom
+// sleeve, etc.), each a full duplicate render with its own copies of the same branding shapes at
+// roughly the same spot. One PSD -> several separate virtuals, one per scene -- this panel picks a
+// scene, lets the rep confirm which of its layers are branding areas, and fills in the photo/mask
+// fields above exactly as if those had been manually exported and uploaded.
+let parsedPsd = null;
+let psdSceneLayers = []; // flat list of leaf layers for the currently-selected scene, in paint order
+
+// Across every real template checked (PowerSnap, Beacon, Beacon Pro, Pulse), every branding/logo
+// area layer was blend mode "multiply" -- the one exception is a black/dark-finish variant, where
+// multiply-onto-black would always render solid black, so those scenes switch that same layer to
+// "normal" blend and rely on it having its own real Photoshop layer mask instead. Neither signal
+// alone is perfect (a masked background photo isn't branding either) -- that's why this is a
+// pre-checked suggestion the rep confirms, not a fully automatic decision.
+function looksLikeBrandingLayer(layer) {
+  return layer.blendMode === 'multiply' || !!layer.mask;
+}
+
+// Photoshop blend mode name -> Canvas2D globalCompositeOperation. A handful of Photoshop modes
+// (linear burn/dodge, vivid/linear/pin light, hard mix, subtract, divide, dissolve) have no direct
+// canvas equivalent -- those fall back to plain source-over, which is visually close enough for
+// this tool's purpose (extracting a usable blank photo + mask, not a pixel-perfect Photoshop clone).
+const BLEND_MODE_MAP = {
+  normal: 'source-over', 'pass through': 'source-over',
+  multiply: 'multiply', screen: 'screen', overlay: 'overlay',
+  darken: 'darken', lighten: 'lighten',
+  'color dodge': 'color-dodge', 'color burn': 'color-burn',
+  'hard light': 'hard-light', 'soft light': 'soft-light',
+  difference: 'difference', exclusion: 'exclusion',
+  hue: 'hue', saturation: 'saturation', color: 'color', luminosity: 'luminosity',
+};
+
+// Flattens a scene group's descendant leaf (non-group) layers into paint order (bottom of stack
+// first, so later drawImage calls correctly paint over earlier ones), skipping any layer that's
+// individually hidden. The scene group's OWN hidden flag is deliberately ignored here -- every
+// non-default scene in these templates is hidden at the top level (that's literally how Photoshop
+// shows/hides alternate looks), so picking a scene from the dropdown is an explicit override of
+// that, but a hidden layer *within* the chosen scene is real leftover/unused art and stays skipped.
+function flattenSceneLayers(group) {
+  const out = [];
+  function walk(layers) {
+    // ag-psd's layer arrays are already bottom-of-stack first -- i.e. already paint order --
+    // confirmed empirically against a real file's ground-truth composite (psd.canvas): drawing
+    // array[0] first and layering forward from there is what actually matches Photoshop's real
+    // rendering, not the reverse (verified because getting this backwards is a silent, easy-to-
+    // miss bug -- a logo drawn first just vanishes under the product photo instead of erroring).
+    for (const l of layers) {
+      if (l.hidden) continue;
+      if (l.children) walk(l.children);
+      else if (l.canvas) out.push(l);
+    }
+  }
+  walk(group.children || []);
+  return out;
+}
+
+function psdLayerThumbnailDataUrl(layer, maxSize) {
+  const scale = Math.min(maxSize / layer.canvas.width, maxSize / layer.canvas.height, 1);
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(layer.canvas.width * scale));
+  c.height = Math.max(1, Math.round(layer.canvas.height * scale));
+  const cctx = c.getContext('2d');
+  cctx.drawImage(layer.canvas, 0, 0, c.width, c.height);
+  return c.toDataURL('image/png');
+}
+
+document.getElementById('choosePsdBtn').addEventListener('click', () => document.getElementById('psdInput').click());
+document.getElementById('psdInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const statusEl = document.getElementById('psdStatus');
+  statusEl.textContent = 'Reading ' + file.name + '…';
+  document.getElementById('psdPanel').style.display = 'none';
+  try {
+    const buf = await file.arrayBuffer();
+    parsedPsd = agPsd.readPsd(buf, { logMissingFeatures: false });
+    parsedPsd._sourceFilename = file.name;
+    const sceneGroups = (parsedPsd.children || []).filter(l => l.children && l.children.length);
+    if (!sceneGroups.length) throw new Error('No top-level groups found in this PSD to use as scenes.');
+    const select = document.getElementById('psdSceneSelect');
+    select.innerHTML = sceneGroups.map((g, i) => `<option value="${i}">${g.name}${g.hidden ? ' (hidden in file)' : ''}</option>`).join('');
+    parsedPsd._sceneGroups = sceneGroups;
+    statusEl.textContent = '✓ Parsed ' + file.name + ' -- ' + sceneGroups.length + ' scene group' + (sceneGroups.length === 1 ? '' : 's') + ' found.';
+    document.getElementById('psdPanel').style.display = 'block';
+    renderPsdSceneLayerList();
+  } catch (err) {
+    statusEl.textContent = 'Could not read that PSD: ' + err.message;
+  }
+});
+
+function renderPsdSceneLayerList() {
+  const sceneIdx = Number(document.getElementById('psdSceneSelect').value || 0);
+  const scene = parsedPsd._sceneGroups[sceneIdx];
+  psdSceneLayers = flattenSceneLayers(scene);
+  const list = document.getElementById('psdLayerList');
+  if (!psdSceneLayers.length) {
+    list.innerHTML = '<span class="empty-note">No visible layers found in this scene.</span>';
+    return;
+  }
+  list.innerHTML = psdSceneLayers.map((l, i) => {
+    const checked = looksLikeBrandingLayer(l);
+    const thumb = psdLayerThumbnailDataUrl(l, 70);
+    const safeName = l.name.replace(/"/g, '&quot;');
+    return `<label style="display:flex; flex-direction:column; align-items:center; gap:3px; width:78px; cursor:pointer; font-size:10px; text-align:center;" title="${safeName}">
+      <img src="${thumb}" style="width:70px; height:70px; object-fit:contain; background:repeating-conic-gradient(#e8e6de 0% 25%, #f5f4ef 0% 50%) 0 0/12px 12px; border:1px solid var(--border); border-radius:4px;" />
+      <input type="checkbox" class="psdLayerChk" data-i="${i}" ${checked ? 'checked' : ''} />
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${l.name}</span>
+    </label>`;
+  }).join('');
+}
+document.getElementById('psdSceneSelect').addEventListener('change', renderPsdSceneLayerList);
+
+document.getElementById('psdUseSceneBtn').addEventListener('click', async () => {
+  const useStatus = document.getElementById('psdUseStatus');
+  const checks = [...document.querySelectorAll('.psdLayerChk')];
+  const brandingIdx = new Set(checks.filter(c => c.checked).map(c => Number(c.dataset.i)));
+  if (!brandingIdx.size) { useStatus.textContent = 'Check at least one branding layer first.'; return; }
+  useStatus.textContent = 'Building photo + mask…';
+  try {
+    const w = parsedPsd.width, h = parsedPsd.height;
+
+    const blankCanvas = document.createElement('canvas');
+    blankCanvas.width = w; blankCanvas.height = h;
+    const blankCtx = blankCanvas.getContext('2d');
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = w; maskCanvas.height = h;
+    const maskCtx = maskCanvas.getContext('2d');
+
+    psdSceneLayers.forEach((l, i) => {
+      if (brandingIdx.has(i)) {
+        maskCtx.globalCompositeOperation = 'source-over';
+        maskCtx.globalAlpha = 1;
+        maskCtx.drawImage(l.canvas, l.left, l.top);
+      } else {
+        blankCtx.globalCompositeOperation = BLEND_MODE_MAP[l.blendMode] || 'source-over';
+        blankCtx.globalAlpha = (l.opacity != null ? l.opacity : 1);
+        blankCtx.drawImage(l.canvas, l.left, l.top);
+      }
+    });
+
+    const sceneIdx = Number(document.getElementById('psdSceneSelect').value || 0);
+    const sceneName = parsedPsd._sceneGroups[sceneIdx].name;
+    const skuMatch = (parsedPsd._sourceFilename || '').match(/\d{3,}/);
+    const baseName = (skuMatch ? skuMatch[0] + '-' : '') + slugify(sceneName || 'scene');
+
+    await applyPhotoDataUrl(blankCanvas.toDataURL('image/png'), baseName + '-blank.png');
+    await applyMaskDataUrl(maskCanvas.toDataURL('image/png'), baseName + '-mask.png');
+    useStatus.textContent = '✓ Applied "' + sceneName + '" -- photo and mask above are filled in. Review the logo placement below, then fill in SKU/Name and save.';
+  } catch (err) {
+    useStatus.textContent = 'Something went wrong building the photo/mask: ' + err.message;
+  }
 });
 
 // The mask gets stretched to cover the photo's own full frame at render time, so it only lines up
