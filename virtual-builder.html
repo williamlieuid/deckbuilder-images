@@ -689,7 +689,11 @@ function renderLogoHistory() {
 }
 let selected = new Set();
 let lastBuiltDeck = [];
-let deckName = ''; // optional, shown on the deck/print header instead of "Product Recommendations"
+let deckName = ''; // optional, folded into the export filename only -- never rendered on the page
+// Full-resolution branded canvases for the current deck build, keyed by sku -- see
+// buildHighResExportCanvas's own comment for why the export doesn't reuse the on-screen preview
+// canvases directly.
+let deckExportCanvases = new Map();
 let selectedPattern = null; // URL of the chosen pattern (library or custom-uploaded)
 let selectedPatternSolidColor = null; // hex color when "Solid Fill" is chosen instead of an image pattern -- mutually exclusive with selectedPattern
 function patternIsSelected() { return !!(selectedPattern || selectedPatternSolidColor); }
@@ -2711,6 +2715,49 @@ function loadCrossOriginImage(url) {
   });
 }
 
+// Same rendering path as exportProductImage below (full baseImg-resolution canvas, not the
+// fixed-700px on-screen preview), minus the download trigger -- used by buildDeckPages so the
+// deck/PDF export never upscales the small preview canvas across an entire 11x8.5in page (which
+// is what was producing pixelated logos/branding in the export before this existed).
+async function buildHighResExportCanvas(p) {
+  const hasLogo = !!logoDataUrl;
+  const hasPattern = p.patternEligible && patternIsSelected();
+  const hasRegionBranding = (hasLogo || hasPattern) && !!(p.regions && (p.regions.rect || p.regions.poly || p.regions.mask));
+  const baseUrl = hasRegionBranding ? p.blankImage : p.masterImage;
+  const baseImg = await loadCrossOriginImage(baseUrl);
+
+  if (!hasRegionBranding) {
+    const canvas = document.createElement('canvas');
+    canvas.width = baseImg.naturalWidth;
+    canvas.height = baseImg.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+
+  const logoImg = logoDataUrl ? await loadCrossOriginImage(logoDataUrl) : null;
+  let pattern = null;
+  if (p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct && !p.clearProduct) {
+    const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
+    if (selectedPattern) {
+      const patternImg = await loadCrossOriginImage(selectedPattern);
+      pattern = { img: patternImg, scale: effectivePatternScale(p.sku), knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
+    } else {
+      pattern = { solidColor: selectedPatternSolidColor, knockout: patternKnockout, overlayImg: overlayImg };
+    }
+  }
+  const effectiveRegions = applyRegionOverrides(p.regions, p.sku);
+  const canvas = document.createElement('canvas');
+  const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
+  const maskImageCache = await loadMaskImageCache(effectiveRegions, loadCrossOriginImage);
+  const fullColorOverride = !!materialFullColorOverride[p.sku];
+  const effectiveLogoMultiply = ((p.blackProduct || p.woodProduct || p.clearProduct) && !fullColorOverride) ? false : logoMultiply;
+  drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct, !!p.blackProduct, fullColorOverride);
+  return canvas;
+}
+
 async function exportProductImage(sku) {
   const p = PRODUCTS.find(x => x.sku === sku);
   if (!p) return;
@@ -2956,7 +3003,7 @@ async function buildDeckPages(navigate = true) {
     <div class="deck-page">
       <div class="deck-grid">
         ${chunk.map(p => `
-          <div>
+          <div data-sku="${p.sku}">
             ${imageBlock(p, false)}
           </div>
         `).join('')}
@@ -2964,6 +3011,16 @@ async function buildDeckPages(navigate = true) {
     </div>
   `).join('');
   await paintBrandedCanvases(pageContainer);
+
+  // Full-resolution canvases for export (see buildHighResExportCanvas's own comment) -- the DOM
+  // canvases paintBrandedCanvases just painted are only ever 700px, plenty for the on-screen grid/
+  // deck view, but pixelated once upscaled across a whole 11x8.5in exported page. Built in parallel
+  // and cached by sku so renderDeckPageCanvas can pull from here instead.
+  deckExportCanvases = new Map();
+  await Promise.all(chosen.map(async p => {
+    try { deckExportCanvases.set(p.sku, await buildHighResExportCanvas(p)); }
+    catch (err) { console.warn('Could not build high-res export canvas for ' + p.sku + ', falling back to the preview canvas.', err); }
+  }));
 
   // Analytics: one event per fact this build represents, batched into a single beacon. "Second
   // location" = the first extra region beyond a product's primary one (regionOverrideKeyList's
@@ -3016,13 +3073,16 @@ function renderDeckPageCanvas(pageEl, scale) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, pageW, pageH);
 
-  // One virtual per page -- see .deck-page's own comment.
+  // One virtual per page -- see .deck-page's own comment. Prefer the full-resolution export
+  // canvas built by buildDeckPages (see deckExportCanvases' own comment); only fall back to the
+  // smaller on-screen preview element if that build failed for this sku.
   const cardEl = pageEl.querySelector('.deck-grid > div');
+  const highResCanvas = cardEl && deckExportCanvases.get(cardEl.dataset.sku);
   const canvasEl = cardEl && cardEl.querySelector('canvas.branded-canvas');
   const imgEl = cardEl && cardEl.querySelector('img.base');
-  const srcEl = canvasEl || imgEl;
-  const sw = canvasEl ? canvasEl.width : (imgEl ? imgEl.naturalWidth : 0);
-  const sh = canvasEl ? canvasEl.height : (imgEl ? imgEl.naturalHeight : 0);
+  const srcEl = highResCanvas || canvasEl || imgEl;
+  const sw = highResCanvas ? highResCanvas.width : canvasEl ? canvasEl.width : (imgEl ? imgEl.naturalWidth : 0);
+  const sh = highResCanvas ? highResCanvas.height : canvasEl ? canvasEl.height : (imgEl ? imgEl.naturalHeight : 0);
   if (srcEl && sw && sh) {
     const fit = Math.min(contentW / sw, contentH / sh);
     const dw = sw * fit, dh = sh * fit;
@@ -3122,7 +3182,10 @@ function applyLoadedProducts(data, sourceLabel) {
     const bySkU = new Map(PRODUCTS.map(p => [p.sku, p]));
     currentResults = currentResults.map(p => bySkU.get(p.sku) || p).filter(p => bySkU.has(p.sku));
   }
-  refreshIfSearched();
+  // Unlike the real deck builder's huge catalog (which waits for a rep to actually search/filter
+  // first), Virtual Builder's list is small enough to just show everything the moment data loads
+  // -- applyFilters() with no active filters renders the full list.
+  applyFilters();
   console.log('Loaded ' + PRODUCTS.length + ' products from ' + sourceLabel + '.');
 }
 function isValidProductsPayload(data) {
