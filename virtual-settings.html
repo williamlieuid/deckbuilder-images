@@ -705,6 +705,32 @@ function flattenSceneLayers(group) {
   return out;
 }
 
+// "Chrome" = the shared title-bar/icon-row/product-title elements that sit alongside the scene
+// groups at the top level, not inside any of them -- always visible regardless of which scene is
+// active, so they're always composited in rather than offered as scene choices. Consistently named
+// "TITLE BAR" (exact, across every template checked) and some ordering of "title"/"icons"/"prod(uct)"
+// for the other one ("title/icons/prod", "icons/title/prod", "title/icons/product" all seen across
+// different designers' files) -- matched loosely by substring rather than one exact string.
+function isChromeGroupName(name) {
+  const n = name.toLowerCase();
+  return /title.*bar/.test(n) || (n.includes('title') && n.includes('icon'));
+}
+
+// Everything a rep's blank photo should show regardless of scene: the chosen scene's own layers
+// (minus whatever's checked as branding) PLUS every chrome group's layers (always opaque, never
+// eligible to be flagged as branding), in their correct top-level document order. Anything else at
+// the top level -- a stray full-canvas background fill layer, another scene not being extracted
+// right now, leftover art -- is deliberately left out, so the product area behind the shot stays
+// transparent instead of picking up some other layer's opaque background by accident.
+function buildScenePaintList(sceneGroup) {
+  const out = [];
+  for (const l of parsedPsd.children) {
+    if (l === sceneGroup) out.push(...flattenSceneLayers(l).map(layer => ({ layer, isChrome: false })));
+    else if (l.children && isChromeGroupName(l.name)) out.push(...flattenSceneLayers(l).map(layer => ({ layer, isChrome: true })));
+  }
+  return out;
+}
+
 function psdLayerThumbnailDataUrl(layer, maxSize) {
   const scale = Math.min(maxSize / layer.canvas.width, maxSize / layer.canvas.height, 1);
   const c = document.createElement('canvas');
@@ -727,7 +753,9 @@ document.getElementById('psdInput').addEventListener('change', async (e) => {
     const buf = await file.arrayBuffer();
     parsedPsd = agPsd.readPsd(buf, { logMissingFeatures: false });
     parsedPsd._sourceFilename = file.name;
-    const sceneGroups = (parsedPsd.children || []).filter(l => l.children && l.children.length);
+    // Chrome groups (title bar, icon row) are excluded here -- they're not a "scene" a rep would
+    // pick, they're always-included background elements. See isChromeGroupName's own comment.
+    const sceneGroups = (parsedPsd.children || []).filter(l => l.children && l.children.length && !isChromeGroupName(l.name));
     if (!sceneGroups.length) throw new Error('No top-level groups found in this PSD to use as scenes.');
     const select = document.getElementById('psdSceneSelect');
     select.innerHTML = sceneGroups.map((g, i) => `<option value="${i}">${g.name}${g.hidden ? ' (hidden in file)' : ''}</option>`).join('');
@@ -774,24 +802,37 @@ document.getElementById('psdUseSceneBtn').addEventListener('click', async () => 
     const blankCanvas = document.createElement('canvas');
     blankCanvas.width = w; blankCanvas.height = h;
     const blankCtx = blankCanvas.getContext('2d');
+    // Solid white background rather than leaving the product area transparent -- simpler, and
+    // matches how a manually-exported product photo normally looks anyway.
+    blankCtx.fillStyle = '#ffffff';
+    blankCtx.fillRect(0, 0, w, h);
     const maskCanvas = document.createElement('canvas');
     maskCanvas.width = w; maskCanvas.height = h;
     const maskCtx = maskCanvas.getContext('2d');
 
+    const sceneIdx = Number(document.getElementById('psdSceneSelect').value || 0);
+    const scene = parsedPsd._sceneGroups[sceneIdx];
+
+    // Blank photo = every chrome-group layer (title bar, icon row -- always opaque, never a
+    // branding candidate) plus the scene's own non-branding layers, in correct document order.
+    // Nothing else at the top level (a stray full-canvas background fill, an un-chosen scene) is
+    // drawn at all, so the canvas stays genuinely transparent wherever nothing was actually
+    // painted -- Virtual Builder's backdrop-color picker can then tint that transparent area
+    // without touching the title bar's own real background.
+    buildScenePaintList(scene).forEach(({ layer: l, isChrome }) => {
+      if (!isChrome && brandingIdx.has(psdSceneLayers.indexOf(l))) return; // drawn into the mask below instead
+      blankCtx.globalCompositeOperation = BLEND_MODE_MAP[l.blendMode] || 'source-over';
+      blankCtx.globalAlpha = (l.opacity != null ? l.opacity : 1);
+      blankCtx.drawImage(l.canvas, l.left, l.top);
+    });
     psdSceneLayers.forEach((l, i) => {
-      if (brandingIdx.has(i)) {
-        maskCtx.globalCompositeOperation = 'source-over';
-        maskCtx.globalAlpha = 1;
-        maskCtx.drawImage(l.canvas, l.left, l.top);
-      } else {
-        blankCtx.globalCompositeOperation = BLEND_MODE_MAP[l.blendMode] || 'source-over';
-        blankCtx.globalAlpha = (l.opacity != null ? l.opacity : 1);
-        blankCtx.drawImage(l.canvas, l.left, l.top);
-      }
+      if (!brandingIdx.has(i)) return;
+      maskCtx.globalCompositeOperation = 'source-over';
+      maskCtx.globalAlpha = 1;
+      maskCtx.drawImage(l.canvas, l.left, l.top);
     });
 
-    const sceneIdx = Number(document.getElementById('psdSceneSelect').value || 0);
-    const sceneName = parsedPsd._sceneGroups[sceneIdx].name;
+    const sceneName = scene.name;
     const skuMatch = (parsedPsd._sourceFilename || '').match(/\d{3,}/);
     const baseName = (skuMatch ? skuMatch[0] + '-' : '') + slugify(sceneName || 'scene');
 
