@@ -2593,7 +2593,6 @@ function imageBlock(p, includeControls = true) {
   }
 
   if (hasRegionBranding) {
-    const isTransparent = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim() === 'transparent';
     const isMaterialLocked = !!(p.blackProduct || p.woodProduct || p.clearProduct);
     const isFullColor = !!materialFullColorOverride[p.sku];
     const materialLabel = p.blackProduct ? 'leather etching' : (p.woodProduct ? 'wood engraving' : 'etching');
@@ -2602,8 +2601,7 @@ function imageBlock(p, includeControls = true) {
       <canvas class="branded-canvas" data-sku="${p.sku}" data-base="${baseImg}"></canvas>
     </div>
     ${isMaterialLocked ? `<button type="button" class="secondary laser-toggle-btn no-print" data-sku="${p.sku}" title="${isFullColor ? 'Switch back to the ' + materialLabel + ' look' : 'Preview a full-color logo instead of the ' + materialLabel + ' look'}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isFullColor ? 'Full Color (click for ' + (p.blackProduct ? 'Etched' : 'Engraved') + ')' : (p.blackProduct ? 'Etched' : 'Engraved') + ' (click for Full Color)'}</button>` : ''}
-    ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">${isTransparent ? 'Download Transparent Image' : 'Download Image'}</button>
-    ${regionControlsHtml(p)}
+    ${includeControls ? `${regionControlsHtml(p)}
     ${isPatternScaleAdjustable ? patternScaleControlHtml(p) : ''}` : ''}`;
   }
 
@@ -2613,8 +2611,7 @@ function imageBlock(p, includeControls = true) {
   const crossOriginAttr = /^https?:\/\//i.test(baseImg) ? ' crossorigin="anonymous"' : '';
   return `<div class="imgwrap">
     <img class="base" src="${baseImg}"${crossOriginAttr} />
-  </div>
-  ${includeControls ? `<button type="button" class="secondary dl-btn no-print" data-sku="${p.sku}" style="width:100%; margin-top:4px; font-size:10px; height:20px; padding:0;">Download Image</button>` : ''}`;
+  </div>`;
 }
 
 // Per-card nudge on top of the global Pattern Scale slider (Pricing, Currency & Branding Options
@@ -2715,9 +2712,9 @@ function loadCrossOriginImage(url) {
   });
 }
 
-// Same rendering path as exportProductImage below (full baseImg-resolution canvas, not the
-// fixed-700px on-screen preview), minus the download trigger -- used by buildDeckPages so the
-// deck/PDF export never upscales the small preview canvas across an entire 11x8.5in page (which
+// Renders a card's branding at full baseImg resolution (not the fixed-700px on-screen preview
+// canvas) -- used by buildDeckPages so the deck/PDF export never upscales the small preview
+// canvas across an entire 11x8.5in page (which
 // is what was producing pixelated logos/branding in the export before this existed).
 async function buildHighResExportCanvas(p) {
   const hasLogo = !!logoDataUrl;
@@ -2758,73 +2755,7 @@ async function buildHighResExportCanvas(p) {
   return canvas;
 }
 
-async function exportProductImage(sku) {
-  const p = PRODUCTS.find(x => x.sku === sku);
-  if (!p) return;
-  const hasLogo = !!logoDataUrl;
-  const hasPattern = p.patternEligible && patternIsSelected();
-  const hasRegionBranding = (hasLogo || hasPattern) && !!(p.regions && (p.regions.rect || p.regions.poly || p.regions.mask));
-  const baseUrl = hasRegionBranding ? p.blankImage : p.masterImage;
-
-  if (!hasRegionBranding) {
-    try {
-      const baseImg = await loadCrossOriginImage(baseUrl);
-      const canvas = document.createElement('canvas');
-      canvas.width = baseImg.naturalWidth;
-      canvas.height = baseImg.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + uniqueFileSuffix() + '.jpg');
-    } catch (err) {
-      alert('This image can\'t be exported directly due to the source site\'s cross-origin security settings. Opening the original image in a new tab instead — right-click (or long-press) it there to save it manually.');
-      window.open(baseUrl, '_blank');
-    }
-    return;
-  }
-
-  try {
-    const baseImg = await loadCrossOriginImage(baseUrl);
-    const logoImg = logoDataUrl ? await loadCrossOriginImage(logoDataUrl) : null;
-    let pattern = null;
-    if (p.patternEligible && patternIsSelected() && !p.blackProduct && !p.woodProduct && !p.clearProduct) {
-      const overlayImg = p.overlayImage ? await loadCrossOriginImage(p.overlayImage) : null;
-      if (selectedPattern) {
-        const patternImg = await loadCrossOriginImage(selectedPattern);
-        pattern = { img: patternImg, scale: effectivePatternScale(p.sku), knockout: patternKnockout, overlayImg: overlayImg, offsetX: patternOffsetX, offsetY: patternOffsetY };
-      } else {
-        pattern = { solidColor: selectedPatternSolidColor, knockout: patternKnockout, overlayImg: overlayImg };
-      }
-    }
-    const effectiveRegions = applyRegionOverrides(p.regions, p.sku);
-    const canvas = document.createElement('canvas');
-    const size = Math.max(baseImg.naturalWidth, baseImg.naturalHeight, 1200);
-    const maskImageCache = await loadMaskImageCache(effectiveRegions, loadCrossOriginImage);
-    const fullColorOverride = !!materialFullColorOverride[p.sku];
-    const effectiveLogoMultiply = ((p.blackProduct || p.woodProduct || p.clearProduct) && !fullColorOverride) ? false : logoMultiply;
-    // Exports always render onto opaque white regardless of the live preview's backdrop choice --
-    // except "Transparent", which needs the export itself to actually carry an alpha channel, so
-    // that one case alone follows the live --backdrop value through to both the canvas fill and
-    // the output format (JPEG has no alpha at all).
-    const liveBackdrop = getComputedStyle(document.documentElement).getPropertyValue('--backdrop').trim();
-    const isTransparent = liveBackdrop === 'transparent';
-    drawBrandedCard(canvas, baseImg, logoImg, effectiveRegions, isTransparent ? 'transparent' : '#ffffff', size, pattern, maskImageCache, effectiveLogoMultiply, !!p.woodProduct, !!p.clearProduct, !!p.blackProduct, fullColorOverride);
-    const dataUrl = isTransparent ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92);
-    const ext = isTransparent ? '.png' : '.jpg';
-    triggerDownload(dataUrl, p.sku + '-' + slugify(p.name) + '-' + uniqueFileSuffix() + ext);
-  } catch (err) {
-    alert('This image can\'t be exported directly due to the source site\'s cross-origin security settings. Opening the original image in a new tab instead — right-click (or long-press) it there to save it manually.');
-    window.open(baseUrl, '_blank');
-  }
-}
-
 document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('dl-btn')) {
-    exportProductImage(e.target.dataset.sku);
-    return;
-  }
   if (e.target.classList.contains('laser-toggle-btn')) {
     const sku = e.target.dataset.sku;
     const p = PRODUCTS.find(x => x.sku === sku);
