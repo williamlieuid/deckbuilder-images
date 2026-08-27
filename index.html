@@ -214,6 +214,9 @@
   .fees p { font-size: 10px; color: var(--text-secondary); margin: 0 0 4px; line-height: 1.4; }
   .addon-row { display: flex; flex-wrap: wrap; column-gap: 32px; row-gap: 4px; }
   .addon-row span { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+  /* Discount-code letter (e.g. "$100 C") -- lets a distributor work out their own cost from the
+     end-user price shown; see priceBox()'s p.priceCode/p.addonPriceCode. */
+  .price-code { color: var(--text-muted); font-weight: 400; }
 
   #emptyState { display: none; text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
 
@@ -5245,7 +5248,12 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
 function priceBox(p) {
   if (!pricingOn()) return '';
-  const addonLines = p.addons.filter(a => a.price).map(a => `<span>${a.name}: +${fmtPrice(a.price)}/unit</span>`).join('');
+  // Discount-code letters (e.g. "$100 C") let a distributor work out their own cost from the
+  // end-user price shown -- priceCode applies to every tier's price, addonPriceCode to the setup
+  // fee and every add-on price. One letter per product (set in Edit a Product), not per line.
+  const priceCodeHtml = p.priceCode ? ` <span class="price-code">${p.priceCode}</span>` : '';
+  const addonCodeHtml = p.addonPriceCode ? ` <span class="price-code">${p.addonPriceCode}</span>` : '';
+  const addonLines = p.addons.filter(a => a.price).map(a => `<span>${a.name}: +${fmtPrice(a.price)}/unit${addonCodeHtml}</span>`).join('');
   if (!p.tiers.length) {
     return `
     <div class="fees">
@@ -5257,12 +5265,12 @@ function priceBox(p) {
   const cells = p.tiers.map((t, i) => `
     <td style="text-align:${i===0?'left':i===last?'right':'center'};">
       <p class="qty">${t.qty} units</p>
-      <p class="pr">${fmtPrice(currency() === 'CAD' ? t.priceCAD : t.priceUS)}</p>
+      <p class="pr">${fmtPrice(currency() === 'CAD' ? t.priceCAD : t.priceUS)}${priceCodeHtml}</p>
     </td>`).join('');
   return `
     <table class="price-table"><tr>${cells}</tr></table>
     <div class="fees">
-      ${p.setupFee ? `<p>Setup: ${fmtPrice(p.setupFee)} one-time</p>` : ''}
+      ${p.setupFee ? `<p>Setup: ${fmtPrice(p.setupFee)} one-time${addonCodeHtml}</p>` : ''}
       <div class="addon-row">${addonLines}</div>
     </div>`;
 }
