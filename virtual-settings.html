@@ -92,7 +92,7 @@
 
   <div class="fieldRow">
     <div class="field" style="max-width:140px;">
-      <label>Virtual Number <span style="color:#D8433B;">*</span></label>
+      <label>SKU <span style="color:#D8433B;">*</span></label>
       <input type="text" id="skuInput" inputmode="numeric" maxlength="4" placeholder="e.g. 4231" required />
     </div>
     <div class="field">
@@ -107,7 +107,7 @@
   <p class="empty-note" id="skuCollisionWarning" style="display:none; color:#D8433B; margin:-6px 0 12px;"></p>
 
   <div class="section-title">Product Photo &amp; Logo Placement</div>
-  <p class="empty-note" style="margin-bottom:8px;">Fill in the Virtual Number, Name, and Color (if used) above first — your uploaded files below will be automatically renamed to match, so they're easy to find later.</p>
+  <p class="empty-note" style="margin-bottom:8px;">Fill in the SKU, Name, and Color (if used) above first — your uploaded files below will be automatically renamed to match, so they're easy to find later.</p>
 
   <div class="uploadRow">
     <button type="button" class="secondary" id="choosePhotoBtn">Choose Blank Product Image</button>
@@ -198,7 +198,7 @@
   <p class="hint">Find a virtual already in the system to change any of its details, photo, or logo placement.</p>
 
   <div class="field" style="position:relative;">
-    <label>Search by Virtual Number or Name</label>
+    <label>Search by SKU or Name</label>
     <input type="text" id="editSearchInput" placeholder="e.g. 4231 or Chisel" autocomplete="off" />
     <div id="editSearchSuggestions" class="suggestions-panel" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:20; background:#fff; border:0.5px solid var(--border); border-radius:6px; margin-top:4px; max-height:240px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
   </div>
@@ -1333,7 +1333,7 @@ document.getElementById('submitProductBtn').addEventListener('click', async () =
     const existing = checkSkuCollision();
     if (existing) {
       const proceed = confirm(`Virtual #${sku} already exists: "${existing.name}".\n\nContinuing will overwrite it, not create a new virtual. Continue anyway?`);
-      if (!proceed) { setSubmitStatus('Cancelled — double check the Virtual Number.', 'error'); return; }
+      if (!proceed) { setSubmitStatus('Cancelled — double check the SKU.', 'error'); return; }
     }
   }
 
